@@ -21,7 +21,7 @@ int main()
   typedef ttVec::const_iterator				ttVeccit;
 
   cout << "-------------------------------------------------------------\n";
-  cout << "--------------- ttauto r495 (2010-04-26) ALPHA --------------\n";
+  cout << "---------------- ttauto r1 (2010-04-30) ALPHA ---------------\n";
   cout << "-------------------------------------------------------------\n";
 //#define TTAUTO_RELEASE
 #ifdef TTAUTO_RELEASE
