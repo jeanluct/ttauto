@@ -1,0 +1,12 @@
+rev 65, n=7, trk=5, first 5 vertices:
+
+Max length of
+bad words     Timings
+0             207.524u 1.536s 3:56.93 88.2%
+1             120.119u 0.796s 2:09.49 93.3%
+2             114.951u 0.840s 2:08.89 89.8%
+3             119.071u 1.208s 2:16.96 87.8%
+4             118.847u 0.924s 2:10.46 91.7%
+5             150.093u 1.228s 2:44.67 91.8%
+
+Notice how bad words of length 2 are the sweet spot.

@@ -1,0 +1,7 @@
+SConscript('../SConscript')
+Import('env')
+
+env.Program('test_permplus1.cpp')
+env.Program('test_traintrack.cpp')
+env.Program('test_folding_path.cpp')
+env.Program('test_badwords.cpp')

@@ -1,0 +1,7 @@
+Import('env')
+import glob
+
+# List of files to compile into library (remove program test_csparse.c)
+liblist = [f for f in glob.glob('*.c') if f not in ['test_csparse.c']]
+
+lib = env.Library('csparse', liblist)

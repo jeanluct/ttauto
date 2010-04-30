@@ -1,0 +1,7 @@
+SConscript('../SConscript')
+Import('env')
+
+env.Program('ttauto.cpp')
+env.Program('ttauto_min_example.cpp')
+env.Program('ttauto_count.cpp')
+env.Program('ttauto_labels.cpp')
