@@ -134,8 +134,8 @@ void print_banner()
 
   std::string banner = "----------------- ttauto ";
   if (svnDate != "" && svnVersion != "")
-    banner += " r" + svnVersion + " (" + svnDate + ") ALPHA ";
-  banner += "------------------";
+    banner += "r" + svnVersion + " (" + svnDate + ") ";
+  banner += "ALPHA ------------------";
   std::string dashes(banner.length(),'-');
   cout << dashes << endl;
   cout << banner << endl;
