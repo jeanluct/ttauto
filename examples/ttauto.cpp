@@ -20,20 +20,23 @@ int main()
   typedef jlt::vector<traintrack>			ttVec;
   typedef ttVec::const_iterator				ttVeccit;
 
+  std::string svnId("$Id$");
+  std::string svnVersion("$LastChangedDate$");
+  std::string svnDate("$LastChangedRevision$");
+
   cout << "-------------------------------------------------------------\n";
-  cout << "---------------- ttauto r1 (2010-04-30) ALPHA ---------------\n";
+  cout << "---------------- ttauto r4 (2011-08-31) ALPHA ---------------\n";
   cout << "-------------------------------------------------------------\n";
-//#define TTAUTO_RELEASE
+#define TTAUTO_RELEASE
 #ifdef TTAUTO_RELEASE
   cout << endl;
-  cout << "Copyright 2010 Jean-Luc Thiffeault (jeanluc@mailaps.org)\n";
-  cout << "               Erwan Lanneau       (lanneau@cpt.univ-mrs.fr)\n";
+  cout << "Copyright 2010,2011 Jean-Luc Thiffeault (jeanluc@mailaps.org)\n";
+  cout << "                    Erwan Lanneau       (lanneau@cpt.univ-mrs.fr)\n";
   cout << endl;
   cout << "This program is a preliminary ALPHA version and should\n";
   cout << "be used with caution.  The authors make no guarantees\n";
   cout << "regarding the validity of the results.\n";
   cout << endl;
-  cout << "--------- Version for J-Y Ham (not for distribution) --------\n";
 #endif
 
   int n = jlt::read_number("\nNumber of punctures",3,20,5);
