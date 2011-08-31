@@ -9,6 +9,8 @@
 
 using namespace traintracks;
 
+void print_banner();
+
 int main()
 {
   using std::cout;
@@ -20,24 +22,7 @@ int main()
   typedef jlt::vector<traintrack>			ttVec;
   typedef ttVec::const_iterator				ttVeccit;
 
-  std::string svnId("$Id$");
-  std::string svnVersion("$LastChangedDate$");
-  std::string svnDate("$LastChangedRevision$");
-
-  cout << "-------------------------------------------------------------\n";
-  cout << "---------------- ttauto r4 (2011-08-31) ALPHA ---------------\n";
-  cout << "-------------------------------------------------------------\n";
-#define TTAUTO_RELEASE
-#ifdef TTAUTO_RELEASE
-  cout << endl;
-  cout << "Copyright 2010,2011 Jean-Luc Thiffeault (jeanluc@mailaps.org)\n";
-  cout << "                    Erwan Lanneau       (lanneau@cpt.univ-mrs.fr)\n";
-  cout << endl;
-  cout << "This program is a preliminary ALPHA version and should\n";
-  cout << "be used with caution.  The authors make no guarantees\n";
-  cout << "regarding the validity of the results.\n";
-  cout << endl;
-#endif
+  print_banner();
 
   int n = jlt::read_number("\nNumber of punctures",3,20,5);
 
@@ -123,4 +108,48 @@ int main()
   tta.search();
 
   cout << "\nThe pseudo-Anosov candidates are in file " << pAfile << endl;
+}
+
+
+void print_banner()
+{
+  using std::cout;
+  using std::endl;
+
+  std::string
+    svnDate("$LastChangedDate$");
+  std::string
+    svnVersion("$LastChangedRevision$");
+
+  if (svnDate.length() >= 18 && svnVersion.length() >= 22)
+    {
+      svnDate = svnDate.substr(18,10);
+      svnVersion.erase(0,22); svnVersion.erase(svnVersion.length()-2,2);
+    }
+  else
+    {
+      svnDate = "";
+      svnVersion = "";
+    }
+
+  std::string banner = "----------------- ttauto ";
+  if (svnDate != "" && svnVersion != "")
+    banner += " r" + svnVersion + " (" + svnDate + ") ALPHA ";
+  banner += "------------------";
+  std::string dashes(banner.length(),'-');
+  cout << dashes << endl;
+  cout << banner << endl;
+  cout << dashes << endl;
+
+#define TTAUTO_RELEASE
+#ifdef TTAUTO_RELEASE
+  cout << endl;
+  cout << "Copyright 2010,2011 Jean-Luc Thiffeault (jeanluc@mailaps.org)\n";
+  cout << "                    Erwan Lanneau       (lanneau@cpt.univ-mrs.fr)\n";
+  cout << endl;
+  cout << "This program is a preliminary ALPHA version and should\n";
+  cout << "be used with caution.  The authors make no guarantees\n";
+  cout << "regarding the validity of the results.\n";
+  cout << endl;
+#endif
 }
