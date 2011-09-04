@@ -3,6 +3,7 @@
 #include <string>
 #include <jlt/vector.hpp>
 #include <jlt/prompt.hpp>
+#include <jlt/subversion.hpp>
 #include "traintrack.hpp"
 #include "ttfoldgraph.hpp"
 #include "ttauto.hpp"
@@ -116,30 +117,16 @@ void print_banner()
   using std::cout;
   using std::endl;
 
-  std::string
-    svnDate("$LastChangedDate$");
-  std::string
-    svnVersion("$LastChangedRevision$");
-
-  if (svnDate.length() >= 18 && svnVersion.length() >= 22)
-    {
-      svnDate = svnDate.substr(18,10);
-      svnVersion.erase(0,22); svnVersion.erase(svnVersion.length()-2,2);
-    }
-  else
-    {
-      svnDate = "";
-      svnVersion = "";
-    }
+  std::string svnDate = jlt::getSVNDate
+    ("$LastChangedDate$");
+  std::string svnRevision = jlt::getSVNRevision("$LastChangedRevision$");
 
   std::string banner = "----------------- ttauto ";
-  if (svnDate != "" && svnVersion != "")
-    banner += "r" + svnVersion + " (" + svnDate + ") ";
+  if (svnDate != "" && svnRevision != "")
+    banner += "r" + svnRevision + " (" + svnDate + ") ";
   banner += "ALPHA ------------------";
   std::string dashes(banner.length(),'-');
-  cout << dashes << endl;
-  cout << banner << endl;
-  cout << dashes << endl;
+  cout << dashes << endl << banner << endl << dashes << endl;
 
 #define TTAUTO_RELEASE
 #ifdef TTAUTO_RELEASE
@@ -147,9 +134,9 @@ void print_banner()
   cout << "Copyright 2010,2011 Jean-Luc Thiffeault (jeanluc@mailaps.org)\n";
   cout << "                    Erwan Lanneau       (lanneau@cpt.univ-mrs.fr)\n";
   cout << endl;
-  cout << "This program is a preliminary ALPHA version and should\n";
-  cout << "be used with caution.  The authors make no guarantees\n";
-  cout << "regarding the validity of the results.\n";
+  cout << "This program is a preliminary ALPHA version and should be used\n";
+  cout << "with caution.  The authors make no guarantees regarding the\n";
+  cout << "validity of the results.\n";
   cout << endl;
 #endif
 }
