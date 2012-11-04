@@ -8,13 +8,6 @@
 
 namespace traintracks {
 
-template<class Vec>
-inline bool cyclic_equal(const Vec& v1, const Vec& v2)
-{
-  return !(cyclic_shift(v1,v2).empty());
-}
-
-
 // If two vectors are cyclically equivalent, return a vector p0v of
 // offsets between them such that v1[v] == v2[(v+p0v[i]) % size()].
 // Return empty p0v if they are not cyclically equivalent.
@@ -43,6 +36,13 @@ jlt::vector<int> cyclic_shift(const Vec& v1, const Vec& v2)
     }
 
   return p0v;
+}
+
+
+template<class Vec>
+inline bool cyclic_equal(const Vec& v1, const Vec& v2)
+{
+  return !(cyclic_shift(v1,v2).empty());
 }
 
 
