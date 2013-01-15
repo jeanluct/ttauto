@@ -8,7 +8,8 @@ The rest of this README is an excerpt from CSparse's README.txt.
 ------------------------------------------------------------------
 
 CSparse: a Concise Sparse Matrix package.
-Version 2.2.0, Copyright (c) 2006-2007, Timothy A. Davis, Mar 31, 2007.
+VERSION 3.1.1, Copyright (c) 2006-2012, Timothy A. Davis, Jun 20, 2012.
+http://www.suitesparse.com
 
 Refer to "Direct Methods for Sparse Linear Systems," Timothy A. Davis,
 SIAM, Philadelphia, 2006.  No detailed user guide is included in this

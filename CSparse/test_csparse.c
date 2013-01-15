@@ -20,12 +20,12 @@ int main ()
 
   if (!BM) { fprintf(stderr,"Error\n"); exit(1); }
 
-  printf("nb = %d\n",BM->nb);
+  printf("nb = %d\n",(int)BM->nb);
 
   int i;
   for (i = 1; i <= BM->nb; ++i)
     {
-      printf("%d ",BM->r[i]);
+      printf("%d ",(int)BM->r[i]);
     }
 
   printf("\n");
