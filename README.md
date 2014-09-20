@@ -16,7 +16,7 @@ There is currently no real documentation for *ttauto*.  See the [examples folder
 
 ### support
 
-The development of *ttauto* was supported by the [US National Science Foundation][10], under grants DMS-0806821 and CMMI-1233935.
+The development of *ttauto* was supported by the [US National Science Foundation][10], under grants [DMS-0806821][11] and [CMMI-1233935][12].
 
 [1]: http://www.math.wisc.edu/~jeanluc/
 [2]: http://www-fourier.ujf-grenoble.fr/~lanneau/
@@ -28,3 +28,5 @@ The development of *ttauto* was supported by the [US National Science Foundation
 [8]: http://bitbucket.org/jeanluc/ttauto/raw/tip/examples/ttauto.cpp
 [9]: http://www.scons.org
 [10]: http://www.nsf.gov
+[11]: http://www.nsf.gov/awardsearch/showAward?AWD_ID=0806821
+[12]: http://www.nsf.gov/awardsearch/showAward?AWD_ID=1233935
