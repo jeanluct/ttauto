@@ -35,9 +35,13 @@ int main()
   multigon mm2(1);	// A monogon.
 
   mm1.attach_edge(0,0);		// Attach a new edge to prong 0, edge 0.
+#ifndef TTAUTO_NO_BOOST
   cout << "Reference count = " << mm1.Edge(0,0).use_count() << endl;
+#endif
   mm2.attach_edge(mm1.Edge(0,0),0,0);	// Attach the same edge to mm2.
+#ifndef TTAUTO_NO_BOOST
   cout << "Reference count = " << mm1.Edge(0,0).use_count() << endl;
+#endif
 
   mm1.attach_edge(0,1);		// Attach another edge a prong 0.
   mm1.attach_edge(0,2);		// ...and another.
