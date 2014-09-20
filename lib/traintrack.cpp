@@ -1,4 +1,22 @@
 // <LICENSE
+//   ttauto: a C++ library for building train track automata
+//
+//   Copyright (C) 2010--2014 Jean-Luc Thiffeault and Erwan Lanneau
+//
+//   This file is part of ttauto.
+//
+//   ttauto is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//
+//   ttauto is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
 #include <iostream>
@@ -235,7 +253,7 @@ traintrack::intVec traintrack::coding_from_monogon(const int mono,
   // Start by finding the multigon the edge is attached to, and which
   // prong.
   int pmono, pemono;
-  multigon *egmono = 
+  multigon *egmono =
     Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
 
   recursive_coding(*egmono,pmono,pemono,code,dir);
@@ -462,7 +480,7 @@ bool traintrack::fold(const int f)
   // Start by finding the multigon the edge is attached to, and which
   // prong.
   int pmono, pemono;
-  multigon *egmono = 
+  multigon *egmono =
     Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
 
   // Find the monogon, prong, edge of the cusp with number fcusp.
@@ -616,7 +634,7 @@ traintrack::dblVec traintrack::weights(const int mono) const
   // Start by finding the multigon the edge is attached to, and which
   // prong.
   int pmono, pemono;
-  multigon *egmono = 
+  multigon *egmono =
     Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
 
   recursive_get_weights(*egmono,pmono,pemono,wv);
@@ -664,7 +682,7 @@ traintrack::weights(traintrack::dblVec::const_iterator wi)
   // Start by finding the multigon the edge is attached to, and which
   // prong.
   int pmono, pemono;
-  multigon *egmono = 
+  multigon *egmono =
     Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
 
   recursive_set_weights(*egmono,pmono,pemono,wi);

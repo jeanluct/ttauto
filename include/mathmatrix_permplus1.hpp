@@ -1,4 +1,22 @@
 // <LICENSE
+//   ttauto: a C++ library for building train track automata
+//
+//   Copyright (C) 2010--2014 Jean-Luc Thiffeault and Erwan Lanneau
+//
+//   This file is part of ttauto.
+//
+//   ttauto is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//
+//   ttauto is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
 #ifndef MATHMATRIX_PERMPLUS1_HPP
@@ -28,7 +46,7 @@ std::ostream& operator<<(std::ostream& strm, const mathmatrix_permplus1& pm);
 class mathmatrix_permplus1
 {
 public:
-  typedef int			value_type;	
+  typedef int			value_type;
   typedef int*			pointer;
   typedef const int*		const_pointer;
   typedef int&			reference;
@@ -221,7 +239,7 @@ jlt::mathmatrix<int> operator*(const jlt::mathmatrix<int>& A,
 
   // Find column permutation.
   // This means that right-multiplication by pm is a little slower than left.
-  jlt::vector<int> cperm(pm.column_perm()); 
+  jlt::vector<int> cperm(pm.column_perm());
 
   jlt::mathmatrix<int> pmA(n,n);
 

@@ -1,4 +1,22 @@
 // <LICENSE
+//   ttauto: a C++ library for building train track automata
+//
+//   Copyright (C) 2010--2014 Jean-Luc Thiffeault and Erwan Lanneau
+//
+//   This file is part of ttauto.
+//
+//   ttauto is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//
+//   ttauto is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
 #ifndef TTFOLDGRAPH_HPP
@@ -358,7 +376,7 @@ private:
 	std::cerr << "exploit_symmetries is false.\n";
 	std::exit(1);
       }
-    
+
     int frnt = 0;
     int rs = 0;
     for (int i = 0; i < (int)vertices(); ++i)
