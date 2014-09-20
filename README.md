@@ -4,7 +4,7 @@
 
 ### contributors
 
-*ttauto* uses John Burkardt's [CSparse][3].
+*ttauto* uses Timothy A. Davis's [CSparse][3].
 
 ### license
 
@@ -20,7 +20,7 @@ The development of *ttauto* was supported by the [US National Science Foundation
 
 [1]: http://www.math.wisc.edu/~jeanluc/
 [2]: http://www-fourier.ujf-grenoble.fr/~lanneau/
-[3]: http://people.sc.fsu.edu/~jburkardt/c_src/csparse/csparse.html
+[3]: http://www.suitesparse.com
 [4]: http://www.gnu.org/licenses/gpl-3.0.html
 [5]: http://bitbucket.org/jeanluc/ttauto/raw/tip/COPYING
 [6]: http://bitbucket.org/jeanluc/ttauto/raw/tip/LICENSE
