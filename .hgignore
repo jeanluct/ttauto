@@ -1,0 +1,15 @@
+syntax: glob
+
+*.o
+.sconsign.dblite
+CSparse/libcsparse.a
+lib/libttauto.a
+examples/ttauto
+examples/ttauto_count
+examples/ttauto_labels
+examples/ttauto_min_example
+examples/ttauto_torus
+tests/test_badwords
+tests/test_folding_path
+tests/test_permplus1
+tests/test_traintrack
