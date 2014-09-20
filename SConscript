@@ -23,7 +23,7 @@ env = Environment(CC = 'gcc',
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
 		  LIBS = ['csparse', 'ttauto'],
                   LIBPATH = ['../CSparse', '../lib' ],
-                  CPPPATH = ['../CSparse', '../include', '..'])
+                  CPPPATH = ['../CSparse', '../include', '..', '../extern/jlt'])
 
 # Use profile=1 on the command-line to turn on profiling.
 profile = ARGUMENTS.get('profile', 0)
