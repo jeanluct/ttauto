@@ -24,7 +24,6 @@
 #include <string>
 #include <jlt/vector.hpp>
 #include <jlt/prompt.hpp>
-#include <jlt/subversion.hpp>
 #include "traintrack.hpp"
 #include "ttfoldgraph.hpp"
 #include "ttauto.hpp"
@@ -32,6 +31,9 @@
 using namespace traintracks;
 
 void print_banner();
+
+std::string get_command_output(const std::string& commandstr);
+
 
 int main()
 {
@@ -138,16 +140,17 @@ void print_banner()
   using std::cout;
   using std::endl;
 
-  std::string svnDate = jlt::getSVNDate
-    ("$LastChangedDate$");
-  std::string svnRevision = jlt::getSVNRevision("$LastChangedRevision$");
+  std::string hgRevision(get_command_output("hg id -n"));
+  std::string hgDate
+    (get_command_output("hg parent --template \"{date|shortdate}\n\""));
 
-  std::string banner = "----------------- ttauto ";
-  if (svnDate != "" && svnRevision != "")
-    banner += "r" + svnRevision + " (" + svnDate + ") ";
-  banner += "ALPHA ------------------";
-  std::string dashes(banner.length(),'-');
-  cout << dashes << endl << banner << endl << dashes << endl;
+  std::string halfdashes(23,'-');
+  std::string banner = halfdashes + " ttauto ";
+  if (hgRevision != "") banner += "r" + hgRevision + " ";
+  if (hgDate != "") banner += "(" + hgDate + ") ";
+  banner += halfdashes;
+  std::string fulldashes(banner.length(),'-');
+  cout << fulldashes << endl << banner << endl << fulldashes << endl;
 
 #define TTAUTO_RELEASE
 #ifdef TTAUTO_RELEASE
@@ -160,4 +163,26 @@ void print_banner()
   cout << "validity of the results.\n";
   cout << endl;
 #endif
+}
+
+// Get output of Unix command (add this to JLT?).
+std::string get_command_output(const std::string& commandstr)
+{
+  // Run the command, redirecting stderr to /dev/null.
+  FILE* pipe(popen((commandstr + " 2> /dev/null").c_str(), "r"));
+
+  // Should be more graceful here.
+  if (!pipe) return "ERROR";
+
+  std::string output;
+  char buffer[256];
+  while(fgets(buffer,sizeof(buffer),pipe) != NULL)
+    {
+      std::string file = buffer;
+      output += file.substr(0,file.size()-1);
+    }
+
+  pclose(pipe);
+
+  return output;
 }
