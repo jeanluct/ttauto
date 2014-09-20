@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #ifndef MULTIGON_HPP
 #define MULTIGON_HPP
 

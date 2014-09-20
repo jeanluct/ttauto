@@ -1,3 +1,6 @@
+# <LICENSE
+# LICENSE>
+
 SConscript('../SConscript')
 Import('env')
 

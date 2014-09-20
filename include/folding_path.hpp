@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #ifndef FOLDING_PATH_HPP
 #define FOLDING_PATH_HPP
 

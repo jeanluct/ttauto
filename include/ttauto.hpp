@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #ifndef TTAUTO_HPP
 #define TTAUTO_HPP
 

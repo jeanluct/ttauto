@@ -1,3 +1,6 @@
+# <LICENSE
+# LICENSE>
+
 env = Environment(CC = 'gcc',
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
 		  LIBS = ['csparse', 'ttauto'],

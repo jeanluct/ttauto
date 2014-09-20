@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #include <iostream>
 #include <vector>
 #include "traintrack.hpp"

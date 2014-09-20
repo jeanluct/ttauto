@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #include <iostream>
 #include <algorithm>
 #include <set>

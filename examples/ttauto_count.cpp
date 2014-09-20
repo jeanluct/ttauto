@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #include <iostream>
 #include "traintrack.hpp"
 #include "ttfoldgraph.hpp"

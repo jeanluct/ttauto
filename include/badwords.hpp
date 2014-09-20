@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #ifndef BADWORDS_HPP
 #define BADWORDS_HPP
 

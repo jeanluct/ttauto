@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #ifndef PACLASS_HPP
 #define PACLASS_HPP
 

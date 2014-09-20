@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #include <iostream>
 #include <list>
 #include <jlt/matrix.hpp>

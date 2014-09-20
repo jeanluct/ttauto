@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #include <iostream>
 #include "edge.hpp"
 #include "multigon.hpp"

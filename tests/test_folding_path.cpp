@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #include <iostream>
 #include <ext/hash_map>
 #include <jlt/mathmatrix.hpp>

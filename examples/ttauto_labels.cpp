@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 // Set traintrack::label_multiprongs = true in traintrack.hpp.
 
 #include <iostream>

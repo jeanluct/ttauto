@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #ifndef TTFOLDGRAPH_HPP
 #define TTFOLDGRAPH_HPP
 

@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #include <iostream>
 #include <jlt/stlio.hpp>
 #include "mathmatrix_permplus1.hpp"

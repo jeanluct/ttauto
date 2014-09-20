@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #include <iostream>
 #include <jlt/vector.hpp>
 #include "edge.hpp"

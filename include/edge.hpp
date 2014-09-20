@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #ifndef EDGE_HPP
 #define EDGE_HPP
 

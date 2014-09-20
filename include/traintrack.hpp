@@ -1,3 +1,6 @@
+// <LICENSE
+// LICENSE>
+
 #ifndef TRAINTRACK_HPP
 #define TRAINTRACK_HPP
 
