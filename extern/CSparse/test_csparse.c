@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include "cs.h"
 
-// gcc -Wall -O test_csparse.c -o test_csparse -lcsparse
+// make
+// gcc -Wall -O test_csparse.c -o test_csparse -L. -lcsparse
 // test_csparse < t1
 
 int main ()
