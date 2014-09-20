@@ -42,7 +42,7 @@ if int(static):
 win = ARGUMENTS.get('win', 0)
 if int(win):
    env.AppendUnique(CCFLAGS = ['-DTTAUTO_NO_BOOST'])
-   env.Tool('crossmingw', toolpath = ['.'])
+   env.Tool('crossmingw', toolpath = ['./devel'])
 
 # For hash_set/hash_map with gcc >= 4.3.3.
 # Eventually replace by unordered_set/unordered_map.
