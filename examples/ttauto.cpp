@@ -152,8 +152,8 @@ void print_banner()
 #define TTAUTO_RELEASE
 #ifdef TTAUTO_RELEASE
   cout << endl;
-  cout << "Copyright 2010,2011 Jean-Luc Thiffeault (jeanluc@mailaps.org)\n";
-  cout << "                    Erwan Lanneau       (lanneau@cpt.univ-mrs.fr)\n";
+  cout << "Copyright 2010-2014 Jean-Luc Thiffeault (jeanluc@mailaps.org)\n";
+  cout << "                    Erwan Lanneau       (Erwan.Lanneau@ujf-grenoble.fr)\n";
   cout << endl;
   cout << "This program is a preliminary ALPHA version and should be used\n";
   cout << "with caution.  The authors make no guarantees regarding the\n";
