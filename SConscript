@@ -2,7 +2,7 @@ env = Environment(CC = 'gcc',
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
 		  LIBS = ['csparse', 'ttauto'],
                   LIBPATH = ['../CSparse', '../lib' ],
-                  CPPPATH = ['../CSparse', '../ttauto', '..'])
+                  CPPPATH = ['../CSparse', '../include', '..'])
 
 # Use profile=1 on the command-line to turn on profiling.
 profile = ARGUMENTS.get('profile', 0)
@@ -23,7 +23,7 @@ if int(win):
    env.AppendUnique(CCFLAGS = ['-DTTAUTO_NO_BOOST'])
    env.Tool('crossmingw', toolpath = ['.'])
 
-# For hash_set/hash_map with gcc 4.3.3.
+# For hash_set/hash_map with gcc >= 4.3.3.
 # Eventually replace by unordered_set/unordered_map.
 env.PrependUnique(CXXFLAGS = ['-Wno-deprecated'])
 
