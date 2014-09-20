@@ -3,6 +3,7 @@ syntax: glob
 *.o
 .sconsign.dblite
 CSparse/libcsparse.a
+devel/crossmingw.pyc
 lib/libttauto.a
 examples/ttauto
 examples/ttauto_count
