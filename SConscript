@@ -22,8 +22,8 @@
 env = Environment(CC = 'gcc',
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
 		  LIBS = ['csparse', 'ttauto'],
-                  LIBPATH = ['../CSparse', '../lib' ],
-                  CPPPATH = ['../CSparse', '../include', '..', '../extern/jlt'])
+                  LIBPATH = ['../extern/CSparse', '../lib' ],
+                  CPPPATH = ['../extern/CSparse', '../include', '../extern/jlt'])
 
 # Use profile=1 on the command-line to turn on profiling.
 profile = ARGUMENTS.get('profile', 0)
@@ -48,7 +48,7 @@ if int(win32):
 # Eventually replace by unordered_set/unordered_map.
 env.PrependUnique(CXXFLAGS = ['-Wno-deprecated'])
 
-SConscript('CSparse/SConscript', exports = 'env')
+SConscript('extern/CSparse/SConscript', exports = 'env')
 SConscript('lib/SConscript', exports = 'env')
 
 Export('env')
