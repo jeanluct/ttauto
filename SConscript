@@ -36,11 +36,11 @@ static = ARGUMENTS.get('static', 0)
 if int(static):
    env.PrependUnique(LINKFLAGS = ['-static'])
 
-# Use command 'scons win=1 <program>.exe' to cross-compile for WIN32.
-# Make sure to run 'scons -c' and 'scons win=1 -c' beforehand.
+# Use command 'scons win32=1 <program>.exe' to cross-compile for WIN32.
+# Make sure to run 'scons -c' and 'scons win32=1 -c' beforehand.
 # On Linux, a cross-compiler such as mingw32 needs to be installed.
-win = ARGUMENTS.get('win', 0)
-if int(win):
+win32 = ARGUMENTS.get('win32', 0)
+if int(win32):
    env.AppendUnique(CCFLAGS = ['-DTTAUTO_NO_BOOST'])
    env.Tool('crossmingw', toolpath = ['./devel'])
 
