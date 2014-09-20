@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# Count lines of code in ttauto as a function of revision, for funsies.
+#
+# Run from the root ttauto folder as devel/linecount.
+#
+# Plot results in Matlab with linecount_plot.m
+#
+# To avoid putting the repo in a funny state, clone a fresh local copy
+# first in tmp.  Delete when done.
+
+ROOTDIR=`pwd`
+DEVELDIR=$ROOTDIR/devel
+LINECOUNTFILE=$DEVELDIR/linecount.dat
+rm -f $LINECOUNTFILE
+LASTREV=`hg id -r tip -n`
+REVSTEP=1
+
+cd /tmp
+rm -rf ttauto-tmp
+hg clone $ROOTDIR ttauto-tmp
+cd ttauto-tmp
+
+for i in `seq 0 $REVSTEP $LASTREV`; do
+    hg up -c -r $i
+    CODEFOLDERS="lib examples tests"
+    if [ -e 'include' ]; then
+	CODEFOLDERS="$CODEFOLDERS include"
+    fi
+    if [ -e 'ttauto' ]; then
+	CODEFOLDERS="$CODEFOLDERS ttauto"
+    fi
+    LINES=`find $CODEFOLDERS \
+	-name '*.[cm]' -o -name '*.?pp' -o -name '*.tex' -o -name '*.bib' \
+	-o -name 'SCons*' \
+	| xargs wc -l | tail -1 | sed 's/ total$//g'`
+    # The date is in UTC seconds.
+    DATE=`hg log -r $i --template '{date|hgdate}' | cut -d' ' -f1`
+    echo $i '\t' $DATE '\t' $LINES >> $LINECOUNTFILE
+done
+
+cd /tmp
+rm -rf ttauto-tmp
