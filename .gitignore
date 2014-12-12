@@ -1,5 +1,3 @@
-syntax: glob
-
 *.o
 .sconsign.dblite
 CSparse/libcsparse.a
