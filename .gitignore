@@ -1,7 +1,7 @@
 *.o
 .sconsign.dblite
-CSparse/libcsparse.a
-CSparse/csparse.lib
+extern/CSparse/libcsparse.a
+extern/CSparse/csparse.lib
 devel/crossmingw.pyc
 lib/libttauto.a
 lib/ttauto.lib
