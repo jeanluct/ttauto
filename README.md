@@ -22,10 +22,10 @@ The development of *ttauto* was supported by the [US National Science Foundation
 [2]: http://www-fourier.ujf-grenoble.fr/~lanneau/
 [3]: http://www.suitesparse.com
 [4]: http://www.gnu.org/licenses/gpl-3.0.html
-[5]: http://bitbucket.org/jeanluc/ttauto/raw/tip/COPYING
-[6]: http://bitbucket.org/jeanluc/ttauto/raw/tip/LICENSE
-[7]: http://bitbucket.org/jeanluc/ttauto/raw/tip/examples
-[8]: http://bitbucket.org/jeanluc/ttauto/raw/tip/examples/ttauto.cpp
+[5]: http://github.com/jeanluct/ttauto/raw/master/COPYING
+[6]: http://github.com/jeanluct/ttauto/raw/master/LICENSE
+[7]: http://github.com/jeanluct/ttauto/raw/tip/examples
+[8]: http://github.com/jeanluct/ttauto/raw/tip/examples/ttauto.cpp
 [9]: http://www.scons.org
 [10]: http://www.nsf.gov
 [11]: http://www.nsf.gov/awardsearch/showAward?AWD_ID=0806821
