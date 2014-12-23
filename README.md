@@ -14,6 +14,8 @@
 
 There is currently no real documentation for *ttauto*.  See the [examples folder][7] for some basic examples.  The most complete program is [ttauto.cpp][8], an interactive program.  The programs must be compiled with the [SCONS][9] build tool.
 
+To compile everything, invoke `scons` in the root folder.  To build only a subset, invoke `scons -u` in a subfolder (such as [examples][7]).
+
 ### support
 
 The development of *ttauto* was supported by the [US National Science Foundation][10], under grants [DMS-0806821][11] and [CMMI-1233935][12].
