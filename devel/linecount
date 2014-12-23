@@ -12,31 +12,43 @@
 ROOTDIR=`pwd`
 DEVELDIR=$ROOTDIR/devel
 LINECOUNTFILE=$DEVELDIR/linecount.dat
+BRANCH=master
+#REVSTEP=1
+
+REVLIST=`git rev-list --reverse $BRANCH`
+
 rm -f $LINECOUNTFILE
-LASTREV=`hg id -r tip -n`
-REVSTEP=1
 
 cd /tmp
 rm -rf ttauto-tmp
-hg clone $ROOTDIR ttauto-tmp
+git clone $ROOTDIR ttauto-tmp
 cd ttauto-tmp
 
-for i in `seq 0 $REVSTEP $LASTREV`; do
-    hg up -c -r $i
-    CODEFOLDERS="lib examples tests"
+for i in $REVLIST; do
+    git checkout $i
+    CODEFOLDERS=""
+    if [ -e 'examples' ]; then
+	CODEFOLDERS="$CODEFOLDERS examples"
+    fi
     if [ -e 'include' ]; then
 	CODEFOLDERS="$CODEFOLDERS include"
+    fi
+    if [ -e 'lib' ]; then
+	CODEFOLDERS="$CODEFOLDERS lib"
+    fi
+    if [ -e 'tests' ]; then
+	CODEFOLDERS="$CODEFOLDERS tests"
     fi
     if [ -e 'ttauto' ]; then
 	CODEFOLDERS="$CODEFOLDERS ttauto"
     fi
     LINES=`find $CODEFOLDERS \
 	-name '*.[cm]' -o -name '*.?pp' -o -name '*.tex' -o -name '*.bib' \
-	-o -name 'SCons*' \
 	| xargs wc -l | tail -1 | sed 's/ total$//g'`
     # The date is in UTC seconds.
-    DATE=`hg log -r $i --template '{date|hgdate}' | cut -d' ' -f1`
-    echo $i '\t' $DATE '\t' $LINES >> $LINECOUNTFILE
+    DATE=`git log -1 --format=%ct $i`
+    SHORTHASH=`git log -1 --format=%h $i`
+    echo $SHORTHASH '\t' $DATE '\t' $LINES >> $LINECOUNTFILE
 done
 
 cd /tmp
