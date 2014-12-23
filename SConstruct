@@ -22,10 +22,13 @@
 #   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 # LICENSE>
 
+import subprocess
+from distutils.version import StrictVersion
+
 # A '#' means relative to the root directory.
 env = Environment(CC = 'gcc',
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
-		  LIBS = ['csparse', 'ttauto'],
+                  LIBS = ['csparse', 'ttauto'],
                   LIBPATH = ['#lib','#extern/CSparse'],
                   CPPPATH = ['#include','#extern/CSparse','#extern/jlt'])
 
@@ -45,12 +48,21 @@ if int(static):
 # On Linux, a cross-compiler such as mingw32 needs to be installed.
 win32 = ARGUMENTS.get('win32', 0)
 if int(win32):
-   env.AppendUnique(CCFLAGS = ['-DTTAUTO_NO_SHARED_PTR'])
+   env.AppendUnique(CXXFLAGS = ['-DTTAUTO_NO_SHARED_PTR'])
    env.Tool('crossmingw', toolpath = ['./devel'])
 
-# For hash_set/hash_map with gcc >= 4.3.3.
-# Eventually replace by unordered_set/unordered_map.
-env.PrependUnique(CXXFLAGS = ['-Wno-deprecated'])
+GCC_VERSION = StrictVersion(
+   subprocess.check_output([env['CXX'],'-dumpversion']))
+
+if GCC_VERSION < StrictVersion('4.5'):
+   # For hash_set/hash_map with.
+   # Eventually replaced by unordered_set/unordered_map.
+   env.AppendUnique(CXXFLAGS = ['-DTTAUTO_OLD_HASH'])
+   if StrictVersion('4.3') <= GCC_VERSION:
+      # For hash_set/hash_map with gcc >= 4.3.3.
+      env.PrependUnique(CXXFLAGS = ['-Wno-deprecated'])
+else:
+   env.PrependUnique(CXXFLAGS = ['-std=c++0x'])
 
 env.SConscript(dirs = ['lib','examples','tests','extern/CSparse'],
                exports = 'env')
