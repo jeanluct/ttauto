@@ -24,8 +24,8 @@
 
 Import('env')
 
-env.Program('ttauto.cpp')
-env.Program('ttauto_min_example.cpp')
-env.Program('ttauto_count.cpp')
-env.Program('ttauto_labels.cpp')
-env.Program('ttauto_torus.cpp')
+Default(env.Program('ttauto.cpp'))
+Default(env.Program('ttauto_min_example.cpp'))
+Default(env.Program('ttauto_count.cpp'))
+Default(env.Program('ttauto_labels.cpp'))
+Default(env.Program('ttauto_torus.cpp'))

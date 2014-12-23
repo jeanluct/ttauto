@@ -29,3 +29,5 @@ import glob
 liblist = [f for f in glob.glob('*.cpp')]
 
 lib = env.Library('ttauto', liblist)
+
+Default(lib)

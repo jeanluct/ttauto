@@ -24,7 +24,7 @@
 
 Import('env')
 
-env.Program('test_permplus1.cpp')
-env.Program('test_traintrack.cpp')
-env.Program('test_folding_path.cpp')
-env.Program('test_badwords.cpp')
+Default(env.Program('test_permplus1.cpp'))
+Default(env.Program('test_traintrack.cpp'))
+Default(env.Program('test_folding_path.cpp'))
+Default(env.Program('test_badwords.cpp'))

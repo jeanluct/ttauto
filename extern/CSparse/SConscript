@@ -31,3 +31,5 @@ liblist = [f for f in glob.glob('*.c') if f not in ['test_csparse.c']]
 lib = env.Library('csparse', liblist)
 
 env.Program('test_csparse.c', LIBS = 'csparse', LIBPATH = '.')
+
+Default(lib)
