@@ -59,7 +59,7 @@ if int(win32):
 # Eventually replace by unordered_set/unordered_map.
 env.PrependUnique(CXXFLAGS = ['-Wno-deprecated'])
 
-SConscript('extern/CSparse/SConscript', exports = 'env')
-SConscript('lib/SConscript', exports = 'env')
-
-Export('env')
+env.SConscript('lib/SConscript', exports = 'env')
+env.SConscript('examples/SConscript', exports = 'env')
+env.SConscript('tests/SConscript', exports = 'env')
+env.SConscript('extern/CSparse/SConscript', exports = 'env')

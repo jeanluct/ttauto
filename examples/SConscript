@@ -22,10 +22,10 @@
 #   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 # LICENSE>
 
-SConscript('../SConscript')
 Import('env')
 
-env.Program('test_permplus1.cpp')
-env.Program('test_traintrack.cpp')
-env.Program('test_folding_path.cpp')
-env.Program('test_badwords.cpp')
+env.Program('ttauto.cpp')
+env.Program('ttauto_min_example.cpp')
+env.Program('ttauto_count.cpp')
+env.Program('ttauto_labels.cpp')
+env.Program('ttauto_torus.cpp')
