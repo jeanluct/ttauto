@@ -22,19 +22,12 @@
 #   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 # LICENSE>
 
-TTAUTOROOTDIR = Dir('.').abspath
-TTAUTOEXTDIR = TTAUTOROOTDIR + '/extern'
-
+# A '#' means relative to the root directory.
 env = Environment(CC = 'gcc',
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
 		  LIBS = ['csparse', 'ttauto'],
-                  LIBPATH = [
-		  	  TTAUTOEXTDIR + '/CSparse',
-		   	  TTAUTOROOTDIR + '/lib'],
-                  CPPPATH = [
-		  	  TTAUTOEXTDIR + '/CSparse',
-			  TTAUTOROOTDIR + '/include',
-			  TTAUTOEXTDIR + '/jlt'])
+                  LIBPATH = ['#lib','#extern/CSparse'],
+                  CPPPATH = ['#include','#extern/CSparse','#extern/jlt'])
 
 # Use profile=1 on the command-line to turn on profiling.
 profile = ARGUMENTS.get('profile', 0)
