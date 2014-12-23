@@ -134,7 +134,7 @@ bool multigon::check() const
 	      std::cerr << " in multigon::check.\n";
 	      std::exit(1);
 	    }
-#ifndef TTAUTO_NO_BOOST
+#ifndef TTAUTO_NO_SHARED_PTR
 	  if (Edge(p,e).use_count() != 2)
 	    {
 	      std::cerr << "Bad edge reference counter";

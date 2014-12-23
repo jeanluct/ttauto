@@ -52,7 +52,7 @@ if int(static):
 # On Linux, a cross-compiler such as mingw32 needs to be installed.
 win32 = ARGUMENTS.get('win32', 0)
 if int(win32):
-   env.AppendUnique(CCFLAGS = ['-DTTAUTO_NO_BOOST'])
+   env.AppendUnique(CCFLAGS = ['-DTTAUTO_NO_SHARED_PTR'])
    env.Tool('crossmingw', toolpath = ['./devel'])
 
 # For hash_set/hash_map with gcc >= 4.3.3.

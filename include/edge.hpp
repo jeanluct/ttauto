@@ -211,7 +211,7 @@ inline bool edge::check() const
 	  std::cerr << "Unhooked edge in edge::check.\n";
 	  std::exit(1);
 	}
-#ifdef TTAUTO_NO_BOOST
+#ifdef TTAUTO_NO_SHARED_PTR
       if (mg[en]->egv[pr[en]][pre[en]] != this)
 #else
       if (mg[en]->egv[pr[en]][pre[en]].get() != this)

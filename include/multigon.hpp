@@ -27,12 +27,25 @@
 
 #include <iostream>
 #include <cstdlib>
-#ifndef TTAUTO_NO_BOOST
-#include <boost/shared_ptr.hpp>
-#endif
 #include <jlt/vector.hpp>
 #include "edge.hpp"
 #include "traintracks_util.hpp"
+
+#ifndef TTAUTO_NO_SHARED_PTR
+#if __cplusplus > 199711L
+#include <memory>
+namespace traintracks
+{
+  using std::shared_ptr;
+}
+#else
+#include <boost/shared_ptr.hpp>
+namespace traintracks
+{
+  using boost::shared_ptr;
+}
+#endif
+#endif
 
 
 namespace traintracks {
@@ -45,10 +58,10 @@ class multigon
   static const int debug = 0;
 
 public:
-#ifdef TTAUTO_NO_BOOST
+#ifdef TTAUTO_NO_SHARED_PTR
   typedef edge*				edgep;
 #else
-  typedef boost::shared_ptr<edge>	edgep;
+  typedef shared_ptr<edge>		edgep;
 #endif
   typedef jlt::vector<edgep>		egpVec;
   typedef jlt::vector<egpVec>		egpVecVec;

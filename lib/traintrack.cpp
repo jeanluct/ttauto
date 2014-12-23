@@ -177,7 +177,7 @@ void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
 	      int t_m = 0;
 	      for (; t_m < (int)ttexist.multigons(); ++t_m)
 		{
-#ifdef TTAUTO_NO_BOOST
+#ifdef TTAUTO_NO_SHARED_PTR
 		  if (ttexist.mgv[t_m] == t_mp) break;
 #else
 		  if (ttexist.mgv[t_m].get() == t_mp) break;
@@ -221,7 +221,7 @@ void traintrack::check() const
   // Check that there are no unhooked prongs.
   for (cmit it = mgv.begin(); it != mgv.end(); ++it)
     {
-#ifndef TTAUTO_NO_BOOST
+#ifndef TTAUTO_NO_SHARED_PTR
       // There should only be one owner for each multigon.
       if (it->use_count() != 1)
 	{

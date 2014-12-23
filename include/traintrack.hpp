@@ -25,15 +25,29 @@
 #ifndef TRAINTRACK_HPP
 #define TRAINTRACK_HPP
 
-#ifndef TTAUTO_NO_BOOST
-#include <boost/shared_ptr.hpp>
-#endif
 #include <jlt/vector.hpp>
 #include <jlt/mathmatrix.hpp>
 #include "edge.hpp"
 #include "multigon.hpp"
 #include "traintracks_util.hpp"
 #include "mathmatrix_permplus1.hpp"
+
+#ifndef TTAUTO_NO_SHARED_PTR
+#if __cplusplus > 199711L
+#include <memory>
+namespace traintracks
+{
+  using std::shared_ptr;
+}
+#else
+#include <boost/shared_ptr.hpp>
+namespace traintracks
+{
+  using boost::shared_ptr;
+}
+#endif
+#endif
+
 
 namespace traintracks {
 
@@ -43,10 +57,10 @@ class traintrack
 
 public:
   typedef multigon::edgep				edgep;
-#ifdef TTAUTO_NO_BOOST
+#ifdef TTAUTO_NO_SHARED_PTR
   typedef multigon*					mgonp;
 #else
-  typedef boost::shared_ptr<multigon>			mgonp;
+  typedef shared_ptr<multigon>				mgonp;
 #endif
   typedef jlt::vector<mgonp>				mgpVec;
   typedef multigon::intVec				intVec;
