@@ -36,7 +36,6 @@ int main()
 {
   using std::cout;
   using std::endl;
-  typedef jlt::mathmatrix<int> Mat;
 
   typedef traintrack TrTr;
   const int n = 6;

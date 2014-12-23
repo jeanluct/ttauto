@@ -588,7 +588,6 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
 {
   static const int debug = 0;
   typedef jlt::vector<int>			Vec;
-  typedef jlt::vector<Vec>::iterator		it;
   typedef jlt::vector<Vec>::const_iterator	cit;
   typedef Vec::const_iterator			vcit;
   using std::cerr;

@@ -288,7 +288,7 @@ public:
   // Do it: Search the automaton starting from vertex tt00
   //
 
-  void search(const int tt00);
+  void search(const int tt00 = 0);
 
 private:
   void find_maxnorm()
@@ -405,7 +405,7 @@ ttauto<TrTr>::print_pA_list_MathematicaForm(std::ostream& strm) const
 
 
 template<class TrTr>
-void ttauto<TrTr>::search(const int tt00 = 0)
+void ttauto<TrTr>::search(const int tt00)
 {
   using std::cout;
   using std::endl;

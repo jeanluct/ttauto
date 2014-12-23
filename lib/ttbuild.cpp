@@ -358,9 +358,6 @@ void traintrack::monogon_to_multigon(const int L, const int K)
 
 jlt::vector<traintrack> ttbuild_list2(const int N)
 {
-  typedef traintrack::intVec intVec;
-  typedef std::list<intVec>::const_iterator cit;
-
   jlt::vector<traintrack> ttv;
 
   // Tracks with punctured monogons and bigons only.

@@ -44,7 +44,6 @@ int main()
   using std::endl;
 
   typedef ttfoldgraph<traintrack>			ttgraph;
-  typedef std::list<ttgraph>::iterator			ttgit;
   typedef std::list<ttgraph>::const_iterator		cttgit;
   typedef jlt::vector<traintrack>			ttVec;
   typedef ttVec::const_iterator				ttVeccit;
