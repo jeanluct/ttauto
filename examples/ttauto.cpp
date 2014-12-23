@@ -142,14 +142,14 @@ void print_banner()
   using std::cout;
   using std::endl;
 
-  std::string hgRevision(get_command_output("hg id -n"));
-  std::string hgDate
-    (get_command_output("hg parent --template \"{date|shortdate}\n\""));
+  std::string gitRevision(get_command_output("git log -1 --format=%h"));
+  std::string gitDate
+    (get_command_output("git log -1 --date=short --format=%cd"));
 
-  std::string halfdashes(23,'-');
+  std::string halfdashes(22,'-');
   std::string banner = halfdashes + " ttauto ";
-  if (hgRevision != "") banner += "r" + hgRevision + " ";
-  if (hgDate != "") banner += "(" + hgDate + ") ";
+  if (gitRevision != "") banner += "rev " + gitRevision + " ";
+  if (gitDate != "") banner += "(" + gitDate + ") ";
   banner += halfdashes;
   std::string fulldashes(banner.length(),'-');
   cout << fulldashes << endl << banner << endl << fulldashes << endl;
@@ -157,12 +157,12 @@ void print_banner()
 #define TTAUTO_RELEASE
 #ifdef TTAUTO_RELEASE
   cout << endl;
-  cout << "Copyright 2010-2014 Jean-Luc Thiffeault (jeanluc@mailaps.org)\n";
-  cout << "                    Erwan Lanneau       (Erwan.Lanneau@ujf-grenoble.fr)\n";
+  cout << "  Copyright (C) 2010-2014  Jean-Luc Thiffeault   <jeanluc@math.wisc.edu>\n";
+  cout << "                           Erwan Lanneau <erwan.lanneau@ujf-grenoble.fr>\n";
   cout << endl;
-  cout << "This program is a preliminary ALPHA version and should be used\n";
-  cout << "with caution.  The authors make no guarantees regarding the\n";
-  cout << "validity of the results.\n";
+  cout << "    This program is a preliminary ALPHA version and should be used\n";
+  cout << "    with caution.  The authors make no guarantees regarding the\n";
+  cout << "    validity of the results.\n";
   cout << endl;
 #endif
 }
