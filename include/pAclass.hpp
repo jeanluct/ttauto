@@ -26,7 +26,11 @@
 #define PACLASS_HPP
 
 #include <iostream>
+#ifdef TTAUTO_OLD_HASH
 #include <ext/hash_map>
+#else
+#include <unordered_map>
+#endif
 #include <jlt/mathmatrix.hpp>
 #include <jlt/polynomial.hpp>
 #include "folding_path.hpp"
@@ -55,11 +59,15 @@ private:
   // Get hash function from folding_path<TrTr>.
   typedef typename folding_path<TrTr>::hash path_hash;
   // Container for the list of paths and transition matrices.
-  //   Note that we use hash_map instead of map: it would be nice to
-  //   use map since we could easily keep the list sorted by length,
-  //   but when there are millions of pAs it's better to use
-  //   folding_path's hash function to speed up checking.
+  //   Note that we use a hashed map instead of a plain map: it would
+  //   be nice to use map since we could easily keep the list sorted
+  //   by length, but when there are millions of pAs it's better to
+  //   use folding_path's hash function to speed up checking.
+#ifdef TTAUTO_OLD_HASH
   typedef typename __gnu_cxx::hash_map<folding_path<TrTr>,Mat,path_hash>
+#else
+  typedef typename std::unordered_map<folding_path<TrTr>,Mat,path_hash>
+#endif
   pathlist;
 
   pathlist pathl;	// List of vertex paths/transition matrix

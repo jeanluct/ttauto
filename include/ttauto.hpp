@@ -66,8 +66,13 @@ public:
   typedef folding_path<TrTr>			fpath;
   typedef long long int				llint;
 #ifdef TTAUTO_HASH_BADWORDS
+#ifdef TTAUTO_OLD_HASH
   typedef __gnu_cxx::hash_set<fpath,typename fpath::hash,
 			      direct_equal_to<TrTr> > badword_list;
+#else
+  typedef std::unordered_set<fpath,typename fpath::hash,
+			     direct_equal_to<TrTr> > badword_list;
+#endif
 #else
   typedef std::list<fpath>			badword_list;
 #endif
@@ -91,7 +96,7 @@ private:
   int tt0;			// Current initial vertex.
   Mat TM;			// Transition matrix of the current pA path.
   pAlist pAl;			// List of pAs.
-#if __cplusplus >= 201103L
+#if __cplusplus >= 199711L || defined(__GXX_EXPERIMENTAL_CXX0X__)
   static constexpr double tol = 1e-5;// Tolerance for a match of the dilatation.
 #else
   static const double tol = 1e-5;// Tolerance for a match of the dilatation.
