@@ -12,9 +12,9 @@
 
 ### documentation
 
-There is currently no real documentation for *ttauto*.  See the [examples folder][7] for some basic examples.  The most complete program is [ttauto.cpp][8], an interactive program.  The programs must be compiled with the [SCONS][9] build tool.
+There is currently no real documentation for *ttauto*.  See the [examples folder][7] for some basic examples.  The most complete program is [ttauto.cpp][8], an interactive program.  The programs are readily compiled with the [SCONS][9] build tool.
 
-To compile everything, invoke `scons` in the root folder.  To build only a subset, invoke `scons -u` in a subfolder (such as [examples][7]).
+To compile everything, invoke `scons` in the root folder.  To build only a subset, use `scons -u` in a subfolder (such as [examples][7]).
 
 ### support
 
