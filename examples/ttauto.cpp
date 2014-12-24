@@ -27,6 +27,7 @@
 #include <string>
 #include <jlt/vector.hpp>
 #include <jlt/prompt.hpp>
+#include <jlt/vcs.hpp>
 #include "traintrack.hpp"
 #include "ttfoldgraph.hpp"
 #include "ttauto.hpp"
@@ -34,8 +35,6 @@
 using namespace traintracks;
 
 void print_banner();
-
-std::string get_command_output(const std::string& commandstr);
 
 
 int main()
@@ -142,17 +141,7 @@ void print_banner()
   using std::cout;
   using std::endl;
 
-  std::string gitRevision(get_command_output("git log -1 --format=%h"));
-  std::string gitDate
-    (get_command_output("git log -1 --date=short --format=%cd"));
-
-  std::string halfdashes(22,'-');
-  std::string banner = halfdashes + " ttauto ";
-  if (gitRevision != "") banner += "rev " + gitRevision + " ";
-  if (gitDate != "") banner += "(" + gitDate + ") ";
-  banner += halfdashes;
-  std::string fulldashes(banner.length(),'-');
-  cout << fulldashes << endl << banner << endl << fulldashes << endl;
+  jlt::printGitBanner("ttauto");
 
 #define TTAUTO_RELEASE
 #ifdef TTAUTO_RELEASE
@@ -165,26 +154,4 @@ void print_banner()
   cout << "    validity of the results.\n";
   cout << endl;
 #endif
-}
-
-// Get output of Unix command (add this to JLT?).
-std::string get_command_output(const std::string& commandstr)
-{
-  // Run the command, redirecting stderr to /dev/null.
-  FILE* pipe(popen((commandstr + " 2> /dev/null").c_str(), "r"));
-
-  // Should be more graceful here.
-  if (!pipe) return "ERROR";
-
-  std::string output;
-  char buffer[256];
-  while(fgets(buffer,sizeof(buffer),pipe) != NULL)
-    {
-      std::string file = buffer;
-      output += file.substr(0,file.size()-1);
-    }
-
-  pclose(pipe);
-
-  return output;
 }
