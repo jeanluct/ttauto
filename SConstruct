@@ -25,8 +25,23 @@
 import subprocess
 from distutils.version import StrictVersion
 
+# Choose a particular compiler by specifying the version here.
+#GCC_version = StrictVersion('4.9.2');
+
+cc = 'gcc'
+cxx = 'g++'
+
+if 'GCC_version' not in locals():
+   # If we didn't define a GCC version number, find out what it is.
+   GCC_version = StrictVersion(
+      subprocess.check_output([cxx,'-dumpversion']))
+else:
+   # If we define a version number, call the appropriate compiler.
+   cc = cc + '-' + str(GCC_version)
+   cxx = cxx + '-' + str(GCC_version)
+
 # A '#' means relative to the root directory.
-env = Environment(CC = 'gcc',
+env = Environment(CC = cc, CXX = cxx,
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
                   LIBS = ['csparse', 'ttauto'],
                   LIBPATH = ['#lib','#extern/CSparse'],
@@ -51,17 +66,16 @@ if int(win32):
    env.AppendUnique(CXXFLAGS = ['-DTTAUTO_NO_SHARED_PTR'])
    env.Tool('crossmingw', toolpath = ['./devel'])
 
-GCC_VERSION = StrictVersion(
-   subprocess.check_output([env['CXX'],'-dumpversion']))
-
-if GCC_VERSION < StrictVersion('4.5'):
+if GCC_version < StrictVersion('4.5'):
    # For hash_set/hash_map with.
    # Eventually replaced by unordered_set/unordered_map.
    env.AppendUnique(CXXFLAGS = ['-DTTAUTO_OLD_HASH'])
-   if StrictVersion('4.3') <= GCC_VERSION:
+   if StrictVersion('4.3') <= GCC_version:
       # For hash_set/hash_map with gcc >= 4.3.3.
       env.PrependUnique(CXXFLAGS = ['-Wno-deprecated'])
 else:
+   # Use modern C++ standard.
+   # This obviates the need for boost library.
    env.PrependUnique(CXXFLAGS = ['-std=c++0x'])
 
 env.SConscript(dirs = ['lib','examples','tests','extern/CSparse'],
