@@ -31,7 +31,7 @@
 
 // Sparse matrix type for matrices of the form permutation or permutation+1.
 
-namespace traintracks {
+namespace ttauto {
 
 class mathmatrix_permplus1;
 
@@ -284,6 +284,6 @@ std::ostream& operator<<(std::ostream& strm, const mathmatrix_permplus1& pm)
   return strm;
 }
 
-} // namespace traintracks
+} // namespace ttauto
 
 #endif // MATHMATRIX_PERMPLUS1_HPP

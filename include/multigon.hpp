@@ -34,13 +34,13 @@
 #ifndef TTAUTO_NO_SHARED_PTR
 #if __cplusplus > 199711L
 #include <memory>
-namespace traintracks
+namespace ttauto
 {
   using std::shared_ptr;
 }
 #else
 #include <boost/shared_ptr.hpp>
-namespace traintracks
+namespace ttauto
 {
   using boost::shared_ptr;
 }
@@ -48,7 +48,7 @@ namespace traintracks
 #endif
 
 
-namespace traintracks {
+namespace ttauto {
 
 class edge;
 class traintrack;
@@ -280,13 +280,13 @@ inline void multigon::cycle_edges(int& p, int &e, const int dir) const
   if (dir == 1)
     {
       // Cycle clockwise.
-      if (++e == edges(p)) { e = 0; p = traintracks::mod(p+1,prongs()); }
+      if (++e == edges(p)) { e = 0; p = ttauto::mod(p+1,prongs()); }
     }
   else
     {
       // Cycle anticlockwise.
       // Important to update the prong first!
-      if (--e == -1) { p = traintracks::mod(p-1,prongs()); e = edges(p)-1; }
+      if (--e == -1) { p = ttauto::mod(p-1,prongs()); e = edges(p)-1; }
     }
 }
 
@@ -300,6 +300,6 @@ inline int multigon::edges() const
   return c;
 }
 
-} // namespace traintracks
+} // namespace ttauto
 
 #endif // MULTIGON_HPP

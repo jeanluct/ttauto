@@ -30,7 +30,7 @@
 #include <jlt/polynomial.hpp>
 #include <jlt/exceptions.hpp>
 
-namespace traintracks {
+namespace ttauto {
 
 // If two vectors are cyclically equivalent, return a vector p0v of
 // offsets between them such that v1[v] == v2[(v+p0v[i]) % size()].
@@ -123,7 +123,7 @@ jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f)
 	      if (!(TM(i,j) == 0 || TM(i,j) == 1))
 		{
 		  std::cerr << "Matrix should contains only ones or zeros ";
-		  std::cerr << " in traintracks::fold_transition_matrix.\n";
+		  std::cerr << " in ttauto::fold_transition_matrix.\n";
 		  std::exit(1);
 		}
 	      colsum += TM(i,j);
@@ -142,7 +142,7 @@ jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f)
       if (bad || notfoundrow2 || notfoundcol2)
 	{
 	  std::cerr << "Matrix should be permutation+1 or identity";
-	  std::cerr << " in traintracks::fold_transition_matrix:\n";
+	  std::cerr << " in ttauto::fold_transition_matrix:\n";
 	  TM.printMatrixForm(std::cerr);
 	  std::exit(1);
 	}
@@ -189,6 +189,6 @@ inline double findroot(const jlt::polynomial<int>& p,
   return x;
 }
 
-} // namespace traintracks
+} // namespace ttauto
 
 #endif // TRAINTRACKS_UTIL_HPP

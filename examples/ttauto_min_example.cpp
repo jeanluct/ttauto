@@ -61,13 +61,13 @@ int main()
   using std::cerr;
   using std::endl;
   using std::vector;
-  using traintracks::traintrack;
+  using ttauto::traintrack;
 
   // Number of punctures.
   const int n = 5;
 
   // Build list of initial train tracks.
-  vector<traintrack> ttv = traintracks::ttbuild_list(n);
+  vector<traintrack> ttv = ttauto::ttbuild_list(n);
 
   // Minimum dilatations for each stratum (see Ham & Song 2007).
   vector<double> dilmax(ttv.size());
@@ -115,11 +115,11 @@ int main()
       ttv[trk].print_singularity_data(cout) << endl;
 
       // Create the train track graph (automaton).
-      traintracks::ttfoldgraph<traintrack> ttg(ttv[trk]);
+      ttauto::ttfoldgraph<traintrack> ttg(ttv[trk]);
 
       cout << "\nSearching automaton graph with " << ttg.vertices();
       cout << " vertices for pseudo-Anosovs...\n";
-      traintracks::ttauto<traintrack> tta(ttg);
+      ttauto::ttauto<traintrack> tta(ttg);
       tta.max_dilatation(dilmax[trk]).badword_length(0).check_norms();
       tta.search();
 

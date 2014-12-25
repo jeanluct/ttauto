@@ -35,9 +35,9 @@ int main()
 {
   using std::cout;
   using std::endl;
-  using traintracks::traintrack;
+  using ttauto::traintrack;
 
-  typedef traintracks::ttfoldgraph<traintrack>		ttgraph;
+  typedef ttauto::ttfoldgraph<traintrack>		ttgraph;
   typedef std::list<ttgraph>::const_iterator		cttgit;
   typedef jlt::vector<traintrack>			ttVec;
 
@@ -45,7 +45,7 @@ int main()
   int trk = 3;			// Initial train track to search.
   double dilmax = 3;		// Max dilatation to look for.
 
-  ttVec ttv = traintracks::ttbuild_list(n);
+  ttVec ttv = ttauto::ttbuild_list(n);
 
   //
   // 5 punctures:
@@ -72,7 +72,7 @@ int main()
   std::list<ttgraph> ttg(subgraphs(ttgraph(ttv[trk])));
 
   cout << "\nFolding subgraphs from initial train track: \n";
-  traintracks::print_subgraphs(ttg);
+  ttauto::print_subgraphs(ttg);
 
   for (cttgit i = ttg.begin(); i != ttg.end(); ++i)
     {
@@ -81,7 +81,7 @@ int main()
       cout << " with " << i->vertices();
       cout << (i->vertices() == 1 ? " vertex\n\n" : " vertices\n\n");
 
-      traintracks::ttauto<traintrack> tta(*i);
+      ttauto::ttauto<traintrack> tta(*i);
       tta.max_dilatation(dilmax).check_norms();
       tta.search();
     }

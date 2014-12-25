@@ -29,7 +29,7 @@
 #include "multigon.hpp"
 #include "traintracks_util.hpp"
 
-namespace traintracks {
+namespace ttauto {
 
 // Attach a new edge to prong p, numbered edge e.
 // Prongs and outgoing edges are numbered clockwise.
@@ -163,7 +163,7 @@ void multigon::cycle_prongs(const int i)
   if (i == 0 || k == 1) return;
 
   // Use -i to get clockwise cycling.
-  std::rotate(egv.begin(),egv.begin()+traintracks::mod(-i,k),egv.end());
+  std::rotate(egv.begin(),egv.begin()+ttauto::mod(-i,k),egv.end());
 
   update_edge_prong_pointers(this);
 }
@@ -177,7 +177,7 @@ multigon::intVec multigon::edge_sequence(const int p0) const
   for (int p = 0; p < k; ++p)
     {
       // Use a modified mod function that guarantees positive numbers.
-      es[p] = edges(traintracks::mod(p + p0,k));
+      es[p] = edges(ttauto::mod(p + p0,k));
     }
 
   return es;
@@ -371,4 +371,4 @@ void swap(multigon& m1, multigon& m2)
   m2.update_edge_prong_pointers(pm1);
 }
 
-} // namespace traintracks
+} // namespace ttauto

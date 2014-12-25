@@ -28,7 +28,7 @@
 #include <iostream>
 #include <jlt/vector.hpp>
 
-namespace traintracks {
+namespace ttauto {
 
 // A path is a vector of integers with values between m0 and m1.
 
@@ -143,6 +143,6 @@ std::ostream& operator<<(std::ostream& strm, const path& pp)
   return strm;
 }
 
-} // namespace traintracks
+} // namespace ttauto
 
 #endif // PATH_HPP

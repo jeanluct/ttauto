@@ -42,8 +42,8 @@ int main()
 {
   using std::cout;
   using std::endl;
-  using traintracks::traintrack;
-  using traintracks::folding_path;
+  using ttauto::traintrack;
+  using ttauto::folding_path;
 
 #ifdef DOUBLEHUMP_TRACK
   typedef doublehump TrTr;
@@ -74,7 +74,7 @@ int main()
   cout << "Train track has " << tt.punctures() << " punctures and ";
   cout << tt.edges() << " edges\n";
 
-  traintracks::ttfoldgraph<TrTr> ttg(tt);
+  ttauto::ttfoldgraph<TrTr> ttg(tt);
 
   cout << "TT folding graph has " << ttg.vertices() << " vertices\n";
 

@@ -42,7 +42,7 @@
 #include "traintracks_util.hpp"
 #include "folding_path.hpp"
 
-namespace traintracks {
+namespace ttauto {
 
 // Find paths with matrices of equal patterns of zeros-and-nonzeros.
 //
@@ -55,7 +55,7 @@ struct direct_equal_to
   bool operator()(const folding_path<TrTr>& p1, const folding_path<TrTr>& p2)
     const
   {
-    return traintracks::direct_equal(p1,p2);
+    return ttauto::direct_equal(p1,p2);
   }
 };
 
@@ -243,6 +243,6 @@ badwords(const ttfoldgraph<TrTr>& ttg, const int maxplen)
   return pbm;
 }
 
-} // namespace traintracks
+} // namespace ttauto
 
 #endif // BADWORDS_HPP

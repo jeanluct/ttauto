@@ -31,7 +31,7 @@
 #include "traintracks_util.hpp"
 #include "ttfoldgraph.hpp"
 
-namespace traintracks {
+namespace ttauto {
 
 template<class TrTr> class folding_path;
 
@@ -343,8 +343,8 @@ void folding_path<TrTr>::cycle_path(const int i)
   vp.pop_back();
 
   // Use -i to get clockwise cycling.
-  std::rotate(fp.begin(),fp.begin()+traintracks::mod(-i,k),fp.end());
-  std::rotate(vp.begin(),vp.begin()+traintracks::mod(-i,k),vp.end());
+  std::rotate(fp.begin(),fp.begin()+ttauto::mod(-i,k),fp.end());
+  std::rotate(vp.begin(),vp.begin()+ttauto::mod(-i,k),vp.end());
 
   // Reinstate final vertex.
   vp.push_back(ttg->target_vertex(vp.back(),fp.back()));
@@ -502,6 +502,6 @@ std::ostream& operator<<(std::ostream& strm, const folding_path<TrTr>& pp)
   return (strm << pp.fp);
 }
 
-} // namespace traintracks
+} // namespace ttauto
 
 #endif // FOLDING_PATH_HPP

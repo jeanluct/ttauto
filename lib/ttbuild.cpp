@@ -33,7 +33,7 @@
 // These are constructors, methods, and helper functions for the class
 // traintrack.
 
-namespace traintracks {
+namespace ttauto {
 
 //
 // Constructors
@@ -332,7 +332,7 @@ void traintrack::monogon_to_multigon(const int L, const int K)
   if (Multigon(L).prongs() != 1)
     {
       std::cerr << "Not a monogon";
-      std::cerr << " in traintracks::ttbuild_monogon_to_multigon\n";
+      std::cerr << " in ttauto::ttbuild_monogon_to_multigon\n";
       std::exit(1);
     }
 
@@ -377,7 +377,7 @@ jlt::vector<traintrack> ttbuild_list(const int N, const int N2)
 
   if (N < 3)
     {
-      std::cerr << "traintracks::ttbuild_list: Need at least 3 puntures.\n";
+      std::cerr << "ttauto::ttbuild_list: Need at least 3 puntures.\n";
       std::exit(1);
     }
 
@@ -513,4 +513,4 @@ int boundary_prongs(const int N, const traintrack::intVec Kv)
   return (-2*EC_sphere - EP) + 2;
 }
 
-} // namespace traintracks
+} // namespace ttauto

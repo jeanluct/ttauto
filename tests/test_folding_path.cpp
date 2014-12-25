@@ -39,8 +39,8 @@ int main()
 {
   using std::cout;
   using std::endl;
-  using traintracks::traintrack;
-  using traintracks::folding_path;
+  using ttauto::traintrack;
+  using ttauto::folding_path;
 
   typedef traintrack TrTr;
   const int n = 6;
@@ -50,7 +50,7 @@ int main()
   cout << "Train track has " << tt.punctures() << " punctures and ";
   cout << tt.edges() << " edges\n";
 
-  traintracks::ttfoldgraph<TrTr> ttg(tt);
+  ttauto::ttfoldgraph<TrTr> ttg(tt);
 
   // ttg.print();
 
