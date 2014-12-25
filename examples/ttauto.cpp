@@ -141,7 +141,7 @@ void print_banner()
   using std::cout;
   using std::endl;
 
-  jlt::printGitBanner("ttauto");
+  jlt::printVCSBanner(cout,"ttauto");
 
 #define TTAUTO_RELEASE
 #ifdef TTAUTO_RELEASE
