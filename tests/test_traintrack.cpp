@@ -27,12 +27,13 @@
 #include "multigon.hpp"
 #include "traintrack.hpp"
 
-using namespace traintracks;
 
 int main()
 {
   using std::cout;
   using std::endl;
+  using traintracks::traintrack;
+  using traintracks::multigon;
 
   multigon mm1(3);	// A trigon.
   multigon mm2(1);	// A monogon.
@@ -93,5 +94,5 @@ int main()
 
   // Built a list of representatives of all allowable train tracks
   // with 8 punctures (monogons).
-  jlt::vector<traintrack> ttv = ttbuild_list(8);
+  jlt::vector<traintrack> ttv = traintracks::ttbuild_list(8);
 }

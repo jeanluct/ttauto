@@ -26,17 +26,18 @@
 #include "traintrack.hpp"
 #include "ttfoldgraph.hpp"
 
-using namespace traintracks;
 
 int main()
 {
+  using traintracks::traintrack;
+
   for (int n = 3; n <= 9; ++n)
     {
       // Train track with n monogons and an (n-2)-gon on the boundary.
       traintrack tt(n);
 
       // Make train track folding automaton graph.
-      ttfoldgraph<traintrack> ttg(tt);
+      traintracks::ttfoldgraph<traintrack> ttg(tt);
 
       // Number of vertices in full automaton.
       std::cout << n << "\t" << ttg.vertices();

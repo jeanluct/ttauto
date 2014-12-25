@@ -34,12 +34,13 @@
 #include "folding_path.hpp"
 #include "pAclass.hpp"
 
-using namespace traintracks;
 
 int main()
 {
   using std::cout;
   using std::endl;
+  using traintracks::traintrack;
+  using traintracks::folding_path;
 
   typedef traintrack TrTr;
   const int n = 6;
@@ -49,7 +50,7 @@ int main()
   cout << "Train track has " << tt.punctures() << " punctures and ";
   cout << tt.edges() << " edges\n";
 
-  ttfoldgraph<TrTr> ttg(tt);
+  traintracks::ttfoldgraph<TrTr> ttg(tt);
 
   // ttg.print();
 

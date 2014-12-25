@@ -37,12 +37,13 @@
 #include "ttauto.hpp"
 #include "badwords.hpp"
 
-using namespace traintracks;
 
 int main()
 {
   using std::cout;
   using std::endl;
+  using traintracks::traintrack;
+  using traintracks::folding_path;
 
 #ifdef DOUBLEHUMP_TRACK
   typedef doublehump TrTr;
@@ -73,7 +74,7 @@ int main()
   cout << "Train track has " << tt.punctures() << " punctures and ";
   cout << tt.edges() << " edges\n";
 
-  ttfoldgraph<TrTr> ttg(tt);
+  traintracks::ttfoldgraph<TrTr> ttg(tt);
 
   cout << "TT folding graph has " << ttg.vertices() << " vertices\n";
 

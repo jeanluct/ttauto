@@ -26,19 +26,18 @@
 #include <jlt/stlio.hpp>
 #include "mathmatrix_permplus1.hpp"
 
-using namespace traintracks;
-using namespace jlt;
-using namespace std;
 
-
-void testM(const mathmatrix<int>& Mpm)
+void testM(const jlt::mathmatrix<int>& Mpm)
 {
+  using std::cout;
+  using std::endl;
+
   const int n = Mpm.dim();
 
   cout << "Matrix pm:\n";
   Mpm.printMatrixForm(cout) << endl;
 
-  mathmatrix_permplus1 pm(Mpm);
+  traintracks::mathmatrix_permplus1 pm(Mpm);
 
   cout << "In permutation+1 form:\n" << pm << endl;
 
@@ -48,7 +47,7 @@ void testM(const mathmatrix<int>& Mpm)
 
   cout << endl;
 
-  mathmatrix<int> M(identity_matrix<int>(n));
+  jlt::mathmatrix<int> M(jlt::identity_matrix<int>(n));
   for (int i = 0; i < n; ++i)
     {
       for (int j = 0; j < n; ++j)
@@ -98,7 +97,7 @@ int main()
 {
   const int n = 6;
 
-  mathmatrix<int> Mpm(n,n);
+  jlt::mathmatrix<int> Mpm(n,n);
   Mpm(0,4) = 1;
   Mpm(1,0) = 1;
   Mpm(2,1) = 1;
