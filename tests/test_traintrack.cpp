@@ -47,7 +47,7 @@ int main()
   cout << "Reference count = " << mm1.Edge(0,0).use_count() << endl;
 #endif
 
-  mm1.attach_edge(0,1);		// Attach another edge a prong 0.
+  mm1.attach_edge(0,1);		// Attach another edge at prong 0.
   mm1.attach_edge(0,2);		// ...and another.
   mm1.insert_edge(0,1);		// Insert an edge at 1, moving an edge
 				// out of the way.
@@ -56,7 +56,7 @@ int main()
   mm1.print();
   mm2.print();
 
-  // Build a train track with 9 monogons, a trigons, a tetragon,
+  // Build a train track with 9 monogons, a trigon, a tetragon,
   // and a pentagon.
   const int N = 9;
   jlt::vector<int> Kv(3);
