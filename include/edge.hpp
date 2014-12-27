@@ -125,7 +125,11 @@ private:
 	// Let mother multigon know we've detached.
 	mg[en]->erase_edge_pointer(pr[en],pre[en]);
 	// Zero everything.
+#if __cplusplus > 199711L
+	mg[en] = nullptr;
+#else
 	mg[en] = 0;
+#endif
 	pr[en] = 0;
 	pre[en] = 0;
       }
@@ -198,7 +202,11 @@ inline void edge::detach_from_multigon(const multigon* mm)
   // Let mother multigon know we've detached.
   mg[en]->erase_edge_pointer(pr[en],pre[en]);
   // Zero everything on that ending.
+#if __cplusplus > 199711L
+  mg[en] = nullptr;
+#else
   mg[en] = 0;
+#endif
   pr[en] = 0;
   pre[en] = 0;
 }

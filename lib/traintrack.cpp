@@ -500,11 +500,19 @@ bool traintrack::fold(const int f)
     Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
 
   // Find the monogon, prong, edge of the cusp with number fcusp.
+#if __cplusplus > 199711L
+  multigon* mmc = nullptr;
+#else
   multigon* mmc = 0;
+#endif
   int pc, ec, cs = fcusp;
   recursive_find_cusp(*egmono,pmono,pemono,cs,mmc,pc,ec);
 
+#if __cplusplus > 199711L
+  if (mmc == nullptr)
+#else
   if (mmc == 0)
+#endif
     {
       std::cerr << "Could not find cusp in traintrack::fold.\n";
       std::exit(1);
