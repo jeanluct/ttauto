@@ -73,7 +73,7 @@ if GCC_version < StrictVersion('4.5'):
    if StrictVersion('4.3') <= GCC_version:
       # For hash_set/hash_map with gcc >= 4.3.3.
       env.PrependUnique(CXXFLAGS = ['-Wno-deprecated'])
-if GCC_version < StrictVersion('4.9'):
+elif GCC_version < StrictVersion('4.9'):
    # Use modern C++ standard.
    # This obviates the need for boost library.
    env.PrependUnique(CXXFLAGS = ['-std=c++0x'])
