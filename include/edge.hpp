@@ -63,10 +63,24 @@ public:
 #endif
 
   // Is the edge ending en unattached?
-  bool is_unattached(const int en) const { return (mg[en] == 0); }
+  bool is_unattached(const int en) const
+  {
+#if __cplusplus > 199711L
+    return (mg[en] == nullptr);
+#else
+    return (mg[en] == 0);
+#endif
+  }
 
   // True if either edge ending is unattached.
-  bool is_unattached() const { return (mg[0] == 0 || mg[1] == 0); }
+  bool is_unattached() const
+  {
+#if __cplusplus > 199711L
+    return (mg[0] == nullptr || mg[1] == nullptr);
+#else
+    return (mg[0] == 0 || mg[1] == 0);
+#endif
+  }
 
   // Get the weight on the edge.
   double weight() const { return wt; }
