@@ -33,7 +33,6 @@
 namespace ttauto {
 
 class multigon;
-class traintrack;
 
 class edge
 {
@@ -85,6 +84,10 @@ public:
   // class traintrack's fold method needs this.
   void detach_from_multigon(const multigon* mm);
 
+  // Detach from both multigons completely.  Keeps only the weight.
+  // This is unused at the moment.
+  void detach_from_multigons();
+
   // Return the pointer, prong, and edge to a multigon that the edge
   // is hooked to from mm.  Needed by class traintrack.
   multigon* target_multigon(const multigon* mm, int& t_pr, int& t_pre) const;
@@ -117,29 +120,9 @@ private:
     std::swap(pre[0],pre[1]);
   }
 
-  // Detach from both multigons completely.  Keeps only the weight.
-  void detach_from_multigons()
-  {
-    for (int en = 0; en < nends; ++en)
-      {
-	// Let mother multigon know we've detached.
-	mg[en]->erase_edge_pointer(pr[en],pre[en]);
-	// Zero everything.
-#if __cplusplus > 199711L
-	mg[en] = nullptr;
-#else
-	mg[en] = 0;
-#endif
-	pr[en] = 0;
-	pre[en] = 0;
-      }
-  }
-
   void point_to_multigon(multigon* mm, const int p, const int e);
 
   friend class multigon;
-  // friend class traintrack; // Only for detach_from_multigon and
-			   // target_multigon.
   friend void swap(multigon* m1, multigon* m2);
 };
 
@@ -196,6 +179,8 @@ inline int edge::which_ending(const multigon* mm) const
   std::exit(1);
 }
 
+// Detach from a given multigon.
+// class traintrack's fold method needs this.
 inline void edge::detach_from_multigon(const multigon* mm)
 {
   int en = which_ending(mm);
@@ -209,6 +194,24 @@ inline void edge::detach_from_multigon(const multigon* mm)
 #endif
   pr[en] = 0;
   pre[en] = 0;
+}
+
+// Detach from both multigons completely.  Keeps only the weight.
+inline void edge::detach_from_multigons()
+{
+  for (int en = 0; en < nends; ++en)
+    {
+      // Let mother multigon know we've detached.
+      mg[en]->erase_edge_pointer(pr[en],pre[en]);
+      // Zero everything.
+#if __cplusplus > 199711L
+      mg[en] = nullptr;
+#else
+      mg[en] = 0;
+#endif
+      pr[en] = 0;
+      pre[en] = 0;
+    }
 }
 
 // Return the pointer, prong, and edge to a multigon that the edge
