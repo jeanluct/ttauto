@@ -315,14 +315,16 @@ void multigon::update_edge_prong_pointers(const std::shared_ptr<const multigon> 
 	      // let the loop carry on it'll see the first ending and
 	      // change it back.  So we interrupt the loop and update
 	      // the second edge ending.
-	      if (Edge(p,e)->mg[0] == pm_old)
+	      std::shared_ptr<multigon> mg0 = Edge(p,e)->mg[0].lock();
+	      if (mg0 == pm_old)
 		{
 		  // We've already updated mg[0], so we must now
 		  // update mg[1].
 		  // (On the first pass, we used swap_endings if
 		  // necessary to ensure the the substitution occured
 		  // on the first ending -- see below.)
-		  Edge(p,e)->mg[1] = pm_new;
+		  std::shared_ptr<multigon> mg1 = Edge(p,e)->mg[1].lock();
+		  mg1 = pm_new;
 		  // For swap it's not strictly necessary to update p
 		  // and e, since they haven't changed.  Do it for
 		  // completeness, and so cycle_prongs can use this.
@@ -395,8 +397,10 @@ void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2)
 {
   std::cerr << "<<<<<<< in swap ============================================\n";
 
+  /*
   const multigon* p1 = m1.get();
   const multigon* p2 = m2.get();
+  */
 
   // Swap their contents.
   std::cerr << "BEFORE:\n";
@@ -405,7 +409,7 @@ void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2)
     {
       for (int e = 0; e < m1->edges(p); ++e)
 	{
-	  std::cerr << "  p=" << p << " e=" << e << " " << m1->Edge(p,e)->mg[0] << " " << m1->Edge(p,e)->mg[1] << std::endl;
+	  std::cerr << "  p=" << p << " e=" << e << " " << m1->Edge(p,e)->mg[0].lock() << " " << m1->Edge(p,e)->mg[1].lock() << std::endl;
 	}
     }
   std::cerr << std::endl;
@@ -414,7 +418,7 @@ void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2)
     {
       for (int e = 0; e < m2->edges(p); ++e)
 	{
-	  std::cerr << "  p=" << p << " e=" << e << " " << m2->Edge(p,e)->mg[0] << " " << m2->Edge(p,e)->mg[1] << std::endl;
+	  std::cerr << "  p=" << p << " e=" << e << " " << m2->Edge(p,e)->mg[0].lock() << " " << m2->Edge(p,e)->mg[1].lock() << std::endl;
 	}
     }
 
@@ -426,15 +430,16 @@ void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2)
 	{
 	  for (int ee = 0; ee < 2; ++e)
 	    {
-	      if (m1->Edge(p,e)->mg[ee] == m1)
+	      std::shared_ptr<multigon> mgee = m1->Edge(p,e)->mg[ee].lock();
+	      if (mgee == m1)
 		{
 		  std::cerr << "  swapping p1 & p2";
-		  m1->Edge(p,e)->mg[ee] = m2;
+		  mgee = m2;
 		}
-	      if (m1->Edge(p,e)->mg[ee] == m2)
+	      if (mgee == m2)
 		{
 		  std::cerr << "  swapping p1 & p2";
-		  m1->Edge(p,e)->mg[ee] = m1;
+		  mgee = m1;
 		}
 	    }
 	}
@@ -446,15 +451,16 @@ void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2)
 	{
 	  for (int ee = 0; ee < 2; ++e)
 	    {
-	      if (m2->Edge(p,e)->mg[ee] == m1)
+	      std::shared_ptr<multigon> mgee = m2->Edge(p,e)->mg[ee].lock();
+	      if (mgee == m1)
 		{
 		  std::cerr << "  swapping p1 & p2";
-		  m2->Edge(p,e)->mg[ee] = m2;
+		  mgee = m2;
 		}
-	      if (m2->Edge(p,e)->mg[ee] == m2)
+	      if (mgee == m2)
 		{
 		  std::cerr << "  swapping p1 & p2";
-		  m2->Edge(p,e)->mg[ee] = m1;
+		  mgee = m1;
 		}
 	    }
 	}
@@ -469,7 +475,7 @@ void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2)
     {
       for (int e = 0; e < m1->edges(p); ++e)
 	{
-	  std::cerr << "  p=" << p << " e=" << e << " " << m1->Edge(p,e)->mg[0] << " " << m1->Edge(p,e)->mg[1] << std::endl;
+	  std::cerr << "  p=" << p << " e=" << e << " " << m1->Edge(p,e)->mg[0].lock() << " " << m1->Edge(p,e)->mg[1].lock() << std::endl;
 	}
     }
   std::cerr << std::endl;
@@ -478,7 +484,7 @@ void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2)
     {
       for (int e = 0; e < m2->edges(p); ++e)
 	{
-	  std::cerr << "  p=" << p << " e=" << e << " " << m2->Edge(p,e)->mg[0] << " " << m2->Edge(p,e)->mg[1] << std::endl;
+	  std::cerr << "  p=" << p << " e=" << e << " " << m2->Edge(p,e)->mg[0].lock() << " " << m2->Edge(p,e)->mg[1].lock() << std::endl;
 	}
     }
 

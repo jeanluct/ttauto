@@ -40,8 +40,8 @@ class edge
   static const int nends = 2;	// An edge has two ends.
 
 public:
-  typedef std::shared_ptr<multigon>		mgonp;
-  typedef std::shared_ptr<const multigon>	cmgonp;
+  typedef std::weak_ptr<multigon>		mgonp;
+  typedef std::weak_ptr<const multigon>		cmgonp;
   typedef jlt::vector<mgonp>			mgpVec;
   typedef multigon::intVec			intVec;
 
@@ -68,7 +68,7 @@ public:
   bool is_unattached(const int en) const
   {
 #if __cplusplus > 199711L
-    return (mg[en] == nullptr);
+    return (mg[en].lock() == nullptr);
 #else
     return (mg[en] == 0);
 #endif
@@ -78,7 +78,7 @@ public:
   bool is_unattached() const
   {
 #if __cplusplus > 199711L
-    return (mg[0] == nullptr || mg[1] == nullptr);
+    return (mg[0].lock() == nullptr || mg[1].lock() == nullptr);
 #else
     return (mg[0] == 0 || mg[1] == 0);
 #endif
@@ -125,7 +125,7 @@ private:
   // This is one of the few methods that explicitly assumes a branch
   // has 2 ends (doesn't respect edge::nends).
   bool attached_to_same_multigon() const
-  { return (mg[0] == mg[1]); }
+  { return (mg[0].lock() == mg[1].lock()); }
 
   void swap_endings()
   {
@@ -187,10 +187,9 @@ inline void edge::point_to_multigon(mgonp mm, const int p, const int e)
 
 inline int edge::which_ending(cmgonp mm) const
 {
-  std::cerr << "Entering..." << mm;
   for (int en = 0; en < nends; ++en)
     {
-      if (mg[en] == mm) { std::cerr << " ok\n"; return en; }
+      if (mg[en].lock() == mm.lock()) { std::cerr << " ok\n"; return en; }
     }
   std::cerr << "Could not find pointer back to prong";
   std::cerr << " in edge::which_ending.\n";
@@ -202,11 +201,13 @@ inline int edge::which_ending(cmgonp mm) const
 inline void edge::detach_from_multigon(cmgonp mm)
 {
   int en = which_ending(mm);
+  std::shared_ptr<multigon> mgen(mg[en].lock());
+
   // Let mother multigon know we've detached.
-  mg[en]->erase_edge_pointer(pr[en],pre[en]);
+  mgen->erase_edge_pointer(pr[en],pre[en]);
   // Zero everything on that ending.
 #if __cplusplus > 199711L
-  mg[en] = nullptr;
+  mgen = nullptr;
 #else
   mg[en] = 0;
 #endif
@@ -219,11 +220,13 @@ inline void edge::detach_from_multigons()
 {
   for (int en = 0; en < nends; ++en)
     {
+      std::shared_ptr<multigon> mgen(mg[en].lock());
+
       // Let mother multigon know we've detached.
-      mg[en]->erase_edge_pointer(pr[en],pre[en]);
+      mgen->erase_edge_pointer(pr[en],pre[en]);
       // Zero everything.
 #if __cplusplus > 199711L
-      mg[en] = nullptr;
+      mgen = nullptr;
 #else
       mg[en] = 0;
 #endif
@@ -253,10 +256,12 @@ inline bool edge::check() const
 	  std::cerr << "Unhooked edge in edge::check.\n";
 	  std::exit(1);
 	}
+      std::shared_ptr<multigon> mgen(mg[en].lock());
+
 #ifdef TTAUTO_NO_SHARED_PTR
       if (mg[en]->egv[pr[en]][pre[en]] != this)
 #else
-      if (mg[en]->egv[pr[en]][pre[en]].get() != this)
+      if (mgen->egv[pr[en]][pre[en]].get() != this)
 #endif
 	{
 	  std::cerr << "Inconsistent pointer in edge::check.\n";
