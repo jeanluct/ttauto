@@ -159,7 +159,13 @@ traintrack::traintrack(const intVec& Kv)
 // boundary (all cusps).
 void traintrack::ttbuild_all_monogons(const int N)
 {
-  mgv.push_back(mgonp(new multigon(1)));	// A monogon (puncture)
+  // A monogon (puncture).
+#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++14 has make_unique.
+  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#else
+  mgv.push_back(mgonp(new multigon(1)));
+#endif
 
   // All the edges are attached to monogon 0.
   for (int i = 0; i < N-1; ++i)
@@ -262,10 +268,21 @@ void traintrack::ttbuild_monogoncusps(const int N, const intVec& Kv)
     }
 
   traintrack tt;
-  mgv.push_back(mgonp(new multigon(1)));		// monogon
+#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++14 has make_unique.
+  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#else
+  mgv.push_back(mgonp(new multigon(1)));
+#endif
   for (int i = 0; i < L; ++i)
     {
-      mgv.push_back(mgonp(new multigon(Kv[i])));	// Kv[i]-gon
+      // Kv[i]-gon.
+#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+      // C++14 has make_unique.
+      mgv.push_back(mgonp(std::make_unique<multigon>(Kv[i])));
+#else
+      mgv.push_back(mgonp(new multigon(Kv[i])));
+#endif
     }
 
   // Attach edges to monogon 0.
@@ -315,7 +332,12 @@ void traintrack::capoff()
 		}
 	      if (ua0 || ua1)
 		{
+#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+		  // C++14 has make_unique.
+		  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#else
 		  mgv.push_back(mgonp(new multigon(1)));
+#endif
 		  multigon::edgep ep = Multigon(m).Edge(p,e);
 		  mgv.back()->attach_edge(ep);
 		}
@@ -345,7 +367,12 @@ void traintrack::monogon_to_multigon(const int L, const int K)
   Multigon(L).Edge(0,0)->detach_from_multigon(mgv[L]);
 #endif
   // Now make a new multigon, overwriting the old one.
+#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++14 has make_unique.
+  mgv[L] = mgonp(std::make_unique<multigon>(K));
+#else
   mgv[L] = mgonp(new multigon(K));
+#endif
 
   // Attach it to the edge we freed up.
   Multigon(L).attach_edge(ep,0,0);

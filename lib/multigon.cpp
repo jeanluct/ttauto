@@ -35,7 +35,12 @@ namespace ttauto {
 // Prongs and outgoing edges are numbered clockwise.
 void multigon::attach_edge(const int p, const int e)
 {
-  edgep newep(new edge());	// Make a new edge.
+  // Make a new edge.
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+  edgep newep(std::make_shared<edge>());
+#else
+  edgep newep(new edge());
+#endif
   attach_edge(newep,p,e);
 }
 
@@ -83,7 +88,12 @@ void multigon::point_to_edge(edgep& eg, const int p, const int e)
 // out of the way.
 void multigon::insert_edge(const int p, const int e)
 {
-  edgep newep(new edge());	// Make a new edge.
+  // Make a new edge.
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+  edgep newep(std::make_shared<edge>());
+#else
+  edgep newep(new edge());
+#endif
   insert_edge(newep,p,e);
 }
 
