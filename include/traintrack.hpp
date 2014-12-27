@@ -25,28 +25,13 @@
 #ifndef TRAINTRACK_HPP
 #define TRAINTRACK_HPP
 
+#include <memory>
 #include <jlt/vector.hpp>
 #include <jlt/mathmatrix.hpp>
 #include "edge.hpp"
 #include "multigon.hpp"
 #include "traintracks_util.hpp"
 #include "mathmatrix_permplus1.hpp"
-
-#ifndef TTAUTO_NO_SHARED_PTR
-#if __cplusplus > 199711L
-#include <memory>
-namespace ttauto
-{
-  using std::shared_ptr;
-}
-#else
-#include <boost/shared_ptr.hpp>
-namespace ttauto
-{
-  using boost::shared_ptr;
-}
-#endif
-#endif
 
 
 namespace ttauto {
@@ -57,10 +42,11 @@ class traintrack
 
 public:
   typedef multigon::edgep				edgep;
-#ifdef TTAUTO_NO_SHARED_PTR
-  typedef multigon*					mgonp;
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+  // There is only one owner for each multigon, so use std::unique_ptr (C++11).
+  typedef std::unique_ptr<multigon>			mgonp;
 #else
-  typedef shared_ptr<multigon>				mgonp;
+  typedef multigon*					mgonp;
 #endif
   typedef jlt::vector<mgonp>				mgpVec;
   typedef multigon::intVec				intVec;

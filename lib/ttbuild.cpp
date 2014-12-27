@@ -339,10 +339,10 @@ void traintrack::monogon_to_multigon(const int L, const int K)
   // Save a pointer to the edge multigon L was pointing to.
   edgep ep = Multigon(L).Edge(0,0);
   // Detach the edge.
-#ifdef TTAUTO_NO_SHARED_PTR
-  Multigon(L).Edge(0,0)->detach_from_multigon(mgv[L]);
-#else
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
   Multigon(L).Edge(0,0)->detach_from_multigon(mgv[L].get());
+#else
+  Multigon(L).Edge(0,0)->detach_from_multigon(mgv[L]);
 #endif
   // Now make a new multigon, overwriting the old one.
   mgv[L] = mgonp(new multigon(K));
