@@ -35,7 +35,12 @@ namespace ttauto {
 traintrack::traintrack(const traintrack::intVec& code)
 {
   // Train track always starts with an uncusped monogon.
+#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++14 has make_unique.
+  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#else
   mgv.push_back(mgonp(new multigon(1)));
+#endif
   Multigon(0).attach_edge();
   if (label_multiprongs)
     Multigon(0).set_label(code[2]); // Copy the label of first monogon.
@@ -79,7 +84,12 @@ traintrack::traintrack(const char* codes)
   /* traintracl(code); */
 
   // Train track always starts with an uncusped monogon.
+#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++14 has make_unique.
+  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#else
   mgv.push_back(mgonp(new multigon(1)));
+#endif
   Multigon(0).attach_edge();
 
   // Iterator for coding: skip initial uncusped monogon marker.
@@ -109,7 +119,13 @@ void traintrack::recursive_build(traintrack::edgep& ee,
     }
 
   // Add a new multigon, copying label.
+  // Could replace new by std::make_unique<multigon> in C++14.
+#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++14 has make_unique.
+  mgv.push_back(mgonp(std::make_unique<multigon>(inb.nprongs, inb.label)));
+#else
   mgv.push_back(mgonp(new multigon(inb.nprongs, inb.label)));
+#endif
 
   // Attach the multigon to the edge we came down.
   mgv.back()->attach_edge(ee,inb.prong,inb.edge);
@@ -156,8 +172,15 @@ void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
   for (int m = 0; m < ttexist.multigons(); ++m)
     {
       // Allocate the new multigons.
+#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+      // C++14 has make_unique.
+      ttnew.mgv.push_back(mgonp(std::make_unique<multigon>
+				(ttexist.Multigon(m).prongs(),
+				 ttexist.Multigon(m).label())));
+#else
       ttnew.mgv.push_back(mgonp(new multigon(ttexist.Multigon(m).prongs(),
 					     ttexist.Multigon(m).label())));
+#endif
       for (int p = 0; p < ttexist.Multigon(m).prongs(); ++p)
 	{
 	  for (int e = 0; e < ttexist.Multigon(m).edges(p); ++e)
