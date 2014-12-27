@@ -58,7 +58,10 @@ public:
 
   edge& operator=(const edge& eg) { copy(*this,eg); return *this; }
 
+#if 0
+  /* Unused.  See definition to see why it's maybe a bad idea. */
   void attach_to_multigon(multigon* mm, const int p = 0, const int e = 0);
+#endif
 
   // Is the edge ending en unattached?
   bool is_unattached(const int en) const { return (mg[en] == 0); }
@@ -141,15 +144,25 @@ private:
 // Method definitions
 //
 
+#if 0
+/* Unused. */
 inline void edge::attach_to_multigon(multigon* mm, const int p, const int e)
 {
   point_to_multigon(mm,p,e);
 
+  /* If we decide we eventually need this method, we can't do this:
+   edgep is now a shared_ptr, so creating from the this pointer is a
+   bad idea.  If we do need tto do this, we have to derive edge from
+   std::enable_shared_from_this<edge>.  See
+   http://en.cppreference.com/w/cpp/memory/enable_shared_from_this */
   multigon::edgep ep(this);
+  /* Use instead: */
+  // multigon::edgep ep(shared_from_this());
 
   // Make sure the multigon knows the edge is attached.
   mm->point_to_edge(ep,p,e);
 }
+#endif
 
 inline void edge::point_to_multigon(multigon* mm, const int p, const int e)
 {
