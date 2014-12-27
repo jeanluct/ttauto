@@ -4,17 +4,12 @@
 // See the file LICENSE for copying permission.
 //
 
-#ifndef __PGI
-#  include <cassert>
-#else
-#  include <assert.h>
-#endif
+#include <cassert>
 #include <iostream>
 #include <complex>
 #include <jlt/mathvector.hpp>
 #include <jlt/mathmatrix.hpp>
 
-using namespace jlt;
 
 int main()
 {
@@ -22,6 +17,8 @@ int main()
   using std::cout;
   using std::cerr;
   using std::endl;
+  using jlt::mathvector;
+  using jlt::mathmatrix;
 
   mathvector<double> a(3);
   mathvector<double> b(3);
@@ -55,6 +52,8 @@ int main()
 
   cout << "\nNow for vectors of vectors:\n\n";
 
+  // A vector of vectors.
+  // Scalar type is double.
   mathvector<mathvector<double>,double> aa(2);
   for (int i = 0; i < 2; ++i) {
     aa[i] = std::vector<double>(4);
@@ -76,8 +75,11 @@ int main()
   cout << AA*a << endl;
   cout << AA.det() << endl;
 
+  // A matrix of matrices.
+  // Scalar type is double.
   mathmatrix<mathmatrix<double>,double> MM(2,2,mathmatrix<double>(4,4));
 
+  // Can multiply by mathvector of mathvectors.
   cout << endl << MM*aa << endl;
 
   MM += 1.;
@@ -95,7 +97,7 @@ int main()
   cout << a << endl;
 
   cout << "identity_matrix(5) =" << endl;
-  cout << identity_matrix<double>(5) << endl;
+  cout << jlt::identity_matrix<double>(5) << endl;
 
   mathmatrix<std::complex<double> > Ac(3,3,std::complex<double>(1,1));
   Ac(0,0) = 0.;
@@ -108,4 +110,16 @@ int main()
   cout << Aci << endl;
   cout << "Check:\n";
   cout << Ac*Aci << endl;
+
+  mathvector<std::complex<double> > v(3,std::complex<double>(1,1));
+  cout << "\nComplex vector (complex double scalar type):\n";
+  cout << v << endl;
+  cout << "and its magnitude: |v| = ";
+  cout << abs(v) << endl;
+
+  mathvector<std::complex<double>,double> v2(3,std::complex<double>(1,1));
+  cout << "\nComplex vector (double scalar type):\n";
+  cout << v2 << endl;
+  cout << "and its magnitude: |v| = ";
+  cout << abs(v2) << endl;
 }

@@ -50,11 +50,7 @@
 #endif
 
 #if defined(MATRIX_CHECK_BOUNDS)
-#  if defined(__PGI)
-#    include <assert.h>
-#  else
-#    include <cassert>
-#  endif
+#  include <cassert>
 #  define MATRIX_ASSERT(x) assert(x)
 #else
 #  define MATRIX_ASSERT(x)
@@ -325,9 +321,17 @@ public:
       return strm;
     }
 
-  std::ostream& printMathematicaForm(std::ostream& strm) const
+  std::ostream& printMathematicaForm(std::ostream& strm,
+				const char name[] = 0,
+				const char comment[] = 0) const
     {
       if (start == 0) return strm;
+
+      // Print comment if specified.
+      if (comment) strm << "(* " << comment << " *)" << std::endl;
+
+      // Only print = if variable name is specified.
+      if (name) strm << name << " = ";
 
       strm << "{";
       for (const_iterator i = start; i != finish; i += n) {
@@ -341,6 +345,8 @@ public:
 	else
 	  strm << *(i+n-1) << "}";
       }
+      // Don't append newline, since in Mathematica it is common to
+      // write on same line.
       strm << "}";
 
       return strm;

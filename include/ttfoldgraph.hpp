@@ -310,7 +310,7 @@ private:
   // edge (rows).
   csparse::cs* adjacency_matrix() const
   {
-    jlt::cs_auto_ptr am(csparse::cs_spalloc(0,0,1,1,1));
+    jlt::cs_unique_ptr am(csparse::cs_spalloc(0,0,1,1,1));
 
     for (int v = 0; v < vertices(); ++v)
       {
@@ -604,11 +604,11 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
   // The adjancency matrix: which edges (cols) are reachable from each
   // edge (rows).
   // Store as a csparse triplet sparse matrix.
-  jlt::cs_auto_ptr am(ttg.adjacency_matrix());
+  jlt::cs_unique_ptr am(ttg.adjacency_matrix());
 
   // Dulmage-Mendelsohn decomposition of sparse matrix into
   // block-triangular form.
-  jlt::csd_auto_ptr dm(csparse::cs_dmperm(am,1));
+  jlt::csd_unique_ptr dm(csparse::cs_dmperm(am,1));
   int nb = dm->nb;
 
   if (debug)

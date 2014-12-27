@@ -175,7 +175,7 @@ inline double findroot(const jlt::polynomial<int>& p,
   int i = 0;
   const int itmax = 100;
 
-  while (jlt::Abs(px) > tol && i++ < itmax)
+  while (std::abs(px) > tol && i++ < itmax)
     {
       x = x - px / p.derivative_at(x);
       px = p(x);
@@ -184,7 +184,7 @@ inline double findroot(const jlt::polynomial<int>& p,
   if (i == itmax)
     throw
       jlt::failed_to_converge<double>
-      ("Failed to converge to specified accuracy.\n",jlt::Abs(px));
+      ("Failed to converge to specified accuracy.\n",std::abs(px));
 
   return x;
 }

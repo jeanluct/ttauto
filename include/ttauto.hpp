@@ -31,7 +31,7 @@
 #include <map>
 #include <stack>
 #include <vector>
-#include <jlt/math.hpp>
+#include <cmath>
 #include <jlt/matrix.hpp>
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
@@ -783,7 +783,7 @@ bool ttauto<TrTr>::descend_graph()
 	  // Spectral radius destroys matrix, so don't use after this.
 	  double lambda2 = jlt::spectral_radius(TMd);
 
-	  if (jlt::Abs(lambda-lambda2) > .01*tol)
+	  if (std::abs(lambda-lambda2) > .01*tol)
 	    {
 	      std::cout << lambda << "\t" << lambda2;
 	      std::cout << "\t" << lambda-lambda2 << std::endl;
@@ -830,7 +830,7 @@ bool ttauto<TrTr>::check_all_norms()
 	  colsum += TMl.top()(j,i);
 	  rowsum += TMl.top()(i,j);
 #ifdef TTAUTO_CHECK_SYMMETRIC_NORM
-	  Gnorm += jlt::Sqrt((double)TMl.top()(i,j)*TMl.top()(j,i));
+	  Gnorm += std::sqrt((double)TMl.top()(i,j)*TMl.top()(j,i));
 #endif
 	}
       Mnorm += colsum;

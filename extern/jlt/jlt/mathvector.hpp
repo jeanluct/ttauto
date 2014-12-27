@@ -12,8 +12,8 @@
 //
 
 #include <stdexcept>
+#include <complex>
 #include <jlt/vector.hpp>
-#include <jlt/math.hpp>
 #include <jlt/stlio.hpp>
 
 namespace jlt {
@@ -74,7 +74,7 @@ inline mathvector<T,S> cross(const mathvector<T,S>& v,
 //
 
 template<class T, class S = T>
-class mathvector : public vector<T>
+class mathvector : public vector<T> // note that this is jlt::vector
 {
 public:
   typedef typename std::vector<T>::size_type		size_type;
@@ -207,40 +207,6 @@ public:
   // Friends
   //
 
-#ifdef __PGI
-  friend mathvector<T,S> operator+(const mathvector<T,S>& v);
-
-  friend mathvector<T,S> operator-(const mathvector<T,S>& v);
-
-  friend mathvector<T,S> operator+(const mathvector<T,S>& v,
-				   const mathvector<T,S>& w);
-
-  friend mathvector<T,S> operator-(const mathvector<T,S>& v,
-				   const mathvector<T,S>& w);
-
-  friend mathvector<T,S> operator*(const_scalar_reference a,
-				   const mathvector<T,S>& v);
-
-  friend mathvector<T,S> operator*(const mathvector<T,S>& v,
-				   const_scalar_reference a);
-
-  friend mathvector<T,S> operator/(const mathvector<T,S>& v,
-				   const_scalar_reference a);
-
-  // Component-wise division.
-  friend mathvector<T,S> operator/(const mathvector<T,S>& v,
-				   const mathvector<T,S>& w);
-
-  // Dot product (not component-wise multiplication).
-  friend scalar_type operator*(const mathvector<T,S>& v,
-			       const mathvector<T,S>& w);
-
-  friend scalar_type dot(const mathvector<T,S>& v, const mathvector<T,S>& w);
-
-  friend scalar_type mag2(const mathvector<T,S>& v);
-
-  friend scalar_type abs(const mathvector<T,S>& v);
-#else
   friend mathvector<T,S> operator+<>(const mathvector<T,S>& v);
 
   friend mathvector<T,S> operator-<>(const mathvector<T,S>& v);
@@ -274,7 +240,6 @@ public:
   friend scalar_type jlt::mag2<>(const mathvector<T,S>& v);
 
   friend scalar_type jlt::abs<>(const mathvector<T,S>& v);
-#endif
 
 
 }; // class mathvector
@@ -492,17 +457,26 @@ inline S mag2(const mathvector<T,S>& v)
   return magn;
 }
 
+// Specializations of mag2 for complex types
+template<class T, class S>
+inline S mag2(const mathvector<std::complex<T>,S>& v)
+{
+  S magn = S();
+
+  for (typename mathvector<std::complex<T>,T>::const_iterator i = v.begin();
+       i != v.end(); ++i)
+    {
+      // Note that std::complex::norm returns the squared magnitude.
+      magn += norm(*i);
+    }
+
+  return magn;
+}
+
 template<class T, class S>
 inline S abs(const mathvector<T,S>& v)
 {
-  return Sqrt(mag2((v)));
-}
-
-// For compatibility with math.hpp
-template<class T, class S>
-inline S Abs(const mathvector<T,S>& v)
-{
-  return abs(v);
+  return std::sqrt(mag2((v)));
 }
 
 } // namespace jlt
