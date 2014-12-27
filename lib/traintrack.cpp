@@ -35,21 +35,21 @@ namespace ttauto {
 traintrack::traintrack(const traintrack::intVec& code)
 {
   // Train track always starts with an uncusped monogon.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
-  // C++14 has make_unique.
-  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++11 has make_shared.
+  mgv.push_back(mgonp(std::make_shared<multigon>(1)));
 #else
   mgv.push_back(mgonp(new multigon(1)));
 #endif
-  Multigon(0).attach_edge();
+  Multigon(0)->attach_edge();
   if (label_multiprongs)
-    Multigon(0).set_label(code[2]); // Copy the label of first monogon.
+    Multigon(0)->set_label(code[2]); // Copy the label of first monogon.
 
   // Iterator for coding: skip initial uncusped monogon marker.
   intVec::const_iterator ci(code.begin() + coding_block::length);
 
   // Recurse down and build train track.
-  recursive_build(Multigon(0).Edge(0,0),ci);
+  recursive_build(Multigon(0)->Edge(0,0),ci);
 
   normalise();
 }
@@ -84,24 +84,24 @@ traintrack::traintrack(const char* codes)
   /* traintracl(code); */
 
   // Train track always starts with an uncusped monogon.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
-  // C++14 has make_unique.
-  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++11 has make_shared.
+  mgv.push_back(mgonp(std::make_shared<multigon>(1)));
 #else
   mgv.push_back(mgonp(new multigon(1)));
 #endif
-  Multigon(0).attach_edge();
+  Multigon(0)->attach_edge();
 
   // Iterator for coding: skip initial uncusped monogon marker.
   intVec::const_iterator ci(code.begin() + coding_block::length);
 
   // Recurse down and build train track.
-  recursive_build(Multigon(0).Edge(0,0),ci);
+  recursive_build(Multigon(0)->Edge(0,0),ci);
 
   normalise();
 }
 
-void traintrack::recursive_build(traintrack::edgep& ee,
+void traintrack::recursive_build(traintrack::edgep ee,
 				 traintrack::intVec::const_iterator& ci)
 {
   coding_block outb;
@@ -119,10 +119,9 @@ void traintrack::recursive_build(traintrack::edgep& ee,
     }
 
   // Add a new multigon, copying label.
-  // Could replace new by std::make_unique<multigon> in C++14.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
-  // C++14 has make_unique.
-  mgv.push_back(mgonp(std::make_unique<multigon>(inb.nprongs, inb.label)));
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++11 has make_shared.
+  mgv.push_back(mgonp(std::make_shared<multigon>(inb.nprongs, inb.label)));
 #else
   mgv.push_back(mgonp(new multigon(inb.nprongs, inb.label)));
 #endif
@@ -172,28 +171,28 @@ void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
   for (int m = 0; m < ttexist.multigons(); ++m)
     {
       // Allocate the new multigons.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
-      // C++14 has make_unique.
-      ttnew.mgv.push_back(mgonp(std::make_unique<multigon>
-				(ttexist.Multigon(m).prongs(),
-				 ttexist.Multigon(m).label())));
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+      // C++11 has make_shared.
+      ttnew.mgv.push_back(mgonp(std::make_shared<multigon>
+				(ttexist.Multigon(m)->prongs(),
+				 ttexist.Multigon(m)->label())));
 #else
-      ttnew.mgv.push_back(mgonp(new multigon(ttexist.Multigon(m).prongs(),
-					     ttexist.Multigon(m).label())));
+      ttnew.mgv.push_back(mgonp(new multigon(ttexist.Multigon(m)->prongs(),
+					     ttexist.Multigon(m)->label())));
 #endif
-      for (int p = 0; p < ttexist.Multigon(m).prongs(); ++p)
+      for (int p = 0; p < ttexist.Multigon(m)->prongs(); ++p)
 	{
-	  for (int e = 0; e < ttexist.Multigon(m).edges(p); ++e)
+	  for (int e = 0; e < ttexist.Multigon(m)->edges(p); ++e)
 	    {
 	      // Find where the edge is hooked to.
-	      const multigon* mp = &ttexist.Multigon(m);
+	      std::shared_ptr<const multigon> mp = ttexist.Multigon(m);
 
 	      // Unfortunately from the old edge we only get a pointer
 	      // to the multigon.  We need to find what index number
 	      // that corresponds to, so we can use it for the new
 	      // multigons.
 	      int t_pr, t_pre;
-	      multigon* t_mp =
+	      std::shared_ptr<multigon> t_mp =
 		mp->Edge(p,e)->target_multigon(mp,t_pr,t_pre);
 
 	      // Search through the multigons for the pointer.
@@ -201,7 +200,7 @@ void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
 	      for (; t_m < (int)ttexist.multigons(); ++t_m)
 		{
 #if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
-		  if (ttexist.mgv[t_m].get() == t_mp) break;
+		  if (ttexist.mgv[t_m] == t_mp) break;
 #else
 		  if (ttexist.mgv[t_m] == t_mp) break;
 #endif
@@ -219,14 +218,14 @@ void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
 		{
 		  // We haven't allocated the target multigon yet, so
 		  // just create a new edge.
-		  ttnew.Multigon(m).attach_edge(p,e);
+		  ttnew.Multigon(m)->attach_edge(p,e);
 		}
 	      else
 		{
 		  // We've already been there, so there is a dangling
 		  // edge waiting for us.
-		  edgep ep = ttnew.Multigon(t_m).Edge(t_pr,t_pre);
-		  ttnew.Multigon(m).attach_edge(ep,p,e);
+		  edgep ep = ttnew.Multigon(t_m)->Edge(t_pr,t_pre);
+		  ttnew.Multigon(m)->attach_edge(ep,p,e);
 		}
 	    }
 	}
@@ -254,7 +253,7 @@ void traintrack::check() const
 traintrack::intVec traintrack::coding_from_monogon(const int mono,
 						   const int dir) const
 {
-  if (Multigon(mono).edges() > 1)
+  if (Multigon(mono)->edges() > 1)
     {
       std::cerr << "Not an uncusped monogon in traintrack::coding.\n";
       std::exit(1);
@@ -263,16 +262,16 @@ traintrack::intVec traintrack::coding_from_monogon(const int mono,
   intVec code;
   // Start the coding vector with the monogon.
   // Uncusped monogons are marked with a coding_block() sequence.
-  coding_block(0,1,Multigon(mono).label(),0,1).append_to(code);
+  coding_block(0,1,Multigon(mono)->label(),0,1).append_to(code);
 
   // Recurse down and compute coding.
   // Start by finding the multigon the edge is attached to, and which
   // prong.
   int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
+  std::shared_ptr<multigon> egmono =
+    Multigon(mono)->Edge(0,0)->target_multigon(Multigon(mono),pmono,pemono);
 
-  recursive_coding(*egmono,pmono,pemono,code,dir);
+  recursive_coding(egmono,pmono,pemono,code,dir);
 
   return code;
 }
@@ -286,7 +285,7 @@ traintrack::intVec traintrack::minimise_coding()
   intVec codemin = coding_from_monogon(mono);
 
   // Loop over monogons with only one edge (uncusped).
-  while (Multigon(++mono).edges() <= 1)
+  while (Multigon(++mono)->edges() <= 1)
     {
       intVec code = coding_from_monogon(mono);
       if (code < codemin) { codemin = code; monomin = mono; }
@@ -306,7 +305,7 @@ traintrack::intVec traintrack::coding(const int dir) const
   intVec codemin = coding_from_monogon(mono,dir);
 
   // Loop over monogons with only one edge (uncusped).
-  while (Multigon(++mono).edges() <= 1)
+  while (Multigon(++mono)->edges() <= 1)
     {
       intVec code = coding_from_monogon(mono,dir);
       if (code < codemin) { codemin = code; }
@@ -315,18 +314,18 @@ traintrack::intVec traintrack::coding(const int dir) const
   return codemin;
 }
 
-void traintrack::recursive_coding(const multigon& mm,
+void traintrack::recursive_coding(std::shared_ptr<const multigon> mm,
 				  const int pin, const int ein,
 				  intVec& code, const int dir) const
 {
   int p = pin, e = ein;
 
-  if (mm.edges() == 1)
+  if (mm->edges() == 1)
     {
       // This is an uncusped monogon so we won't
       // recurse. Record it here and continue.  Uncusped
       // monogons are marked with a coding_block() sequence.
-      coding_block(0,1,mm.label(),0,1).append_to(code);
+      coding_block(0,1,mm->label(),0,1).append_to(code);
       return;
     }
 
@@ -335,13 +334,13 @@ void traintrack::recursive_coding(const multigon& mm,
       // Prong number relative to entry prong into multigon.
       // The entry prong is labeled 0, and the other prongs
       // clockwise from 0 (anticlockwise if dir = -1).
-      int prong = ttauto::mod(dir*(p-pin),mm.prongs());
+      int prong = ttauto::mod(dir*(p-pin),mm->prongs());
       // Number of prongs in outgoing multigon.
-      int nprongs = mm.prongs();
+      int nprongs = mm->prongs();
       // Label of the multigon.
-      int label = mm.label();
+      int label = mm->label();
       // Number of edges in the outgoing prong.
-      int nedges = mm.edges(p);
+      int nedges = mm->edges(p);
       // The outgoing edge.  Number anticlockwise if dir = -1.
       int edge = (dir == 1 ? e : nedges-1-e);
 
@@ -351,15 +350,15 @@ void traintrack::recursive_coding(const multigon& mm,
 
       // Find the next multigon down.
       int pout, eout;
-      multigon *ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
+      std::shared_ptr<multigon> ed = mm->Edge(p,e)->target_multigon(mm,pout,eout);
 
       // Don't recurse down the entry edge.
       if (!(p == pin && e == ein))
 	{
-	  recursive_coding(*ed,pout,eout,code,dir);
+	  recursive_coding(ed,pout,eout,code,dir);
 	}
       // Increment the edge and prong (decrement if dir = -1).
-      mm.cycle_edges(p,e,dir);
+      mm->cycle_edges(p,e,dir);
     }
   while (!(p == pin && e == ein));
 }
@@ -373,7 +372,7 @@ mathmatrix_permplus1 traintrack::cyclic_symmetry()
   mathmatrix_permplus1 perm(jlt::identity_matrix<int>(edges()));
 
   // Loop over monogons with only one edge (uncusped) and save codings.
-  while (Multigon(++mono).edges() <= 1)
+  while (Multigon(++mono)->edges() <= 1)
     {
       if (code == coding_from_monogon(mono))
 	{
@@ -496,17 +495,17 @@ bool traintrack::fold(const int f)
   // Start by finding the multigon the edge is attached to, and which
   // prong.
   int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
+  std::shared_ptr<const multigon> egmono =
+    Multigon(mono)->Edge(0,0)->target_multigon(Multigon(mono),pmono,pemono);
 
   // Find the monogon, prong, edge of the cusp with number fcusp.
 #if __cplusplus > 199711L
-  multigon* mmc = nullptr;
+  std::shared_ptr<multigon> mmc = nullptr;
 #else
   multigon* mmc = 0;
 #endif
   int pc, ec, cs = fcusp;
-  recursive_find_cusp(*egmono,pmono,pemono,cs,mmc,pc,ec);
+  recursive_find_cusp(egmono,pmono,pemono,cs,mmc,pc,ec);
 
 #if __cplusplus > 199711L
   if (mmc == nullptr)
@@ -519,12 +518,13 @@ bool traintrack::fold(const int f)
     }
 
   // Fold at the cusp.
-  return fold(*mmc,pc,ec,fdir);
+  return fold(mmc,pc,ec,fdir);
 }
 
-bool traintrack::recursive_find_cusp(multigon& mm,
+bool traintrack::recursive_find_cusp(std::shared_ptr<const multigon> mm,
 				     const int pin, const int ein,
-				     int& fcusp, multigon*& mmc,
+				     int& fcusp,
+				     std::shared_ptr<const multigon> mmc,
 				     int& pc, int& ec) const
 {
   int p = pin, e = ein;
@@ -533,13 +533,13 @@ bool traintrack::recursive_find_cusp(multigon& mm,
     {
       // Is there a cusp here?  There is, as long as it's not the
       // last edge on a prong.
-      if (e < mm.edges(p)-1)
+      if (e < mm->edges(p)-1)
 	{
 	  if (fcusp-- == 0)
 	    {
 	      // We've found the cusp!  We're done here.  Send
 	      // back the location of the cusp.
-	      mmc = &mm;
+	      mmc = mm;
 	      pc = p;
 	      ec = e;
 	      return true;
@@ -548,7 +548,7 @@ bool traintrack::recursive_find_cusp(multigon& mm,
 
       // Find the next multigon down.
       int pout, eout;
-      multigon *ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
+      std::shared_ptr<multigon> ed = mm->Edge(p,e)->target_multigon(mm,pout,eout);
 
       // Don't recurse down the entry edge.
       if (!(p == pin && e == ein))
@@ -556,11 +556,11 @@ bool traintrack::recursive_find_cusp(multigon& mm,
 	  // Recurse only if it's not an uncusped monogon down there.
 	  if (ed->edges() > 1)
 	    {
-	      if (recursive_find_cusp(*ed,pout,eout,fcusp,mmc,pc,ec))
+	      if (recursive_find_cusp(ed,pout,eout,fcusp,mmc,pc,ec))
 		return true;
 	    }
 	}
-      mm.cycle_edges(p,e);	// Increment the edge and prong.
+      mm->cycle_edges(p,e);	// Increment the edge and prong.
     }
   while (!(p == pin && e == ein));
 
@@ -572,7 +572,7 @@ bool traintrack::recursive_find_cusp(multigon& mm,
 //
 // A cusp is specified by c, the first of its two edges encountered
 // clockwise.
-bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
+bool traintrack::fold(std::shared_ptr<multigon> mm, const int p, const int c, const int dir)
 {
   int e0, e1;
 
@@ -582,7 +582,7 @@ bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
       std::exit(1);
     }
 
-  if (c > mm.edges(p)-2)
+  if (c > mm->edges(p)-2)
     {
       std::cerr << "Not a cusp in traintrack::fold.\n";
       std::exit(1);
@@ -595,7 +595,7 @@ bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
 
   // Find target of edge: multigon pointer, prong, and edge.
   int t_pr, t_pre;
-  multigon *t_mm = mm.Edge(p,e1)->target_multigon(&mm,t_pr,t_pre);
+  std::shared_ptr<multigon> t_mm = mm->Edge(p,e1)->target_multigon(mm,t_pr,t_pre);
 
   if (debug)
     {
@@ -612,9 +612,9 @@ bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
       // We fold until the next prong clockwise (anticlockwise) on the
       // target multigon.
       // The new weight on e1.
-      double w0 = mm.Edge(p,e0)->weight();
-      double w1 = mm.Edge(p,e1)->weight();
-      mm.Edge(p,e1)->weight(w0 + w1);
+      double w0 = mm->Edge(p,e0)->weight();
+      double w1 = mm->Edge(p,e1)->weight();
+      mm->Edge(p,e1)->weight(w0 + w1);
 
       if (debug) std::cerr << "traintrack::fold t_pr=" << t_pr;
       // Find the prong we're folding until, which means adding dir to
@@ -628,8 +628,8 @@ bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
       int t2_pre = (dir == 1 ? 0 : t_mm->edges(t2_pr));
       if (debug) std::cerr << " t2_pre=" << t2_pre << std::endl;
       // Now detach edge e0 from mm and re-attach to *t_mm.
-      edgep ep = mm.Edge(p,e0);
-      ep->detach_from_multigon(&mm);
+      edgep ep = mm->Edge(p,e0);
+      ep->detach_from_multigon(mm);
       t_mm->insert_edge(ep,t2_pr,t2_pre);
     }
   else
@@ -652,42 +652,42 @@ traintrack::dblVec traintrack::weights(const int mono) const
 {
   // Start the weights vector with the monogon.
   dblVec wv;
-  wv.push_back(Multigon(mono).Edge(0,0)->weight());
+  wv.push_back(Multigon(mono)->Edge(0,0)->weight());
 
   // Recurse down and collect weights.
   // Start by finding the multigon the edge is attached to, and which
   // prong.
   int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
+  std::shared_ptr<multigon> egmono =
+    Multigon(mono)->Edge(0,0)->target_multigon(Multigon(mono),pmono,pemono);
 
-  recursive_get_weights(*egmono,pmono,pemono,wv);
+  recursive_get_weights(egmono,pmono,pemono,wv);
 
   return wv;
 }
 
-void traintrack::recursive_get_weights(const multigon& mm,
+void traintrack::recursive_get_weights(std::shared_ptr<multigon> mm,
 				       const int pin, const int ein,
 				       dblVec& wv) const
 {
   int p = pin, e = ein;
-  mm.cycle_edges(p,e);	// Increment the edge and prong.
+  mm->cycle_edges(p,e);	// Increment the edge and prong.
 
   do
     {
       // Record the weight.
-      wv.push_back(mm.Edge(p,e)->weight());
+      wv.push_back(mm->Edge(p,e)->weight());
 
       // Find the next multigon down.
       int pout, eout;
-      multigon *ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
+      std::shared_ptr<multigon> ed = mm->Edge(p,e)->target_multigon(mm,pout,eout);
 
       // Recurse only if it's not an uncusped monogon down there.
       if (ed->edges() > 1)
 	{
-	  recursive_get_weights(*ed,pout,eout,wv);
+	  recursive_get_weights(ed,pout,eout,wv);
 	}
-      mm.cycle_edges(p,e);	// Increment the edge and prong.
+      mm->cycle_edges(p,e);	// Increment the edge and prong.
     }
   while (!(p == pin && e == ein));
 }
@@ -700,42 +700,42 @@ traintrack::weights(traintrack::dblVec::const_iterator wi)
   int mono = 0;
 
   // Start the weights vector with the monogon.
-  Multigon(mono).Edge(0,0)->weight(*wi++);
+  Multigon(mono)->Edge(0,0)->weight(*wi++);
 
   // Recurse down and collect weights.
   // Start by finding the multigon the edge is attached to, and which
   // prong.
   int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
+  std::shared_ptr<multigon> egmono =
+    Multigon(mono)->Edge(0,0)->target_multigon(Multigon(mono),pmono,pemono);
 
-  recursive_set_weights(*egmono,pmono,pemono,wi);
+  recursive_set_weights(egmono,pmono,pemono,wi);
 
   return wi;
 }
 
-void traintrack::recursive_set_weights(const multigon& mm,
+void traintrack::recursive_set_weights(std::shared_ptr<multigon> mm,
 				       const int pin, const int ein,
 				       dblVec::const_iterator& wi)
 {
   int p = pin, e = ein;
-  mm.cycle_edges(p,e);	// Increment the edge and prong.
+  mm->cycle_edges(p,e);	// Increment the edge and prong.
 
   do
     {
       // Copy the weight.
-      mm.Edge(p,e)->weight(*wi++);
+      mm->Edge(p,e)->weight(*wi++);
 
       // Find the next multigon down.
       int pout, eout;
-      multigon *ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
+      std::shared_ptr<multigon> ed = mm->Edge(p,e)->target_multigon(mm,pout,eout);
 
       // Recurse only if it's not an uncusped monogon down there.
       if (ed->edges() > 1)
 	{
-	  recursive_set_weights(*ed,pout,eout,wi);
+	  recursive_set_weights(ed,pout,eout,wi);
 	}
-      mm.cycle_edges(p,e);	// Increment the edge and prong.
+      mm->cycle_edges(p,e);	// Increment the edge and prong.
     }
   while (!(p == pin && e == ein));
 }
@@ -770,13 +770,13 @@ std::ostream& traintrack::printMathematicaForm(std::ostream& strm) const
 
   for (int m = 0; m < (int)mgv.size(); ++m)
     {
-      for (int p = 0; p < Multigon(m).prongs(); ++p)
+      for (int p = 0; p < Multigon(m)->prongs(); ++p)
 	{
-	  for (int e = 0; e < Multigon(m).edges(p); ++e)
+	  for (int e = 0; e < Multigon(m)->edges(p); ++e)
 	    {
 	      int t_p, t_e;
-	      multigon *t_mm =
-		Multigon(m).Edge(p,e)->target_multigon(&Multigon(m),t_p,t_e);
+	      std::shared_ptr<multigon> t_mm =
+		Multigon(m)->Edge(p,e)->target_multigon(Multigon(m),t_p,t_e);
 	      int t_m = multigon_index(t_mm);
 	      int v1 = multigon_prong_index(m,p);
 	      int v2 = multigon_prong_index(t_m,t_p);
@@ -789,7 +789,7 @@ std::ostream& traintrack::printMathematicaForm(std::ostream& strm) const
   // Draw multigons as closed polygons in the graph.
   for (int m = 0; m < (int)mgv.size(); ++m)
     {
-      int np = Multigon(m).prongs();
+      int np = Multigon(m)->prongs();
       if (np > 1)
 	{
 	  for (int p = 0; p < np; ++p)
@@ -812,12 +812,12 @@ std::ostream& traintrack::printMathematicaForm(std::ostream& strm) const
 }
 
 
-inline int traintrack::multigon_index(const multigon* mm) const
+inline int traintrack::multigon_index(std::shared_ptr<const multigon> mm) const
 {
   int m = 0;
   for (; m < (int)mgv.size(); ++m)
     {
-      if (mm == &Multigon(m)) break;
+      if (mm == Multigon(m)) break;
     }
   if (m == (int)mgv.size())
     {
@@ -831,7 +831,7 @@ inline int traintrack::multigon_index(const multigon* mm) const
 int traintrack::multigon_prong_index(const int mi, const int pi) const
 {
   int ix = 0;
-  for (int m = 0; m < mi; ++m) ix += Multigon(m).prongs();
+  for (int m = 0; m < mi; ++m) ix += Multigon(m)->prongs();
   ix += pi;
 
   return ix;

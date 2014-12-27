@@ -1,0 +1,5 @@
+On branch try-shared-multigon:
+
+Got some way to converting multigon to be handled by shared_ptr, so edges could properly point to it.  Had to convert everything to pointers.
+
+I think I hit a big problem in swap: multigons have edges, but edges point back to multigons, so I think I have circular dependencies.  The right behavior might be for edges to have weak_ptr's to multigons?

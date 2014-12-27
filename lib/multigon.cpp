@@ -46,7 +46,7 @@ void multigon::attach_edge(const int p, const int e)
 
 // Attach an edge eg to prong p, numbered edge e.
 // Prongs and outgoing edges are numbered clockwise.
-void multigon::attach_edge(edgep& eg, const int p, const int e)
+void multigon::attach_edge(edgep eg, const int p, const int e)
 {
   if (debug)
     {
@@ -59,10 +59,10 @@ void multigon::attach_edge(edgep& eg, const int p, const int e)
   point_to_edge(eg,p,e);
 
   // Make sure the edge knows where it's attached.
-  eg->point_to_multigon(this,p,e);
+  eg->point_to_multigon(shared_from_this(),p,e);
 }
 
-void multigon::point_to_edge(edgep& eg, const int p, const int e)
+void multigon::point_to_edge(edgep eg, const int p, const int e)
 {
   if (debug && (p < 0 || p >= prongs()))
     {
@@ -99,7 +99,7 @@ void multigon::insert_edge(const int p, const int e)
 
 // Insert an edge eg, which unlike attach_edge shifts the existing edges
 // out of the way.
-void multigon::insert_edge(edgep& eg, const int p, const int e)
+void multigon::insert_edge(edgep eg, const int p, const int e)
 {
   // If there is nothing there, can just attach.
   if (e >= edges(p)) return attach_edge(eg,p,e);
@@ -109,13 +109,14 @@ void multigon::insert_edge(edgep& eg, const int p, const int e)
   egv[p].insert(egv[p].begin() + e,eg);
 
   // Make sure the edge knows where it's attached.
-  eg->point_to_multigon(this,p,e);
+  eg->point_to_multigon(shared_from_this(),p,e);
 
   // Now update the edge numbers on the edges after e.  The edge
   // pointers and prongs don't need updating.
   for (int ee = e+1; ee < edges(p); ++ee)
     {
-      int en = Edge(p,ee)->which_ending(this);
+      std::cerr << "here1\n";
+      int en = Edge(p,ee)->which_ending(shared_from_this());
       Edge(p,ee)->pre[en] = ee;
     }
 }
@@ -131,7 +132,8 @@ bool multigon::check() const
 	      std::cerr << "Unhooked prong edge in multigon::check.\n";
 	      std::exit(1);
 	    }
-	  int en = Edge(p,e)->which_ending(this);
+	  std::cerr << "here2\n";
+	  int en = Edge(p,e)->which_ending(shared_from_this());
 	  if (Edge(p,e)->pr[en] != p)
 	    {
 	      std::cerr << "Inconsistent prong number";
@@ -149,7 +151,7 @@ bool multigon::check() const
 	    {
 	      std::cerr << "Bad edge reference counter";
 	      std::cerr << " in multigon::check.\n";
-	      std::exit(1);
+	      //std::exit(1);
 	    }
 #endif
 	}
@@ -175,7 +177,8 @@ void multigon::cycle_prongs(const int i)
   // Use -i to get clockwise cycling.
   std::rotate(egv.begin(),egv.begin()+ttauto::mod(-i,k),egv.end());
 
-  update_edge_prong_pointers(this);
+  /*update_edge_prong_pointers(this);*/
+  update_edge_prong_pointers(std::const_pointer_cast<const multigon>(shared_from_this()));
 }
 
 multigon::intVec multigon::edge_sequence(const int p0) const
@@ -287,16 +290,18 @@ void multigon::erase_edge_pointer(const int p, const int e)
   // pointers and prongs don't need updating.
   for (int ee = e; ee < edges(p); ++ee)
     {
-      int en = Edge(p,ee)->which_ending(this);
+      std::cerr << "here3\n";
+      int en = Edge(p,ee)->which_ending(shared_from_this());
       Edge(p,ee)->pre[en] = ee;
     }
 }
 
 // Cycle through edge pointers, find the end pointing to pm_old, and
 // update to point to this.
-void multigon::update_edge_prong_pointers(const multigon* pm_old)
+/*void multigon::update_edge_prong_pointers(const multigon *pm_old)*/
+void multigon::update_edge_prong_pointers(const std::shared_ptr<const multigon> pm_old)
 {
-  multigon *pm_new = this;
+  std::shared_ptr<multigon> pm_new = shared_from_this();
 
   for (int p = 0; p < prongs(); ++p)
     {
@@ -336,6 +341,7 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 	  else
 	    {
 	      // Find which end points to the old multigon.
+	      std::cerr << "here4\n";
 	      int en = Edge(p,e)->which_ending(pm_old);
 	      Edge(p,e)->mg[en] = pm_new;
 	      // For swap it's not strictly necessary to
@@ -363,6 +369,7 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 
 // Swap two multigons.
 // The tricky bit is updating the edge pointers back to the multigons.
+#if 0
 void swap(multigon& m1, multigon& m2)
 {
   // Save pointers to m1 and m2.
@@ -379,6 +386,118 @@ void swap(multigon& m1, multigon& m2)
 
   // Update the edge pointers for m2.
   m2.update_edge_prong_pointers(pm1);
+}
+#endif
+
+// Swap two multigons.
+// The tricky bit is updating the edge pointers back to the multigons.
+void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2)
+{
+  std::cerr << "<<<<<<< in swap ============================================\n";
+
+  const multigon* p1 = m1.get();
+  const multigon* p2 = m2.get();
+
+  // Swap their contents.
+  std::cerr << "BEFORE:\n";
+  std::cerr << m1 << " with " << m1->k << " prongs" << std::endl;
+  for (int p = 0; p < m1->prongs(); ++p)
+    {
+      for (int e = 0; e < m1->edges(p); ++e)
+	{
+	  std::cerr << "  p=" << p << " e=" << e << " " << m1->Edge(p,e)->mg[0] << " " << m1->Edge(p,e)->mg[1] << std::endl;
+	}
+    }
+  std::cerr << std::endl;
+  std::cerr << m2 << " with " << m2->k << " prongs" << std::endl;
+  for (int p = 0; p < m2->prongs(); ++p)
+    {
+      for (int e = 0; e < m2->edges(p); ++e)
+	{
+	  std::cerr << "  p=" << p << " e=" << e << " " << m2->Edge(p,e)->mg[0] << " " << m2->Edge(p,e)->mg[1] << std::endl;
+	}
+    }
+
+  std::swap(*m1,*m2);
+
+  for (int p = 0; p < m1->prongs(); ++p)
+    {
+      for (int e = 0; e < m1->edges(p); ++e)
+	{
+	  for (int ee = 0; ee < 2; ++e)
+	    {
+	      if (m1->Edge(p,e)->mg[ee] == m1)
+		{
+		  std::cerr << "  swapping p1 & p2";
+		  m1->Edge(p,e)->mg[ee] = m2;
+		}
+	      if (m1->Edge(p,e)->mg[ee] == m2)
+		{
+		  std::cerr << "  swapping p1 & p2";
+		  m1->Edge(p,e)->mg[ee] = m1;
+		}
+	    }
+	}
+    }
+
+  for (int p = 0; p < m2->prongs(); ++p)
+    {
+      for (int e = 0; e < m2->edges(p); ++e)
+	{
+	  for (int ee = 0; ee < 2; ++e)
+	    {
+	      if (m2->Edge(p,e)->mg[ee] == m1)
+		{
+		  std::cerr << "  swapping p1 & p2";
+		  m2->Edge(p,e)->mg[ee] = m2;
+		}
+	      if (m2->Edge(p,e)->mg[ee] == m2)
+		{
+		  std::cerr << "  swapping p1 & p2";
+		  m2->Edge(p,e)->mg[ee] = m1;
+		}
+	    }
+	}
+    }
+
+
+
+
+  std::cerr << "\nAFTER:\n";
+  std::cerr << m1 << " with " << m1->k << " prongs" << std::endl;
+  for (int p = 0; p < m1->prongs(); ++p)
+    {
+      for (int e = 0; e < m1->edges(p); ++e)
+	{
+	  std::cerr << "  p=" << p << " e=" << e << " " << m1->Edge(p,e)->mg[0] << " " << m1->Edge(p,e)->mg[1] << std::endl;
+	}
+    }
+  std::cerr << std::endl;
+  std::cerr << m2 << " with " << m2->k << " prongs" << std::endl;
+  for (int p = 0; p < m2->prongs(); ++p)
+    {
+      for (int e = 0; e < m2->edges(p); ++e)
+	{
+	  std::cerr << "  p=" << p << " e=" << e << " " << m2->Edge(p,e)->mg[0] << " " << m2->Edge(p,e)->mg[1] << std::endl;
+	}
+    }
+
+#if 0
+  // Update the edge pointers for m1.
+  m1->update_edge_prong_pointers(m2);
+  // Now the train track might momentarilty be in an inconsistent
+  // state, if the two multigons share an edge.  But everything will
+  // be ok after the next step.
+
+  std::cerr << "in swap 3\n";
+
+  // Update the edge pointers for m2.
+  m2->update_edge_prong_pointers(m1);
+
+  std::cerr << "   end: " << m1 << " " << m2 << " " << m1->k << " " << m2->k << std::endl;
+#endif
+  std::cerr << ">>>>>>> in swap ============================================\n";
+
 }
 
 } // namespace ttauto

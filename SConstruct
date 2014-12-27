@@ -26,7 +26,7 @@ import subprocess
 from distutils.version import StrictVersion
 
 # Choose a particular compiler by specifying the version here.
-#GCC_version = StrictVersion('4.9.2');
+GCC_version = StrictVersion('4.9.2');
 
 cc = 'gcc'
 cxx = 'g++'

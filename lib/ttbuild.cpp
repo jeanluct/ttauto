@@ -160,16 +160,16 @@ traintrack::traintrack(const intVec& Kv)
 void traintrack::ttbuild_all_monogons(const int N)
 {
   // A monogon (puncture).
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
-  // C++14 has make_unique.
-  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++11 has make_shared.
+  mgv.push_back(mgonp(std::make_shared<multigon>(1)));
 #else
   mgv.push_back(mgonp(new multigon(1)));
 #endif
 
   // All the edges are attached to monogon 0.
   for (int i = 0; i < N-1; ++i)
-    Multigon(0).attach_edge(0,i);
+    Multigon(0)->attach_edge(0,i);
 
   // Cap-off by attaching monogons to the free edge endings.
   capoff();
@@ -268,18 +268,18 @@ void traintrack::ttbuild_monogoncusps(const int N, const intVec& Kv)
     }
 
   traintrack tt;
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
-  // C++14 has make_unique.
-  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++11 has make_shared.
+  mgv.push_back(mgonp(std::make_shared<multigon>(1)));
 #else
   mgv.push_back(mgonp(new multigon(1)));
 #endif
   for (int i = 0; i < L; ++i)
     {
       // Kv[i]-gon.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
-      // C++14 has make_unique.
-      mgv.push_back(mgonp(std::make_unique<multigon>(Kv[i])));
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+      // C++11 has make_shared.
+      mgv.push_back(mgonp(std::make_shared<multigon>(Kv[i])));
 #else
       mgv.push_back(mgonp(new multigon(Kv[i])));
 #endif
@@ -287,14 +287,14 @@ void traintrack::ttbuild_monogoncusps(const int N, const intVec& Kv)
 
   // Attach edges to monogon 0.
   for (int i = 0; i <= (P[0]-1)+(L-1); ++i)
-    Multigon(0).attach_edge(0,i);
+    Multigon(0)->attach_edge(0,i);
 
   for (int i = 0; i < L; ++i)
     {
       // Edges on prong 0, edges [P0-1 + 0,P0-1 + (L-1)] of monogon 0
       // are attached to the 0th prong of multigons [1,L].
-      multigon::edgep ep = Multigon(0).Edge(0,P[0]-1+i);
-      Multigon(i+1).attach_edge(ep);
+      multigon::edgep ep = Multigon(0)->Edge(0,P[0]-1+i);
+      Multigon(i+1)->attach_edge(ep);
     }
 
   // Cap-off by attaching monogons to the free edge endings.
@@ -312,18 +312,18 @@ void traintrack::capoff()
 
   for (int m = 0; m < mgin; ++m)
     {
-      for (int p = 0; p < Multigon(m).prongs(); ++p)
+      for (int p = 0; p < Multigon(m)->prongs(); ++p)
 	{
-	  for (int e = 0; e < Multigon(m).edges(p); ++e)
+	  for (int e = 0; e < Multigon(m)->edges(p); ++e)
 	    {
-	      if (Multigon(m).prong_edge_is_unattached(p,e))
+	      if (Multigon(m)->prong_edge_is_unattached(p,e))
 		{
 		  // There's no edge there at all, so add one.
 		  // It will get capped off in a bit...
-		  Multigon(m).attach_edge(p,e);
+		  Multigon(m)->attach_edge(p,e);
 		}
-	      bool ua0 = Multigon(m).Edge(p,e)->is_unattached(0);
-	      bool ua1 = Multigon(m).Edge(p,e)->is_unattached(1);
+	      bool ua0 = Multigon(m)->Edge(p,e)->is_unattached(0);
+	      bool ua1 = Multigon(m)->Edge(p,e)->is_unattached(1);
 	      if (ua0 && ua1)
 		{
 		  std::cerr << "Both ends unattached";
@@ -332,13 +332,13 @@ void traintrack::capoff()
 		}
 	      if (ua0 || ua1)
 		{
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
-		  // C++14 has make_unique.
-		  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+		  // C++11 has make_shared.
+		  mgv.push_back(mgonp(std::make_shared<multigon>(1)));
 #else
 		  mgv.push_back(mgonp(new multigon(1)));
 #endif
-		  multigon::edgep ep = Multigon(m).Edge(p,e);
+		  multigon::edgep ep = Multigon(m)->Edge(p,e);
 		  mgv.back()->attach_edge(ep);
 		}
 	    }
@@ -351,7 +351,7 @@ void traintrack::monogon_to_multigon(const int L, const int K)
   typedef traintrack::mgonp	mgonp;
   typedef multigon::edgep	edgep;
 
-  if (Multigon(L).prongs() != 1)
+  if (Multigon(L)->prongs() != 1)
     {
       std::cerr << "Not a monogon";
       std::cerr << " in ttauto::ttbuild_monogon_to_multigon\n";
@@ -359,23 +359,23 @@ void traintrack::monogon_to_multigon(const int L, const int K)
     }
 
   // Save a pointer to the edge multigon L was pointing to.
-  edgep ep = Multigon(L).Edge(0,0);
+  edgep ep = Multigon(L)->Edge(0,0);
   // Detach the edge.
 #if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
-  Multigon(L).Edge(0,0)->detach_from_multigon(mgv[L].get());
+  Multigon(L)->Edge(0,0)->detach_from_multigon(mgv[L]);
 #else
-  Multigon(L).Edge(0,0)->detach_from_multigon(mgv[L]);
+  Multigon(L)->Edge(0,0)->detach_from_multigon(mgv[L]);
 #endif
   // Now make a new multigon, overwriting the old one.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
-  // C++14 has make_unique.
-  mgv[L] = mgonp(std::make_unique<multigon>(K));
+#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+  // C++11 has make_shared.
+  mgv[L] = mgonp(std::make_shared<multigon>(K));
 #else
   mgv[L] = mgonp(new multigon(K));
 #endif
 
   // Attach it to the edge we freed up.
-  Multigon(L).attach_edge(ep,0,0);
+  Multigon(L)->attach_edge(ep,0,0);
 }
 
 

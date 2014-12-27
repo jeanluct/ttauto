@@ -40,8 +40,10 @@ class edge
   static const int nends = 2;	// An edge has two ends.
 
 public:
-  typedef jlt::vector<multigon*>	mgpVec;
-  typedef multigon::intVec		intVec;
+  typedef std::shared_ptr<multigon>		mgonp;
+  typedef std::shared_ptr<const multigon>	cmgonp;
+  typedef jlt::vector<mgonp>			mgpVec;
+  typedef multigon::intVec			intVec;
 
 private:
   double wt;			// Weight on edge.
@@ -59,7 +61,7 @@ public:
 
 #if 0
   /* Unused.  See definition to see why it's maybe a bad idea. */
-  void attach_to_multigon(multigon* mm, const int p = 0, const int e = 0);
+  void attach_to_multigon(mgonp mm, const int p = 0, const int e = 0);
 #endif
 
   // Is the edge ending en unattached?
@@ -92,11 +94,11 @@ public:
   bool check() const;
 
   // Which edge ending is a multigon attached to?
-  int which_ending(const multigon* mm) const;
+  int which_ending(cmgonp mm) const;
 
   // Detach from a given multigon.
   // class traintrack's fold method needs this.
-  void detach_from_multigon(const multigon* mm);
+  void detach_from_multigon(cmgonp mm);
 
   // Detach from both multigons completely.  Keeps only the weight.
   // This is unused at the moment.
@@ -104,7 +106,7 @@ public:
 
   // Return the pointer, prong, and edge to a multigon that the edge
   // is hooked to from mm.  Needed by class traintrack.
-  multigon* target_multigon(const multigon* mm, int& t_pr, int& t_pre) const;
+  mgonp target_multigon(cmgonp mm, int& t_pr, int& t_pre) const;
 
 private:
   // Be careful: pointers to edges are duplicated!
@@ -134,10 +136,11 @@ private:
     std::swap(pre[0],pre[1]);
   }
 
-  void point_to_multigon(multigon* mm, const int p, const int e);
+  void point_to_multigon(mgonp mm, const int p, const int e);
 
   friend class multigon;
-  friend void swap(multigon* m1, multigon* m2);
+  /* Added for debugging */
+  friend void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2);
 };
 
 
@@ -147,7 +150,7 @@ private:
 
 #if 0
 /* Unused. */
-inline void edge::attach_to_multigon(multigon* mm, const int p, const int e)
+inline void edge::attach_to_multigon(mgonp mm, const int p, const int e)
 {
   point_to_multigon(mm,p,e);
 
@@ -165,7 +168,7 @@ inline void edge::attach_to_multigon(multigon* mm, const int p, const int e)
 }
 #endif
 
-inline void edge::point_to_multigon(multigon* mm, const int p, const int e)
+inline void edge::point_to_multigon(mgonp mm, const int p, const int e)
 {
   // Attach to the first unattached ending.
   for (int en = 0; en < nends; ++en)
@@ -182,11 +185,12 @@ inline void edge::point_to_multigon(multigon* mm, const int p, const int e)
   std::exit(1);
 }
 
-inline int edge::which_ending(const multigon* mm) const
+inline int edge::which_ending(cmgonp mm) const
 {
+  std::cerr << "Entering..." << mm;
   for (int en = 0; en < nends; ++en)
     {
-      if (mg[en] == mm) return en;
+      if (mg[en] == mm) { std::cerr << " ok\n"; return en; }
     }
   std::cerr << "Could not find pointer back to prong";
   std::cerr << " in edge::which_ending.\n";
@@ -195,7 +199,7 @@ inline int edge::which_ending(const multigon* mm) const
 
 // Detach from a given multigon.
 // class traintrack's fold method needs this.
-inline void edge::detach_from_multigon(const multigon* mm)
+inline void edge::detach_from_multigon(cmgonp mm)
 {
   int en = which_ending(mm);
   // Let mother multigon know we've detached.
@@ -230,8 +234,8 @@ inline void edge::detach_from_multigons()
 
 // Return the pointer, prong, and edge to a multigon that the edge
 // is hooked to from mm.
-inline multigon* edge::target_multigon(const multigon* mm,
-				       int& t_pr, int& t_pre) const
+inline edge::mgonp edge::target_multigon(cmgonp mm,
+					 int& t_pr, int& t_pre) const
 {
   // Target ending is the one mm is not on.
   int t_en = 1 - which_ending(mm);

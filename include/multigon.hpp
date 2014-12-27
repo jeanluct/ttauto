@@ -27,6 +27,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <memory>
 #include <jlt/vector.hpp>
 #include "edge.hpp"
 #include "traintracks_util.hpp"
@@ -53,7 +54,7 @@ namespace ttauto {
 class edge;
 class traintrack;
 
-class multigon
+class multigon : public std::enable_shared_from_this<multigon>
 {
   static const int debug = 0;
 
@@ -68,11 +69,10 @@ public:
   typedef jlt::vector<int>		intVec;
 
 private:
-  int k;				// Number of prongs.
-  egpVecVec egv;			// Each prong points to one or
-					// more edges.
-  int lab;				// Label set.
-  bool punct;				// Punctured?
+  int k;			// Number of prongs.
+  egpVecVec egv;		// Each prong points to one or more edges.
+  int lab;			// Label set.
+  bool punct;			// Punctured?
 
 public:
 
@@ -122,9 +122,9 @@ public:
     return *this;
   }
 
-  edgep& Edge(const int p, const int e);
+  edgep Edge(const int p, const int e);
 
-  const edgep& Edge(const int p, const int e) const;
+  const edgep Edge(const int p, const int e) const;
 
   // Cycle through edges, incrementing the prong as needed.
   void cycle_edges(int& p, int &e, const int dir = 1) const;
@@ -163,7 +163,7 @@ public:
   void attach_edge(const int p = 0, const int e = 0);
 
   // Attach an edge eg at prong p, branch e.
-  void attach_edge(edgep& eg, const int p = 0, const int e = 0);
+  void attach_edge(edgep eg, const int p = 0, const int e = 0);
 
   // Insert a new edge at prong p, branch e (existing branches are
   // moved out of the way).
@@ -171,7 +171,7 @@ public:
 
   // Insert an edge eg at prong p, branch e (existing branches are
   // moved out of the way).
-  void insert_edge(edgep& eg, const int p = 0, const int e = 0);
+  void insert_edge(edgep eg, const int p = 0, const int e = 0);
 
   // Is there an edge already attached at prong p, edge e?
   bool prong_edge_is_unattached(const int p, const int e) const;
@@ -204,7 +204,8 @@ public:
 private:
   // Cycle through edge pointers, find the end pointing to pm_old, and
   // update to point to this.
-  void update_edge_prong_pointers(const multigon *pm_old);
+  /* void update_edge_prong_pointers(const multigon *pm_old);*/
+  void update_edge_prong_pointers(const std::shared_ptr<const multigon> pm_old);
 
   bool check_range(const int p, const int e) const
   {
@@ -225,28 +226,30 @@ private:
 
   void erase_edge_pointer(const int p, const int e);
 
-  void point_to_edge(edgep& eg, const int p, const int b);
+  void point_to_edge(edgep eg, const int p, const int b);
 
   friend class edge;
-  friend void swap(multigon& m1, multigon& m2);
+  friend void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2);
+  // friend void swap(multigon& m1, multigon& m2);
 };
 
 // Swap two multigons.
-void swap(multigon& m1, multigon& m2);
+void swap(std::shared_ptr<multigon> m1, std::shared_ptr<multigon> m2);
+//void swap(multigon& m1, multigon& m2);
 
 
 //
 // Inline method definitions
 //
 
-inline multigon::edgep& multigon::Edge(const int p, const int e)
+inline multigon::edgep multigon::Edge(const int p, const int e)
 {
   if (debug) check_range(p,e);
 
   return egv[p][e];
 }
 
-inline const multigon::edgep& multigon::Edge(const int p, const int e) const
+inline const multigon::edgep multigon::Edge(const int p, const int e) const
 {
   if (debug) check_range(p,e);
 

@@ -43,8 +43,7 @@ class traintrack
 public:
   typedef multigon::edgep				edgep;
 #if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
-  // There is only one owner for each multigon, so use std::unique_ptr (C++11).
-  typedef std::unique_ptr<multigon>			mgonp;
+  typedef std::shared_ptr<multigon>			mgonp;
 #else
   typedef multigon*					mgonp;
 #endif
@@ -123,7 +122,7 @@ public:
   // Public methods
   //
 
-  const multigon& Multigon(const int m) const;
+  std::shared_ptr<const multigon> Multigon(const int m) const;
 
   int edges() const { return mgv.size()-1; } /* Count explicitly */
 
@@ -257,8 +256,8 @@ private:
   // Other helper functions and private members
   //
 
-  // non-const reference to multigon is private.
-  multigon& Multigon(const int m);
+  // non-const pointer to multigon is private.
+  std::shared_ptr<multigon> Multigon(const int m);
 
   // The coding of a train track is a sequence of coding_blocks.
   struct coding_block;
@@ -266,7 +265,7 @@ private:
   void copy(traintrack& ttnew, const traintrack& ttexist);
 
   // Find the index of a multigon edge in the vector, given a pointer.
-  int multigon_index(const multigon* mm) const;
+  int multigon_index(std::shared_ptr<const multigon> mm) const;
 
   // Compute an index of for a multigon prong.
   int multigon_prong_index(const int mi, const int pi) const;
@@ -274,19 +273,21 @@ private:
   // Do two normalised tracks have the same multigons?
   bool same_multigons(const traintrack& tt) const;
 
-  void recursive_build(edgep& ee, intVec::const_iterator& cd);
+  void recursive_build(edgep ee, intVec::const_iterator& cd);
 
-  void recursive_coding(const multigon& mm, const int pp, const int ee,
+  void recursive_coding(std::shared_ptr<const multigon> mm, const int pp, const int ee,
 			intVec& code, const int dir) const;
 
-  void recursive_get_weights(const multigon& mm, const int pp, const int ee,
+  void recursive_get_weights(std::shared_ptr<multigon> mm, const int pp, const int ee,
 			     dblVec& wv) const;
 
-  void recursive_set_weights(const multigon& mm, const int pp, const int ee,
+  void recursive_set_weights(std::shared_ptr<multigon> mm, const int pp, const int ee,
 			     dblVec::const_iterator& wi);
 
-  bool recursive_find_cusp(multigon& mm, const int pp, const int ee,
-			   int& fcusp, multigon*& mmc, int& pc, int& ec) const;
+  bool recursive_find_cusp(std::shared_ptr<const multigon> mm,
+			   const int pin, const int ein,
+			   int& fcusp, std::shared_ptr<const multigon> mmc,
+			   int& pc, int& ec) const;
 
   // Minimise coding over uncusped monogons, such that the min is
   // obtained from the first position.
@@ -304,7 +305,7 @@ private:
 
   // Fold cusp c of prong p of multigon m in direction dir.
   //   dir = 1 clockwise, dir = 1 anticlockwise.
-  bool fold(multigon& mm, const int p, const int c, const int dir);
+  bool fold(std::shared_ptr<multigon> mm, const int p, const int c, const int dir);
 
   // Print a coding block.
   friend std::ostream& operator<<(std::ostream& strm, const coding_block& b);
@@ -376,7 +377,7 @@ struct traintrack::coding_block
 // Inline method definitions
 //
 
-inline multigon& traintrack::Multigon(const int m)
+inline std::shared_ptr<multigon> traintrack::Multigon(const int m)
 {
   if (debug && (m < 0 || m >= (int)mgv.size()))
     {
@@ -384,10 +385,10 @@ inline multigon& traintrack::Multigon(const int m)
       std::cerr << " in traintrack::Multigon\n";
       std::exit(1);
     }
-  return *mgv[m];
+  return mgv[m];
 }
 
-inline const multigon& traintrack::Multigon(const int m) const
+inline std::shared_ptr<const multigon> traintrack::Multigon(const int m) const
 {
   if (debug && (m < 0 || m >= (int)mgv.size()))
     {
@@ -395,7 +396,7 @@ inline const multigon& traintrack::Multigon(const int m) const
       std::cerr << " in traintrack::Multigon\n";
       std::exit(1);
     }
-  return *mgv[m];
+  return mgv[m];
 }
 
 inline int traintrack::monogons() const
@@ -403,7 +404,7 @@ inline int traintrack::monogons() const
   int nm = 0;
   for (int m = 0; m < multigons(); ++m)
     {
-      if (Multigon(m).prongs() == 1) ++nm;
+      if (Multigon(m)->prongs() == 1) ++nm;
     }
   return nm;
 }
@@ -413,7 +414,7 @@ inline int traintrack::punctures() const
   int np = 0;
   for (int m = 0; m < multigons(); ++m)
     {
-      if (Multigon(m).punctured()) ++np;
+      if (Multigon(m)->punctured()) ++np;
     }
   return np;
 }
@@ -459,7 +460,7 @@ inline void traintrack::normalise()
 {
   for (int m = 0; m < multigons(); ++m)
     {
-      Multigon(m).normalise();
+      Multigon(m)->normalise();
     }
   sort();
   minimise_coding();
@@ -478,7 +479,7 @@ inline void traintrack::swap(const int m1, const int m2)
       std::cerr << "Nonexistent multigon in traintrack::swap.\n";
       std::exit(1);
     }
-  ttauto::swap(*mgv[m1],*mgv[m2]);
+  ttauto::swap(mgv[m1],mgv[m2]);
 }
 
 inline std::ostream&
