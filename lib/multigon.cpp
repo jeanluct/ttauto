@@ -23,6 +23,7 @@
 // LICENSE>
 
 #include <iostream>
+#include <string>
 #include <cstdlib>
 #include <cmath>
 #include "edge.hpp"
@@ -279,6 +280,27 @@ std::ostream& multigon::print(std::ostream& strm) const
   return strm;
 }
 
+// Print detailed information about the multigon.
+std::ostream& multigon::print_details(std::ostream& strm) const
+{
+  using std::endl;
+
+  strm << "Multigon with " << k << " prong";
+  if (k > 1) strm << "s";
+  strm << " at address " << this << endl;
+  for (int p = 0; p < prongs(); ++p)
+    {
+      strm << "  prong " << p << ":";
+      for (int e = 0; e < edges(p); ++e)
+	{
+	  strm << " (" << Edge(p,e)->mg[0] << "-" << Edge(p,e)->mg[1] << ")";
+	}
+      strm << endl;
+    }
+
+  return strm;
+}
+
 void multigon::erase_edge_pointer(const int p, const int e)
 {
   // Erase the edge pointer (the edge is untouched).
@@ -368,6 +390,15 @@ void swap(multigon& m1, multigon& m2)
   // Save pointers to m1 and m2.
   multigon *pm1 = &m1, *pm2 = &m2;
 
+  if (multigon::debug)
+    {
+      using std::endl;
+      std::cerr << std::string(78,'-') << endl;
+      std::cerr << "multigon::swap -- before:\n";
+      m1.print_details(std::cerr);
+      m2.print_details(std::cerr);
+    }
+
   // Swap their contents.
   std::swap(m1,m2);
 
@@ -379,6 +410,13 @@ void swap(multigon& m1, multigon& m2)
 
   // Update the edge pointers for m2.
   m2.update_edge_prong_pointers(pm1);
+
+  if (multigon::debug)
+    {
+      std::cerr << "\nmultigon::swap -- after:\n";
+      m1.print_details(std::cerr);
+      m2.print_details(std::cerr);
+    }
 }
 
 } // namespace ttauto

@@ -227,6 +227,9 @@ private:
 
   void point_to_edge(edgep& eg, const int p, const int b);
 
+  // Print detailed information about the multigon.
+  std::ostream& print_details(std::ostream& strm = std::cout) const;
+
   friend class edge;
   friend void swap(multigon& m1, multigon& m2);
 };
