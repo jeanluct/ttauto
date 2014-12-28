@@ -106,7 +106,7 @@ public:
 
   // Return the pointer, prong, and edge to a multigon that the edge
   // is hooked to from mm.  Needed by class traintrack.
-  mgonp target_multigon(cmgonp mm, int& t_pr, int& t_pre) const;
+  std::shared_ptr<multigon> target_multigon(cmgonp mm, int& t_pr, int& t_pre) const;
 
 private:
   // Be careful: pointers to edges are duplicated!
@@ -237,14 +237,14 @@ inline void edge::detach_from_multigons()
 
 // Return the pointer, prong, and edge to a multigon that the edge
 // is hooked to from mm.
-inline edge::mgonp edge::target_multigon(cmgonp mm,
+inline std::shared_ptr<multigon> edge::target_multigon(cmgonp mm,
 					 int& t_pr, int& t_pre) const
 {
   // Target ending is the one mm is not on.
   int t_en = 1 - which_ending(mm);
   t_pr = pr[t_en];
   t_pre = pre[t_en];
-    return mg[t_en];
+  return mg[t_en].lock();
 }
 
 inline bool edge::check() const
