@@ -47,6 +47,13 @@ env = Environment(CC = cc, CXX = cxx,
                   LIBPATH = ['#lib','#extern/CSparse'],
                   CPPPATH = ['#include','#extern/CSparse','#extern/jlt'])
 
+# Use debug=1 on the command-line to turn on debugging.
+debug = ARGUMENTS.get('debug', 0)
+if int(debug):
+   env.PrependUnique(CCFLAGS = ['-g'])
+   env.PrependUnique(LINKFLAGS = ['-static'])
+   env.PrependUnique(LINKFLAGS = ['-g'])
+
 # Use profile=1 on the command-line to turn on profiling.
 profile = ARGUMENTS.get('profile', 0)
 if int(profile):
