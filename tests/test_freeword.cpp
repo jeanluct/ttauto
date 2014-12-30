@@ -35,22 +35,19 @@ int main()
   using jlt::operator<<;
   using namespace ttauto;
 
-  free_word<int> w = {-1,1,2,2,-2,1,1,2,1,-2,2,-1};
+  free_word<int> w;
+  w.create({-1,1,2,2,-2,1,1,2,1,-2,2,-1});
   cout << w << endl << endl;
+  cout << 10*w << endl << endl;
+  cout << w*-10 << endl << endl;
 
   cout << w.reduce() << endl;
 
-
-  free_word<free_elem> l = {main_edge(1,-1),inf_edge(1,2,1)};
-
-  cout << main_edge(1,-1) << endl;
-  cout << inf_edge(1,2,1) << endl;
+  free_word<free_elem> l;
+  l = l*main_edge(1,-1);
+  l = l*inf_edge(1,2,1);
+  l = l*inf_edge(1,2,-1);
 
   cout << l << endl;
-
-  //  for (auto i = l.begin(); i != l.end(); ++i)
-  //    {
-  //    }
-  //  cout << w*2 << endl;
-  //  cout << 2*w << endl;
+  cout << l.reduce() << endl;
 }
