@@ -132,37 +132,6 @@ inline free_word<T> operator*(const T& ee, const free_word<T>& ww)
 }
 
 
-
-
-
-
-
-class main_edge : public free_elem
-{
-  // Main edge is numbered by edge#.
-  int eno;
-
-public:
-  main_edge(int eno_ = 0, int inv_ = 0) : free_elem(inv_), eno(eno_) {}
-
-  /*
-  main_edge inv()
-  {
-    return main_edge(eno,-inv);
-  }
-  */
-};
-
-class inf_edge : public free_elem
-{
-  // Infinitesimal edge is numbered by multigon# and prong#.
-  int mno, pno;
-
-public:
-  inf_edge(int mno_ = 0, int pno_ = 0, int inv_ = 0)
-    : free_elem(inv_), mno(mno_), pno(pno_) {}
-};
-
 } // namespace ttauto
 
 #endif // FREEWORD_HPP
