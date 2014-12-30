@@ -40,13 +40,16 @@ int main()
   l.push_back(main_edge(1,0));
   l.push_back(inf_edge(1,2,1));
 
-  free_word<int> w = {-1,-1,-1,1,2,2,3,3,3,3,3,-2,-2,1};
-  cout << w << endl;
+  free_word<int> w = {-1,1,2,2,-2,1,1,2,1,-2,2,-1};
+  cout << w << endl << endl;
   //reduce(w.begin(),w.end());
+  /*
   w.erase(reduce(w.begin(),w.end()),w.end());
   cout << w << endl;
   w.erase(reduce(w.begin(),w.end()),w.end());
   cout << w << endl;
+  */
+  cout << w.reduce() << endl;
   //  cout << w*2 << endl;
   //  cout << 2*w << endl;
 }
