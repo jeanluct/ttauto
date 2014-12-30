@@ -35,8 +35,9 @@ int main()
   using jlt::operator<<;
   using namespace ttauto;
 
-  free_word<int> w = {-1,1,2,2,-2,1,1,2,1,-2,2,-1};
+  free_word<int> w({-5,-1,1,2,2,-2,1,1,2,1,-2,2,-1});
   cout << w << endl << endl;
+  cout << w*w << endl << endl;
   cout << w*-11 << endl;
   cout << -11*w << endl;
   cout << w.reduce() << endl;

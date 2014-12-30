@@ -78,16 +78,38 @@ public:
 
 // Forward declarations.
 template<class T> class free_word;
-template<class T> free_word<T> operator*(const free_word<T>&, const T&);
-template<class T> free_word<T> operator*(const T&, const free_word<T>&);
+template<class T>
+free_word<T> operator*(const free_word<T>&, const T&);
+template<class T>
+free_word<T> operator*(const T&, const free_word<T>&);
+template<class T>
+free_word<T> operator*(const free_word<T>&, const free_word<T>&);
 
 
 template<class T>
 class free_word : public std::list<T>
 {
+  int ngen;
+
 public:
+  free_word(int ngen_ = 1) : ngen(ngen_) {}
+
   // Forward initializer list to base class.
-  free_word(std::initializer_list<T> l) : std::list<T>(l) {}
+  free_word(std::initializer_list<T> l, int ngen_ = 0) : std::list<T>(l)
+  {
+    /* This is specialized to ints for now. */
+    int ngen = 0;
+    for (auto i : *this)
+      {
+	ngen = std::max(std::abs(i),ngen);
+      }
+    if (ngen_ && ngen > ngen_)
+      {
+	std::cerr << "ngen is too small.\n";
+	std::exit(-1);
+      }
+    ngen = std::max(ngen,ngen_);
+  }
 
   // Reduce a word by cancelling adjacent inverses.
   free_word<T>& reduce();
@@ -95,6 +117,7 @@ public:
   // Multiplication just appends and prepends elements to the word.
   friend free_word<T> operator*<>(const free_word<T>&, const T&);
   friend free_word<T> operator*<>(const T&, const free_word<T>&);
+  friend free_word<T> operator*<>(const free_word<T>&, const free_word<T>&);
 };
 
 // Reduce a word by cancelling adjacent inverses.
@@ -129,6 +152,14 @@ inline free_word<T> operator*(const T& ee, const free_word<T>& ww)
   free_word<T> ww2 = ww;
   ww2.push_front(ee);
   return ww2;
+}
+
+template<class T>
+inline free_word<T> operator*(const free_word<T>& w1, const free_word<T>& w2)
+{
+  free_word<T> w12 = w1;
+  w12.insert(w12.end(),w2.begin(),w2.end());
+  return w12;
 }
 
 
