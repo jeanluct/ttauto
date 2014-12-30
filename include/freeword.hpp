@@ -27,6 +27,27 @@
 
 namespace ttauto {
 
+template <class ForwardIterator>
+ForwardIterator reduce(ForwardIterator first, ForwardIterator last)
+{
+  if (first == last) return last;
+
+  ForwardIterator result = first;
+  while (++first != last)
+    {
+      if (!(*result == *first))
+	{
+	  *(++result) = *first;
+	}
+      else
+	{
+	  *result = *(++first);
+	  if (first == last) { --result; break; }
+	}
+    }
+  return ++result;
+}
+
 class free_elem
 {
 protected:
@@ -34,7 +55,98 @@ protected:
 
 public:
   free_elem(int inv_ = 0) : inv(inv_) {}
+
+  free_elem inverse() { return free_elem(-inv); }
 };
+
+// Forward declarations.
+template<class T> class free_word;
+template<class T> free_word<T> operator*(const free_word<T>&, const T&);
+template<class T> free_word<T> operator*(const T&, const free_word<T>&);
+
+#if 0
+template<class T>
+class free_word
+{
+  std::list<T> w;
+
+public:
+  free_word(std::list<T> ww = std::list<T>()) : w(ww) {}
+
+  free_word(std::initializer_list<T> l) : w(l) {}
+
+  free_word<T> reduce()
+  {
+    for (auto j = w.begin(), i = j++; j != w.end; ++i, ++j)
+      {
+	if (*i == j->inverse())
+	  {
+	    std::remove(i,j);
+	  }
+      }
+  return *this;
+  }
+
+  friend free_word<T> operator*<>(const free_word<T>&, const T&);
+  friend free_word<T> operator*<>(const T&, const free_word<T>&);
+};
+
+template<class T>
+inline free_word<T> operator*(const free_word<T>& ww, const T& ee)
+{
+  std::list<T> w = ww.w;
+  w.push_back(ee);
+  return free_word<T>(w);
+}
+
+template<class T>
+inline free_word<T> operator*(const T& ee, const free_word<T>& ww)
+{
+  std::list<T> w = ww.w;
+  w.push_front(ee);
+  return free_word<T>(w);
+}
+#else
+template<class T>
+class free_word : public std::list<T>
+{
+public:
+  // Forward initializer list.
+  free_word(std::initializer_list<T> l) : std::list<T>(l) {}
+
+  free_word<T> reduce()
+  {
+    for (auto j = this->begin(), i = j++; j != this->end(); ++i, ++j)
+      {
+	if (*i == j->inverse())
+	  {
+	    std::remove(i,j);
+	  }
+      }
+  return *this;
+  }
+
+  friend free_word<T> operator*<>(const free_word<T>&, const T&);
+  friend free_word<T> operator*<>(const T&, const free_word<T>&);
+};
+
+template<class T>
+inline free_word<T> operator*(const free_word<T>& ww, const T& ee)
+{
+  free_word<T> ww2 = ww;
+  ww2.push_back(ee);
+  return ww2;
+}
+
+template<class T>
+inline free_word<T> operator*(const T& ee, const free_word<T>& ww)
+{
+  free_word<T> ww2 = ww;
+  ww2.push_front(ee);
+  return ww2;
+}
+#endif
+
 
 class main_edge : public free_elem
 {
@@ -43,6 +155,13 @@ class main_edge : public free_elem
 
 public:
   main_edge(int eno_ = 0, int inv_ = 0) : free_elem(inv_), eno(eno_) {}
+
+  /*
+  main_edge inv()
+  {
+    return main_edge(eno,-inv);
+  }
+  */
 };
 
 class inf_edge : public free_elem
