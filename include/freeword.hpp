@@ -25,6 +25,8 @@
 #ifndef FREEWORD_HPP
 #define FREEWORD_HPP
 
+#include <iostream>
+
 namespace ttauto {
 
 // Remove equal adjacent elements from container.
@@ -62,20 +64,6 @@ template<class T>
 inline T inverse(const T& i) { return -i; }
 
 
-class free_elem
-{
-protected:
-  int inv;
-
-public:
-  free_elem(int inv_ = 0) : inv(inv_) {}
-
-  free_elem inverse() { return free_elem(-inv); }
-};
-
-
-
-
 // Forward declarations.
 template<class T> class free_word;
 template<class T> free_word<T> operator*(const free_word<T>&, const T&);
@@ -86,6 +74,10 @@ template<class T>
 class free_word : public std::list<T>
 {
 public:
+  // Perfect-forward arguments to base constructor.
+  template<typename... Args>
+  free_word(Args&&... _args) : std::list<T>(std::forward<Args>(_args)...) {}
+
   // Forward initializer list to base class.
   free_word(std::initializer_list<T> l) : std::list<T>(l) {}
 
@@ -101,10 +93,13 @@ public:
 template<class T>
 inline free_word<T>& free_word<T>::reduce()
 {
+  // This is the "equality" comparison class that allows cancellation
+  // of generators.
   struct IsInv {
     bool operator() (const T& a, const T& b) { return (a == inverse(b)); }
   } isinv;
 
+  // Keep cancelling until nothing changes.
   while (true)
     {
       auto i = adjacent_remove(this->begin(),this->end(),isinv);
@@ -134,8 +129,34 @@ inline free_word<T> operator*(const T& ee, const free_word<T>& ww)
 
 
 
+//template<class T> bool operator==(const T&, const T&);
+//template<class T> T inverse(const T&);
 
 
+class free_elem
+{
+protected:
+  int inv;
+
+public:
+  free_elem(int inv_ = 1) : inv(inv_)
+  {
+    if (!(inv_ == 1 || inv_ == -1))
+      {
+	std::cerr << "Error: bad value " << inv_ <<" for inv.\n";
+	std::exit(-1);
+      }
+  }
+
+  friend bool operator==(const free_elem&, const free_elem&);
+  friend free_elem inverse<>(const free_elem&);
+
+  virtual std::ostream& print(std::ostream& strm) const
+  {
+    strm << "(" << "*" << (inv > 0 ? "+" : "-" ) << ")";
+    return strm;
+  }
+};
 
 class main_edge : public free_elem
 {
@@ -143,14 +164,16 @@ class main_edge : public free_elem
   int eno;
 
 public:
-  main_edge(int eno_ = 0, int inv_ = 0) : free_elem(inv_), eno(eno_) {}
+  main_edge(int eno_ = 0, int inv_ = 1) : free_elem(inv_), eno(eno_) {}
 
-  /*
-  main_edge inv()
+  friend bool operator==(const main_edge&, const main_edge&);
+  friend main_edge inverse<>(const main_edge&);
+
+  virtual std::ostream& print(std::ostream& strm) const
   {
-    return main_edge(eno,-inv);
+    strm << "(" << eno << (inv > 0 ? "+" : "-" ) << ")";
+    return strm;
   }
-  */
 };
 
 class inf_edge : public free_elem
@@ -159,9 +182,83 @@ class inf_edge : public free_elem
   int mno, pno;
 
 public:
-  inf_edge(int mno_ = 0, int pno_ = 0, int inv_ = 0)
+  inf_edge(int mno_ = 0, int pno_ = 0, int inv_ = 1)
     : free_elem(inv_), mno(mno_), pno(pno_) {}
+
+  friend bool operator==(const inf_edge&, const inf_edge&);
+  friend inf_edge inverse<>(const inf_edge&);
+
+  virtual std::ostream& print(std::ostream& strm) const
+  {
+    strm << "(" << mno << "," << pno << (inv > 0 ? "+" : "-" ) << ")";
+    return strm;
+  }
 };
+
+
+template<>
+inline main_edge inverse(const main_edge& a)
+{
+  return main_edge(a.eno,-a.inv);
+}
+
+template<>
+inline inf_edge inverse(const inf_edge& a)
+{
+  return inf_edge(a.mno,a.pno,-a.inv);
+}
+
+// A main edge is never equal to an infinitesimal one.
+bool operator==(const main_edge&, const inf_edge&) { return false; }
+bool operator==(const inf_edge&, const main_edge&) { return false; }
+
+// Main edge comparison function.
+bool operator==(const main_edge& a, const main_edge& b)
+{
+  return (a.eno == b.eno && a.inv == b.inv);
+}
+
+// Infinitesimal edge comparison function.
+bool operator==(const inf_edge& a, const inf_edge& b)
+{
+  return (a.mno == b.mno && a.pno == b.pno && a.inv == b.inv);
+}
+
+#if 0
+std::ostream& operator<<(std::ostream& strm, const free_elem& a)
+{
+  strm << "(" << "*" << (a.inv > 0 ? "+" : "-" ) << ")";
+  return strm;
+}
+
+std::ostream& operator<<(std::ostream& strm, const main_edge& a)
+{
+  strm << "(" << a.eno << (a.inv > 0 ? "+" : "-" ) << ")";
+  return strm;
+}
+
+std::ostream& operator<<(std::ostream& strm, const inf_edge& a)
+{
+  strm << "(" << a.mno << "," << a.pno << (a.inv > 0 ? "+" : "-" ) << ")";
+  return strm;
+}
+#else
+std::ostream& operator<<(std::ostream& strm, const free_elem& a)
+{
+  return a.print(strm);
+}
+
+std::ostream& operator<<(std::ostream& strm, const main_edge& a)
+{
+  return a.print(strm);
+}
+
+std::ostream& operator<<(std::ostream& strm, const inf_edge& a)
+{
+  return a.print(strm);
+}
+#endif
+
 
 } // namespace ttauto
 
