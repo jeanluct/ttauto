@@ -71,15 +71,17 @@ template<class T> free_word<T> operator*(const T&, const free_word<T>&);
 
 
 template<class T>
-class free_word : public std::list<T>
+class free_word
 {
+  std::list<T> word;
+
 public:
   // Perfect-forward arguments to base constructor.
   template<typename... Args>
-  free_word(Args&&... _args) : std::list<T>(std::forward<Args>(_args)...) {}
+  free_word(Args&&... _args) : word(std::forward<Args>(_args)...) {}
 
   // Forward initializer list to base class.
-  free_word(std::initializer_list<T> l) : std::list<T>(l) {}
+  free_word(std::initializer_list<T> l) : word(l) {}
 
   // Reduce a word by cancelling adjacent inverses.
   free_word<T>& reduce();
@@ -87,6 +89,13 @@ public:
   // Multiplication just appends and prepends elements to the word.
   friend free_word<T> operator*<>(const free_word<T>&, const T&);
   friend free_word<T> operator*<>(const T&, const free_word<T>&);
+
+  std::ostream& print(std::ostream& strm) const
+  {
+    copy(word.begin(), word.end(), std::ostream_iterator<T>(strm, "\t"));
+
+    return strm;
+  }
 };
 
 // Reduce a word by cancelling adjacent inverses.
@@ -102,9 +111,9 @@ inline free_word<T>& free_word<T>::reduce()
   // Keep cancelling until nothing changes.
   while (true)
     {
-      auto i = adjacent_remove(this->begin(),this->end(),isinv);
-      if (i == this->end()) break;
-      erase(i,this->end());
+      auto i = adjacent_remove(word.begin(),word.end(),isinv);
+      if (i == word.end()) break;
+      word.erase(i,word.end());
     }
 
   return *this;
@@ -113,16 +122,16 @@ inline free_word<T>& free_word<T>::reduce()
 template<class T>
 inline free_word<T> operator*(const free_word<T>& ww, const T& ee)
 {
-  free_word<T> ww2 = ww;
-  ww2.push_back(ee);
+  free_word<T> ww2(ww.word);
+  ww2.word.push_back(ee);
   return ww2;
 }
 
 template<class T>
 inline free_word<T> operator*(const T& ee, const free_word<T>& ww)
 {
-  free_word<T> ww2 = ww;
-  ww2.push_front(ee);
+  free_word<T> ww2(ww.word);
+  ww2.word.push_front(ee);
   return ww2;
 }
 
@@ -243,6 +252,12 @@ std::ostream& operator<<(std::ostream& strm, const inf_edge& a)
   return strm;
 }
 #else
+template<class T>
+std::ostream& operator<<(std::ostream& strm, const free_word<T>& w)
+{
+  return w.print(strm);
+}
+
 std::ostream& operator<<(std::ostream& strm, const free_elem& a)
 {
   return a.print(strm);
