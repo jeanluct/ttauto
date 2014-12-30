@@ -114,6 +114,14 @@ public:
   // Reduce a word by cancelling adjacent inverses.
   free_word<T>& reduce();
 
+  // Return the inverse of the free word.
+  free_word<T> inverse() const
+  {
+    free_word<T> iw(ngen);
+    for (auto i = this->rbegin(); i != this->rend(); ++i) iw.push_back(-(*i));
+    return iw;
+  }
+
   // Multiplication just appends and prepends elements to the word.
   friend free_word<T> operator*<>(const free_word<T>&, const T&);
   friend free_word<T> operator*<>(const T&, const free_word<T>&);
@@ -162,6 +170,24 @@ inline free_word<T> operator*(const free_word<T>& w1, const free_word<T>& w2)
   return w12;
 }
 
+
+template<class T>
+class free_auto
+{
+  std::map<T,free_word<T>> actgen;
+
+public:
+  void action_on_gen(T a, free_word<T>& w)
+  {
+    if (a < 0)
+      {
+	// Only store the action on positive generators.
+	a = -a;
+	w = w.inverse();
+      }
+    actgen[a] = w;
+  }
+};
 
 } // namespace ttauto
 

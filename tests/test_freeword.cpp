@@ -37,6 +37,7 @@ int main()
 
   free_word<int> w({-5,-1,1,2,2,-2,1,1,2,1,-2,2,-1});
   cout << w << endl << endl;
+  cout << w.inverse() << endl << endl;
   cout << w*w << endl << endl;
   cout << w*-11 << endl;
   cout << -11*w << endl;
