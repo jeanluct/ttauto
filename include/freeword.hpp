@@ -78,6 +78,7 @@ public:
 
 // Forward declarations.
 template<class T> class free_word;
+template<class T> class free_auto;
 template<class T>
 free_word<T> operator*(const free_word<T>&, const T&);
 template<class T>
@@ -110,6 +111,8 @@ public:
       }
     ngen = std::max(ngen,ngen_);
   }
+
+  /* Make a copy constructor and operator= that check gen. */
 
   // Reduce a word by cancelling adjacent inverses.
   free_word<T>& reduce();
@@ -172,22 +175,106 @@ inline free_word<T> operator*(const free_word<T>& w1, const free_word<T>& w2)
 
 
 template<class T>
-class free_auto
+class free_auto : std::vector<free_word<T>>
 {
-  std::map<T,free_word<T>> actgen;
-
 public:
-  void action_on_gen(T a, free_word<T>& w)
+  free_auto(const int ngen_) : std::vector<free_word<T> >(ngen_+1) {}
+
+  size_t numgens() const { return (this->size()-1); }
+
+  // Action of the automorphism on a single generator a.
+  // Use this for assignment.
+  free_word<T>& operator[](const T a)
   {
+    if (a == 0)
+      {
+	std::cerr << "Cannot specify action on identity.\n";
+	std::exit(-1);
+      }
     if (a < 0)
       {
-	// Only store the action on positive generators.
-	a = -a;
-	w = w.inverse();
+	std::cerr << "Assign to positive generators only.\n";
+	std::exit(-1);
       }
-    actgen[a] = w;
+    // Only store the action on positive generators.
+    return std::vector<free_word<T> >::operator[](a);
+  }
+
+  // Const version of operator[].
+  // Must still return a reference, so that pointer operations like
+  // begin() are still valid.
+  const free_word<T>& operator[](const T a) const
+  {
+    if (a == 0)
+      {
+	std::cerr << "Cannot specify action on identity.\n";
+	std::exit(-1);
+      }
+    if (a < 0)
+      {
+	std::cerr << "Assign to positive generators only.\n";
+	std::exit(-1);
+      }
+    // Only store the action on positive generators.
+    return std::vector<free_word<T> >::operator[](a);
+  }
+
+  // get_action is like operator[], but returns by value.
+  // It can thus return a free_word for a<0.
+  const free_word<T> get_action(const T a) const
+  {
+    if (a == 0)
+      {
+	std::cerr << "Cannot specify action on identity.\n";
+	std::exit(-1);
+      }
+    if (a > 0)
+      return std::vector<free_word<T> >::operator[](a);
+    else // For negative a, call free_word<T>::inverse().
+      return (std::vector<free_word<T> >::operator[](-a)).inverse();
+  }
+
+  free_auto<T>& operator*=(const free_auto<T>& a)
+  {
+    if (numgens() != a.numgens())
+      {
+	std::cerr << "Can only compose free_auto objects with ";
+	std::cerr << "the same number of generators.\n";
+	std::exit(-1);
+      }
+    free_auto<T> res(numgens());
+    for (size_t i = 1; i <= numgens(); ++i)
+      {
+	for (auto j : this->operator[](i))
+	  {
+	    res[i] = res[i]*a.get_action(j);
+	  }
+      }
+    return (*this = res);
   }
 };
+
+template<class T>
+inline free_auto<T> operator*(const free_auto<T>& a, const free_auto<T>& b)
+{
+  free_auto<T> ab(a);
+  return (ab *= b);
+}
+
+template<class T>
+std::ostream& operator<<(std::ostream& strm, const free_auto<T>& a)
+{
+  constexpr int wid = 5;
+
+  for (size_t i = 1; i <= a.numgens(); ++i)
+    {
+      strm << std::setw(wid);
+      strm << i << " -> ";
+      for (auto j : a[i]) strm << std::setw(wid) << j;
+      strm << std::endl;
+    }
+  return strm;
+}
 
 } // namespace ttauto
 
