@@ -23,8 +23,11 @@
 // LICENSE>
 
 #include <iostream>
-#include <jlt/stlio.hpp>
 #include <list>
+#include <jlt/stlio.hpp>
+#include "traintrack.hpp"
+#include "ttfoldgraph.hpp"
+#include "folding_path.hpp"
 #include "freeword.hpp"
 
 
@@ -33,8 +36,9 @@ int main()
   using std::cout;
   using std::endl;
   using jlt::operator<<;
-  using namespace ttauto;
+  using namespace traintracks;
 
+#if 0
   free_word<int> w({-5,-1,1,2,2,-2,1,1,2,1,-2,2,-1});
   cout << w << endl << endl;
   cout << w.inverse() << endl << endl;
@@ -68,4 +72,57 @@ int main()
   cout << "\nT2:\n" << T2;
   // Compose the two automorphisms.
   cout << endl << "T1*T2:\n" << T1*T2 << endl;
+#endif
+  typedef ttfoldgraph<traintrack>			ttgraph;
+  typedef std::list<ttgraph>::const_iterator		cttgit;
+  typedef jlt::vector<traintrack>			ttVec;
+  typedef ttVec::const_iterator				ttVeccit;
+
+  int n = 3;
+  ttVec ttv = ttbuild_list(n);
+  int trk = 0;
+
+  cout << "\nTrain track has " << ttv[trk].punctures() << " punctures and ";
+  cout << ttv[trk].edges() << " edges\n";
+  cout << "\nConstructing automaton...\n";
+
+  ttgraph ttg(ttv[trk]);
+  cout << "\nFolding automaton has " << ttg.vertices();
+  cout << (ttg.vertices() > 1 ? " vertices\n" : " vertex\n");
+
+  // Make a folding path through the automaton.
+  folding_path<traintrack> p(ttg,0);
+  p.push_back(0); p.push_back(1);
+
+  cout << "\nTransition matrix:\n";
+  cout << p.transition_matrix() << endl;
+
+  cout << "\nTrain track map:\n";
+  cout << p.traintrack_map() << endl;
+
+  //  return 0;
+
+  /* Something's weird in the rest... */
+  /* Doesn't reproduce the correct automaton? */
+  n = 4;
+  ttVec ttv2 = ttbuild_list(n);
+  trk = 0;
+
+  cout << "\nTrain track has " << ttv2[trk].punctures() << " punctures and ";
+  cout << ttv2[trk].edges() << " edges\n";
+  cout << "\nConstructing automaton...\n";
+
+  ttgraph ttg2(ttv2[trk]);
+  cout << "\nFolding automaton has " << ttg2.vertices();
+  cout << (ttg2.vertices() > 1 ? " vertices\n" : " vertex\n");
+
+  // Make a folding path through the automaton.
+  folding_path<traintrack> p2(ttg2,0);
+  p2.push_back(0); p2.push_back(1); p2.push_back(0);
+
+  cout << "\nTransition matrix:\n";
+  cout << p2.transition_matrix() << endl;
+
+  cout << "\nTrain track map:\n";
+  cout << p2.traintrack_map() << endl;
 }

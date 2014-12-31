@@ -73,16 +73,17 @@ int main()
   // p1 = 1:2121, p2 = 4:1212.
 
   folding_path<TrTr> p1(ttg,1);
-  p1.push_back(2);
+  p1.push_back(0);
+  p1.push_back(0);
   p1.push_back(1);
-  p1.push_back(2);
   p1.push_back(1);
 
-  cout << "p1 = " << p1 << "  [" << p1.vertices() << "]" << endl;
+  cout << "  p1 = " << p1 << "  [" << p1.vertices() << "]" << endl;
 
   folding_path<TrTr> p2(p1);
+  cout << "p2 is p1 cycled by -1:\n";
   p2.cycle_path(-1);
-  cout << "p2 = " << p2 << "  [" << p2.vertices() << "]" << endl;
+  cout << "  p2 = " << p2 << "  [" << p2.vertices() << "]" << endl;
 
   if (p1 == p2)
     cout << "Paths are equal!\n";

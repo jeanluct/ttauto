@@ -32,6 +32,7 @@
 #include "multigon.hpp"
 #include "traintracks_util.hpp"
 #include "mathmatrix_permplus1.hpp"
+#include "freeword.hpp"
 
 
 namespace traintracks {
@@ -133,6 +134,8 @@ public:
 
   int punctures() const;
 
+  int total_prongs() const; // Total number of prongs, summed over multigons.
+
   // Count the total number of exterior cusps in graph.
   // Exterior cusps are the same as boundary prongs.
   int cusps() const;
@@ -191,6 +194,14 @@ public:
     jlt::mathmatrix<int> M(traintracks::fold_transition_matrix(*this,f));
     fold(f);
     return M;
+  }
+
+  // Fold and find train track map.
+  free_auto<int> fold_traintrack_map(const int f)
+  {
+    free_auto<int> AM(traintracks::fold_traintrack_map(*this,f));
+    fold(f);
+    return AM;
   }
 
   // Return vector of edge weights.
@@ -416,6 +427,14 @@ inline int traintrack::punctures() const
       if (Multigon(m).punctured()) ++np;
     }
   return np;
+}
+
+inline int traintrack::total_prongs() const
+{
+  int tp = 0;
+  for (int m = 0; m < this->multigons(); ++m) tp += Multigon(m).prongs();
+
+  return tp;
 }
 
 inline int traintrack::cusps() const

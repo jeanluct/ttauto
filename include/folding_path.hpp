@@ -30,6 +30,7 @@
 #include "path.hpp"
 #include "traintracks_util.hpp"
 #include "ttfoldgraph.hpp"
+#include "freeword.hpp"
 
 namespace traintracks {
 
@@ -101,7 +102,9 @@ public:
 
   const path& vertices() const { return vp; }
 
-  const Mat transition_matrix() const;
+  Mat transition_matrix() const;
+
+  free_auto<int> traintrack_map() const;
 
   // Return a subpath of length |nf|.
   // nf > 0 measure from initial vertex;
@@ -351,7 +354,7 @@ void folding_path<TrTr>::cycle_path(const int i)
 }
 
 template<class TrTr>
-const typename folding_path<TrTr>::Mat
+typename folding_path<TrTr>::Mat
 folding_path<TrTr>::transition_matrix() const
 {
   const int n = ttg->edges();
@@ -370,6 +373,33 @@ folding_path<TrTr>::transition_matrix() const
       v = ttg->target_vertex(v,*i);
     }
   return TM;
+}
+
+template<class TrTr>
+free_auto<int>
+folding_path<TrTr>::traintrack_map() const
+{
+  const int nmain = ttg->edges();
+  const int ninf = ttg->traintrack(0).total_prongs();
+  const int ngen = nmain + ninf;
+  int v = initial_vertex();
+  std::cerr << "nmain = " << nmain << std::endl;
+  std::cerr << " ninf = " << ninf << std::endl;
+  free_auto<int> AM(ngen);
+
+  for (path::const_iterator i = fp.begin(); i != fp.end(); ++i)
+    {
+      if (*i >= ttg->foldings(v))
+	{
+	  std::cerr << "Illegal folding " << *i << " at vertex " << v;
+	  std::cerr << " in folding_path::traintrack_map.\n";
+	  std::exit(1);
+	}
+      AM = AM * ttg->traintrack_map(v,*i);
+      v = ttg->target_vertex(v,*i);
+    }
+
+  return AM;
 }
 
 // Return a subpath of length |nf|.

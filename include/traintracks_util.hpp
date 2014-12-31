@@ -29,6 +29,7 @@
 #include <jlt/mathmatrix.hpp>
 #include <jlt/polynomial.hpp>
 #include <jlt/exceptions.hpp>
+#include "freeword.hpp"
 
 namespace traintracks {
 
@@ -149,6 +150,69 @@ jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f)
     }
 
   return TM;
+}
+
+
+template<class TrTr>
+free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
+{
+  // Chaining two folds amounts to composition of automorphisms:
+  // AM(12)=AM(1)*TM(2).
+
+  TrTr tt(tt0);
+  const int ninf = tt0.total_prongs();
+  const int n = tt0.edges();
+  const int ngen = n + ninf;
+  free_auto<int> AM(ngen);
+
+  // Need to find two main edges and one infinitesimal edge.
+  // main edge a: folding from
+  // main edge b: folding onto
+  //  inf edge  : in between
+
+  // The cusp should give us the in-between edge.
+
+  /* Kludge: compute transition matrix first to figure it out. */
+  jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f);
+
+  // Check that the transition matrix is permutation+1 or identity.
+  int col2 = -1, row2 = -1;
+  if (TM != jlt::identity_matrix<int>(n))
+    {
+      for (int i = 0; i < n; ++i)
+	{
+	  int colsum = 0, rowsum = 0;
+	  for (int j = 0; j < n; ++j)
+	    {
+	      colsum += TM(i,j);
+	      rowsum += TM(j,i);
+	    }
+	  if (colsum == 2) col2 = i;
+	  if (rowsum == 2) row2 = i;
+	}
+    }
+  //  std::cerr << "row with two ones is " << row2 << std::endl;
+  //  std::cerr << "col with two ones is " << col2 << std::endl;
+
+  if (col2 == -1 || row2 == -1) return AM;
+
+  AM[row2+1] = {row2+1};
+  //  AM[row2+1] = {-(row2+1)};
+  if (f % 2 == 0)
+    {
+      // Fold clockwise.
+      AM[col2+1] = {row2+1,col2+1};
+    }
+  else
+    {
+      // Fold counterclockwise.
+      AM[col2+1] = {col2+1,row2+1};
+    }
+
+  /* Check automorphism (see transition matrix) */
+
+
+  return AM;
 }
 
 

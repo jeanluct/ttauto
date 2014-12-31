@@ -75,6 +75,8 @@ private:
   jlt::vector<jlt::vector<int> > tv;
   // Transition matrix on a branch.
   jlt::vector<jlt::vector<Matpp1> > TMv;
+  // Train track automorphism on a branch.
+  jlt::vector<jlt::vector<free_auto<int> > > AMv;
   // Number of foldings (outgoing branches) at each vertex.
   jlt::vector<int> nfoldsv;
   /* The train track should have this info.  Ditch the sequential
@@ -110,8 +112,9 @@ public:
   ttfoldgraph(const jlt::vector<TrTr>& trtrv_,
 	      const jlt::vector<jlt::vector<int> >& tv_,
 	      const jlt::vector<jlt::vector<Matpp1> >& TMv_,
+	      const jlt::vector<jlt::vector<free_auto<int> > >& AMv_,
 	      const jlt::vector<int>& nfoldsv_)
-    : trtrv(trtrv_), tv(tv_), TMv(TMv_), nfoldsv(nfoldsv_),
+    : trtrv(trtrv_), tv(tv_), TMv(TMv_), AMv(AMv_), nfoldsv(nfoldsv_),
       n(trtrv.front().edges()), nfoldsmax(trtrv.front().foldings()), TM(n,n),
       id(jlt::identity_matrix<int>(n))
   {
@@ -137,6 +140,8 @@ private:
 	tv.push_back(jlt::vector<int>());
 	// Add an outgoing matrix.
 	TMv.push_back(jlt::vector<Matpp1>());
+	// Add an outgoing train track map.
+	AMv.push_back(jlt::vector<free_auto<int> >());
 	// Initalise the vector giving the number of foldings.
 	nfoldsv.push_back(0);
 	// The index of the vertex we just added.
@@ -157,11 +162,14 @@ private:
 	// Fold and find the transition matrix.
 	TrTr trtr0(trtr);
 	TM = trtr0.fold_transition_matrix(f);
+	free_auto<int> AM = trtr0.fold_traintrack_map(f);
 	if (TM != id)
 	  {
 	    ++nfoldsv[idx];
 	    // Convert matrix to sparse type and add to list.
 	    TMv[idx].push_back(Matpp1(TM));
+	    // Add automorphism to list.
+	    AMv[idx].push_back(AM);
 	    // Add the target vertex, if it's not already in there, and
 	    // point to it.
 	    int tidx = add_vertex(trtr0);
@@ -186,6 +194,7 @@ private:
     trtrv.erase(trtrv.begin()+vv);
     tv.erase(tv.begin()+vv);
     TMv.erase(TMv.begin()+vv);
+    AMv.erase(AMv.begin()+vv);
     nfoldsv.erase(nfoldsv.begin()+vv);
     if (exploit_symmetries)
       {
@@ -223,6 +232,7 @@ private:
 	// Loop over branches.
 	jlt::vector<int>::iterator it = tv[v].begin();
 	jlt::vector<Matpp1>::iterator iTM = TMv[v].begin();
+	auto iAM = AMv[v].begin();
 	while (it != tv[v].end())
 	  {
 	    if (*it == vv)
@@ -237,6 +247,7 @@ private:
 		// don't incremement them.
 		it = tv[v].erase(it);
 		iTM = TMv[v].erase(iTM);
+		iAM = AMv[v].erase(iAM);
 		--nfoldsv[v];
 		continue;
 	      }
@@ -280,6 +291,7 @@ private:
     std::swap(trtrv[v1],trtrv[v2]);
     std::swap(tv[v1],tv[v2]);
     std::swap(TMv[v1],TMv[v2]);
+    std::swap(AMv[v1],AMv[v2]);
     std::swap(nfoldsv[v1],nfoldsv[v2]);
     if (exploit_symmetries)
       {
@@ -466,6 +478,11 @@ public:
   const Matpp1& transition_matrix(const int idx, const int br) const
   {
     return TMv[idx][br];
+  }
+
+  const free_auto<int>& traintrack_map(const int idx, const int br) const
+  {
+    return AMv[idx][br];
   }
 
   int target_vertex(const int idx, const int br) const
@@ -742,6 +759,7 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
       jlt::vector<TrTr> trtrv_sub;
       jlt::vector<Vec> tv_sub;
       jlt::vector<jlt::vector<mathmatrix_permplus1> > TMv_sub;
+      jlt::vector<jlt::vector<free_auto<int> > > AMv_sub;
       Vec nfoldsv_sub;
 
       // Loop over train tracks in this block.
@@ -752,6 +770,7 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
 	  trtrv_sub.push_back(ttg.trtrv[tr]);
 	  tv_sub.push_back(ttg.tv[tr]);
 	  TMv_sub.push_back(ttg.TMv[tr]);
+	  AMv_sub.push_back(ttg.AMv[tr]);
 	  nfoldsv_sub.push_back(ttg.nfoldsv[tr]);
 
 	  // Remove outgoing arrows with target outside subgraph.
@@ -765,6 +784,7 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
 		  // associated transition matrix.
 		  tv_sub[j].erase(tv_sub[j].begin() + b);
 		  TMv_sub[j].erase(TMv_sub[j].begin() + b);
+		  AMv_sub[j].erase(AMv_sub[j].begin() + b);
 		  --nfoldsv_sub[j];
 		}
 	      else
@@ -778,7 +798,7 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
 	    }
 	}
       // Add this subgraph to the list.
-      ttgl.push_back(ttfoldgraph<TrTr>(trtrv_sub,tv_sub,TMv_sub,nfoldsv_sub));
+      ttgl.push_back(ttfoldgraph<TrTr>(trtrv_sub,tv_sub,TMv_sub,AMv_sub,nfoldsv_sub));
     }
 
   return ttgl;
