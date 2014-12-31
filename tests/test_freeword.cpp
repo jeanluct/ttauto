@@ -45,18 +45,27 @@ int main()
 
   // Define automorphism: 2 main edges, 3 infinitesimal edges.
   // {1,2,3,a,b} = {1,2,3,4,5}
+  // Defaults to the identity automorphism.
+  cout << "\nIdentity automorphism:\n" << free_auto<int>(5);
+
   free_auto<int> T1(5);
   T1[1] = {2};
   T1[2] = {1};
   T1[3] = {3};
   T1[4] = {-4};
   T1[5] = {4,-2,5};
+  cout << "\nT1:\n" << T1;
+
+  // Compose the two automorphisms.
+  cout << endl << "T1*id\n" << T1*free_auto<int>(5) << endl;
+
   free_auto<int> T2(5);
   T2[1] = {1};
   T2[2] = {3};
   T2[3] = {2};
   T2[4] = {4,-2,5};
   T2[5] = {-5};
-  free_auto<int> T12 = T1*T2;
-  cout << endl << T12 << endl;
+  cout << "\nT2:\n" << T2;
+  // Compose the two automorphisms.
+  cout << endl << "T1*T2:\n" << T1*T2 << endl;
 }

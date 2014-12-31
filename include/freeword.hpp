@@ -78,7 +78,6 @@ public:
 
 // Forward declarations.
 template<class T> class free_word;
-template<class T> class free_auto;
 template<class T>
 free_word<T> operator*(const free_word<T>&, const T&);
 template<class T>
@@ -136,14 +135,16 @@ template<class T>
 inline free_word<T>& free_word<T>::reduce()
 {
   struct IsInv {
-    bool operator() (const T& a, const T& b) { return (a == inverse(b)); }
+    bool operator() (const T& a, const T& b)
+    { return (a == ttauto::inverse(b)); }
+    // Make sure to specify inverse() function, not method.
   } isinv;
 
   while (true)
     {
       auto i = adjacent_remove(this->begin(),this->end(),isinv);
       if (i == this->end()) break;
-      erase(i,this->end());
+      this->erase(i,this->end());
     }
 
   return *this;
@@ -175,11 +176,22 @@ inline free_word<T> operator*(const free_word<T>& w1, const free_word<T>& w2)
 
 
 template<class T>
-class free_auto : std::vector<free_word<T>>
+class free_auto : std::vector<free_word<T> >
 {
 public:
-  free_auto(const int ngen_) : std::vector<free_word<T> >(ngen_+1) {}
+  free_auto(const int ngen_) : std::vector<free_word<T> >(ngen_+1)
+  {
+    // Initialize to the identity automorphism.
+    for (size_t i = 1; i <= numgens(); ++i)
+      std::vector<free_word<T> >::operator[](i).push_back(i);
+  }
 
+  // Construct from base class.
+  free_auto(const std::vector<free_word<T> >& a) : std::vector<free_word<T> >(a)
+  {
+  }
+
+  // Number of generators.  Note that the vector size has to be one larger.
   size_t numgens() const { return (this->size()-1); }
 
   // Action of the automorphism on a single generator a.
@@ -242,7 +254,7 @@ public:
 	std::cerr << "the same number of generators.\n";
 	std::exit(-1);
       }
-    free_auto<T> res(numgens());
+    free_auto<T> res(std::vector<free_word<T> >(numgens()+1));
     for (size_t i = 1; i <= numgens(); ++i)
       {
 	for (auto j : this->operator[](i))
@@ -257,8 +269,7 @@ public:
 template<class T>
 inline free_auto<T> operator*(const free_auto<T>& a, const free_auto<T>& b)
 {
-  free_auto<T> ab(a);
-  return (ab *= b);
+  return (free_auto<T>(a) *= b);
 }
 
 template<class T>
