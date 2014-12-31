@@ -25,7 +25,7 @@
 #ifndef FREEWORD_HPP
 #define FREEWORD_HPP
 
-namespace ttauto {
+namespace traintracks {
 
 // Remove equal adjacent elements from container.
 // This can be used to cancel inverses by using the right comparison function.
@@ -136,7 +136,7 @@ inline free_word<T>& free_word<T>::reduce()
 {
   struct IsInv {
     bool operator() (const T& a, const T& b)
-    { return (a == ttauto::inverse(b)); }
+    { return (a == traintracks::inverse(b)); }
     // Make sure to specify inverse() function, not method.
   } isinv;
 
@@ -287,6 +287,6 @@ std::ostream& operator<<(std::ostream& strm, const free_auto<T>& a)
   return strm;
 }
 
-} // namespace ttauto
+} // namespace traintracks
 
 #endif // FREEWORD_HPP

@@ -37,7 +37,7 @@ void testM(const jlt::mathmatrix<int>& Mpm)
   cout << "Matrix pm:\n";
   Mpm.printMatrixForm(cout) << endl;
 
-  ttauto::mathmatrix_permplus1 pm(Mpm);
+  traintracks::mathmatrix_permplus1 pm(Mpm);
 
   cout << "In permutation+1 form:\n" << pm << endl;
 

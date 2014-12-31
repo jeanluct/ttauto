@@ -29,7 +29,7 @@
 #include "multigon.hpp"
 #include "traintrack.hpp"
 
-namespace ttauto {
+namespace traintracks {
 
 // Make a train track from its coding.
 traintrack::traintrack(const traintrack::intVec& code)
@@ -335,7 +335,7 @@ void traintrack::recursive_coding(const multigon& mm,
       // Prong number relative to entry prong into multigon.
       // The entry prong is labeled 0, and the other prongs
       // clockwise from 0 (anticlockwise if dir = -1).
-      int prong = ttauto::mod(dir*(p-pin),mm.prongs());
+      int prong = traintracks::mod(dir*(p-pin),mm.prongs());
       // Number of prongs in outgoing multigon.
       int nprongs = mm.prongs();
       // Label of the multigon.
@@ -621,7 +621,7 @@ bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
       // the target.  Then take the mod.
       //
       // Do not use the % function here!!
-      int t2_pr = ttauto::mod(t_pr+dir,t_mm->prongs());
+      int t2_pr = traintracks::mod(t_pr+dir,t_mm->prongs());
       if (debug) std::cerr << " t2_pr=" << t2_pr;
 
       // e0 will become the new first (last) prong at t2_pr.
@@ -854,4 +854,4 @@ std::ostream& traintrack::print_coding(std::ostream& strm,
   return strm;
 }
 
-} // namespace ttauto
+} // namespace traintracks

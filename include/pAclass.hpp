@@ -36,7 +36,7 @@
 #include "folding_path.hpp"
 #include "traintracks_util.hpp"
 
-namespace ttauto {
+namespace traintracks {
 
 // Info about a pA class, that is pA's with the same dilatation.
 template <class TrTr>
@@ -209,6 +209,6 @@ public:
   }
 };
 
-} // namespace ttauto
+} // namespace traintracks
 
 #endif // PACLASS_HPP

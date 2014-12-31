@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Exclude files in the git directory in $1!!
+findcmd="find $1 -type f ! -path \"*/.git/*\" -print0"
+$findcmd | xargs -0 sed -i 's/namespace ttauto/namespace traintracks/g'
+$findcmd | xargs -0 sed -i 's/ttauto::/traintracks::/g'

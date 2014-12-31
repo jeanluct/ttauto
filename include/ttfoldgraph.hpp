@@ -51,7 +51,7 @@
 // print_coding
 //
 
-namespace ttauto {
+namespace traintracks {
 
 template<class TrTr> class ttfoldgraph;
 
@@ -828,6 +828,6 @@ print_subgraphs(const std::list<ttfoldgraph<TrTr> >& ttg,
   return strm;
 }
 
-} // namespace ttauto
+} // namespace traintracks
 
 #endif // TTFOLDGRAPH_HPP

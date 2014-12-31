@@ -29,7 +29,7 @@
 
 int main()
 {
-  using ttauto::traintrack;
+  using traintracks::traintrack;
 
   for (int n = 3; n <= 9; ++n)
     {
@@ -37,7 +37,7 @@ int main()
       traintrack tt(n);
 
       // Make train track folding automaton graph.
-      ttauto::ttfoldgraph<traintrack> ttg(tt);
+      traintracks::ttfoldgraph<traintrack> ttg(tt);
 
       // Number of vertices in full automaton.
       std::cout << n << "\t" << ttg.vertices();

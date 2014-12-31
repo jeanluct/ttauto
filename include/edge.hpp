@@ -30,7 +30,7 @@
 #include <jlt/vector.hpp>
 #include "multigon.hpp"
 
-namespace ttauto {
+namespace traintracks {
 
 class multigon;
 
@@ -267,6 +267,6 @@ inline bool edge::check() const
   return true;
 }
 
-} // namespace ttauto
+} // namespace traintracks
 
 #endif // EDGE_HPP

@@ -40,9 +40,9 @@ int main()
 {
   using std::cout;
   using std::endl;
-  using ttauto::traintrack;
+  using traintracks::traintrack;
 
-  typedef ttauto::ttfoldgraph<traintrack>		ttgraph;
+  typedef traintracks::ttfoldgraph<traintrack>		ttgraph;
   typedef std::list<ttgraph>::const_iterator		cttgit;
   typedef jlt::vector<traintrack>			ttVec;
   typedef ttVec::const_iterator				ttVeccit;
@@ -51,7 +51,7 @@ int main()
 
   int n = jlt::read_number("\nNumber of punctures",3,20,5);
 
-  ttVec ttv = ttauto::ttbuild_list(n);
+  ttVec ttv = traintracks::ttbuild_list(n);
   cout << "\nList of strata:\n";
   for (ttVeccit i = ttv.begin(); i != ttv.end(); ++i)
     {
@@ -91,7 +91,7 @@ int main()
     }
 
   cout << "\nSubgraphs:\n";
-  ttauto::print_subgraphs(ttg);
+  traintracks::print_subgraphs(ttg);
 
   if (jlt::yesno("\nWrite subgraphs to file",false))
     {
@@ -127,7 +127,7 @@ int main()
   if (div) ostr << "_" << fg+1 << "_inv";
   std::string pAfile = "pA" + ostr.str() + ".m";
 
-  ttauto::ttauto<traintrack> tta(*ifg);
+  traintracks::ttauto<traintrack> tta(*ifg);
   tta.output_file(pAfile.c_str());
   tta.max_pathlength(len);
   tta.search();

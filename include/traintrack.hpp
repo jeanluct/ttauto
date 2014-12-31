@@ -34,7 +34,7 @@
 #include "mathmatrix_permplus1.hpp"
 
 
-namespace ttauto {
+namespace traintracks {
 
 class traintrack
 {
@@ -188,7 +188,7 @@ public:
   // Fold and find transition matrix.
   jlt::mathmatrix<int> fold_transition_matrix(const int f)
   {
-    jlt::mathmatrix<int> M(ttauto::fold_transition_matrix(*this,f));
+    jlt::mathmatrix<int> M(traintracks::fold_transition_matrix(*this,f));
     fold(f);
     return M;
   }
@@ -478,7 +478,7 @@ inline void traintrack::swap(const int m1, const int m2)
       std::cerr << "Nonexistent multigon in traintrack::swap.\n";
       std::exit(1);
     }
-  ttauto::swap(*mgv[m1],*mgv[m2]);
+  traintracks::swap(*mgv[m1],*mgv[m2]);
 }
 
 inline std::ostream&
@@ -492,6 +492,6 @@ operator<<(std::ostream& strm, const traintrack::coding_block& b)
   return strm;
 }
 
-} // namespace ttauto
+} // namespace traintracks
 
 #endif // TRAINTRACK_HPP
