@@ -35,3 +35,5 @@ The development of *ttauto* was supported by the [US National Science Foundation
 [11]: http://www.nsf.gov
 [12]: http://www.nsf.gov/awardsearch/showAward?AWD_ID=0806821
 [13]: http://www.nsf.gov/awardsearch/showAward?AWD_ID=1233935
+
+[![Analytics](https://ga-beacon.appspot.com/UA-58116885-1/ttauto/readme)](https://github.com/igrigorik/ga-beacon)
