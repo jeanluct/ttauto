@@ -161,8 +161,7 @@ private:
       {
 	// Fold and find the transition matrix.
 	TrTr trtr0(trtr);
-	TM = trtr0.fold_transition_matrix(f);
-	free_auto<int> AM = trtr0.fold_traintrack_map(f);
+	free_auto<int> AM = trtr0.fold_transition_matrix(f,TM);
 	if (TM != id)
 	  {
 	    ++nfoldsv[idx];

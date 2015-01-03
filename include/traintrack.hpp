@@ -188,6 +188,7 @@ public:
   //  f odd  = fold clockwise
   bool fold(const int f);
 
+#if 0
   // Fold and find transition matrix.
   jlt::mathmatrix<int> fold_transition_matrix(const int f)
   {
@@ -195,10 +196,12 @@ public:
     fold(f);
     return M;
   }
+#endif
 
-  // Fold and find train track map.
-  free_auto<int> fold_traintrack_map(const int f)
+  // Fold and find transition matrix and train track map.
+  free_auto<int> fold_transition_matrix(const int f, jlt::mathmatrix<int>& M)
   {
+    M = traintracks::fold_transition_matrix(*this,f);
     free_auto<int> AM(traintracks::fold_traintrack_map(*this,f));
     fold(f);
     return AM;
