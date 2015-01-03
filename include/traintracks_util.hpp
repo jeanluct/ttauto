@@ -196,17 +196,18 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
   if (col2 == -1 || row2 == -1) return AM;
 
-  AM[row2+1] = {row2+1};
-  //  AM[row2+1] = {-(row2+1)};
+  int j = row2+1, i = col2+1;
+  AM[i] = {i};
+  //  AM[i] = {-(i)};
   if (f % 2 == 0)
     {
       // Fold clockwise.
-      AM[col2+1] = {row2+1,col2+1};
+      AM[j] = {j,i};
     }
   else
     {
       // Fold counterclockwise.
-      AM[col2+1] = {col2+1,row2+1};
+      AM[j] = {i,j};
     }
 
   /* Check automorphism (see transition matrix) */
