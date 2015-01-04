@@ -94,8 +94,8 @@ int main()
   folding_path<traintrack> p(ttg,0);
   p.push_back(0); p.push_back(1);
 
-  cout << "\nTransition matrix:\n";
-  cout << p.transition_matrix() << endl;
+  cout << "\nTransition matrix (transposed):\n";
+  p.transition_matrix().transpose().printMatrixForm(cout) << endl;
 
   cout << "\nTrain track map:\n";
   cout << p.traintrack_map() << endl;
@@ -106,7 +106,7 @@ int main()
   /* Doesn't reproduce the correct automaton? */
   n = 4;
   ttVec ttv2 = ttbuild_list(n);
-  trk = 0;
+  trk = 1;
 
   cout << "\nTrain track has " << ttv2[trk].punctures() << " punctures and ";
   cout << ttv2[trk].edges() << " edges\n";
@@ -120,8 +120,8 @@ int main()
   folding_path<traintrack> p2(ttg2,0);
   p2.push_back(0); p2.push_back(1); p2.push_back(0);
 
-  cout << "\nTransition matrix:\n";
-  cout << p2.transition_matrix() << endl;
+  cout << "\nTransition matrix (transposed):\n";
+  p2.transition_matrix().transpose().printMatrixForm(cout) << endl;
 
   cout << "\nTrain track map:\n";
   cout << p2.traintrack_map() << endl;
