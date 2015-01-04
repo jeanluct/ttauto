@@ -27,8 +27,7 @@
 
 namespace traintracks {
 
-// Remove equal adjacent elements from container.
-// This can be used to cancel inverses by using the right comparison function.
+// Remove from container adjacent elements satisfying a comparison function.
 // Similar to unique (http://www.cplusplus.com/reference/algorithm/unique/)
 template <class ForwardIterator, class BinaryPredicate>
 ForwardIterator adjacent_remove_if(ForwardIterator first,
