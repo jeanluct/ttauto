@@ -31,8 +31,9 @@ namespace traintracks {
 // This can be used to cancel inverses by using the right comparison function.
 // Similar to unique (http://www.cplusplus.com/reference/algorithm/unique/)
 template <class ForwardIterator, class BinaryPredicate>
-ForwardIterator adjacent_remove(ForwardIterator first, ForwardIterator last,
-		       BinaryPredicate pred)
+ForwardIterator adjacent_remove_if(ForwardIterator first,
+				   ForwardIterator last,
+				   BinaryPredicate pred)
 {
   if (first == last) return last;
 
@@ -142,7 +143,7 @@ inline free_word<T>& free_word<T>::reduce()
 
   while (true)
     {
-      auto i = adjacent_remove(this->begin(),this->end(),isinv);
+      auto i = adjacent_remove_if(this->begin(),this->end(),isinv);
       if (i == this->end()) break;
       this->erase(i,this->end());
     }
