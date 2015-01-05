@@ -395,7 +395,12 @@ folding_path<TrTr>::traintrack_map() const
 	  std::cerr << " in folding_path::traintrack_map.\n";
 	  std::exit(1);
 	}
+      /* The choice here depends on how we interpret row/column. */
+#if 1
       AM = AM * ttg->traintrack_map(v,*i);
+#else
+      AM = ttg->traintrack_map(v,*i) * AM;
+#endif
       v = ttg->target_vertex(v,*i);
     }
 

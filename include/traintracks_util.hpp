@@ -193,25 +193,31 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
     }
   //  std::cerr << "row with two ones is " << row2 << std::endl;
   //  std::cerr << "col with two ones is " << col2 << std::endl;
+  bool isperm = (col2 == -1 || row2 == -1);
 
-  if (col2 == -1 || row2 == -1) return AM;
+  TM.transpose(); // Transpose the transition matrix.
 
-  int j = row2+1, i = col2+1;
-  AM[i] = {i};
-  //  AM[i] = {-(i)};
+  // Turn back into a permutation matrix.
+  if (!isperm) TM(row2,col2) = 0;
+
+  // Find permutation and its inverse.
+  jlt::mathvector<int> pp(n), ppi(n);
+  for (int i = 0; i < n; ++i)
+    for (int j = 0; j < n; ++j)
+      if (TM(i,j) == 1) { pp[i] = j; ppi[j] = i; }
+  // Copy permutation over to train track map.
+  for (int i = 0; i < n; ++i) AM[i+1] = {pp[i]+1};
+
+  // Now deal with the folded edges.
+  int e1 = row2+1, e21 = pp[row2]+1, e22 = col2+1;
+
+  AM[ppi[e22-1]+1] = {-e22};
   if (f % 2 == 0)
-    {
-      // Fold clockwise.
-      AM[j] = {j,i};
-    }
+    AM[e1] = {e21,e22}; // fold clockwise
   else
-    {
-      // Fold counterclockwise.
-      AM[j] = {i,j};
-    }
+    AM[e1] = {e22,e21}; // fold counterclockwise
 
   /* Check automorphism (see transition matrix) */
-
 
   return AM;
 }

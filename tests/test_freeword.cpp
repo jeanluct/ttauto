@@ -91,8 +91,9 @@ int main()
   cout << (ttg.vertices() > 1 ? " vertices\n" : " vertex\n");
 
   // Make a folding path through the automaton.
+  // This is the example in devel/iss03
   folding_path<traintrack> p(ttg,0);
-  p.push_back(0); p.push_back(1);
+  p.push_back(1); p.push_back(0);
 
   cout << "\nTransition matrix (transposed):\n";
   p.transition_matrix().transpose().printMatrixForm(cout) << endl;
