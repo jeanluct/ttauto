@@ -208,6 +208,8 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   // Copy permutation over to train track map.
   for (int i = 0; i < n; ++i) AM[i+1] = {pp[i]+1};
 
+  if (isperm) return AM;
+
   // Now deal with the folded edges.
   int e1 = row2+1, e21 = pp[row2]+1, e22 = col2+1;
 
