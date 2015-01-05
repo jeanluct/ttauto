@@ -57,23 +57,10 @@ ForwardIterator adjacent_remove_if(ForwardIterator first,
   return ++result;
 }
 
+
 // A default inverse function, appropriate for ints and doubles.
 template<class T>
 inline T inverse(const T& i) { return -i; }
-
-
-class free_elem
-{
-protected:
-  int inv;
-
-public:
-  free_elem(int inv_ = 0) : inv(inv_) {}
-
-  free_elem inverse() { return free_elem(-inv); }
-};
-
-
 
 
 // Forward declarations.
