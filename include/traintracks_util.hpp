@@ -174,6 +174,7 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
   /* Kludge: compute transition matrix first to figure it out. */
   jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f);
+  TM.transpose(); // Transpose the transition matrix.
 
   // Check that the transition matrix is permutation+1 or identity.
   int col2 = -1, row2 = -1;
@@ -187,15 +188,13 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 	      colsum += TM(i,j);
 	      rowsum += TM(j,i);
 	    }
-	  if (colsum == 2) col2 = i;
-	  if (rowsum == 2) row2 = i;
+	  if (colsum == 2) row2 = i;
+	  if (rowsum == 2) col2 = i;
 	}
     }
   //  std::cerr << "row with two ones is " << row2 << std::endl;
   //  std::cerr << "col with two ones is " << col2 << std::endl;
   bool isperm = (col2 == -1 || row2 == -1);
-
-  TM.transpose(); // Transpose the transition matrix.
 
   // Turn back into a permutation matrix.
   if (!isperm) TM(row2,col2) = 0;
