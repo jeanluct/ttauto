@@ -213,10 +213,11 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   int e1 = row2+1, e21 = pp[row2]+1, e22 = col2+1;
 
   AM[ppi[e22-1]+1] = {-e22};
+  int infinitesimal = -ngen; // placeholder
   if (f % 2 == 0)
-    AM[e1] = {e21,e22}; // fold clockwise
+    AM[e1] = {e21,infinitesimal,e22}; // fold clockwise
   else
-    AM[e1] = {e22,e21}; // fold counterclockwise
+    AM[e1] = {e22,infinitesimal,e21}; // fold counterclockwise
 
   /* Check automorphism (see transition matrix) */
 
