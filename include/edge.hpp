@@ -107,6 +107,8 @@ public:
   // is hooked to from mm.  Needed by class traintrack.
   multigon* target_multigon(const multigon* mm, int& t_pr, int& t_pre) const;
 
+  multigon* ending_multigon(const int en) const { return mg[en]; }
+
 private:
   // Be careful: pointers to edges are duplicated!
   void copy(edge& enew, const edge& eold)

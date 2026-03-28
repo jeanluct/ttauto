@@ -337,7 +337,7 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 	      // let the loop carry on it'll see the first ending and
 	      // change it back.  So we interrupt the loop and update
 	      // the second edge ending.
-	      if (Edge(p,e)->mg[0] == pm_old)
+	      if (Edge(p,e)->ending_multigon(0) == pm_old)
 		{
 		  // We've already updated mg[0], so we must now
 		  // update mg[1].
