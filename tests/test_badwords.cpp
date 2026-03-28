@@ -30,7 +30,6 @@
 #include "ttauto.hpp"
 #include "traintracks_util.hpp"
 #include "folding_path.hpp"
-#include "ttauto.hpp"
 #include "badwords.hpp"
 
 

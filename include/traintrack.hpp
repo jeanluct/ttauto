@@ -41,18 +41,18 @@ class traintrack
   static const bool label_multiprongs = true;
 
 public:
-  typedef multigon::edgep				edgep;
+  using edgep = multigon::edgep;
 #if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
   // There is only one owner for each multigon, so use std::unique_ptr (C++11).
-  typedef std::unique_ptr<multigon>			mgonp;
+  using mgonp = std::unique_ptr<multigon>;
 #else
-  typedef multigon*					mgonp;
+  using mgonp = multigon*;
 #endif
-  typedef jlt::vector<mgonp>				mgpVec;
-  typedef multigon::intVec				intVec;
-  typedef jlt::vector<double>				dblVec;
-  typedef mgpVec::const_iterator			cmit;
-  typedef mgpVec::iterator				mit;
+  using mgpVec = jlt::vector<mgonp>;
+  using intVec = multigon::intVec;
+  using dblVec = jlt::vector<double>;
+  using cmit = mgpVec::const_iterator;
+  using mit = mgpVec::iterator;
 
   static const int debug = 0;
   static const bool exploit_symmetries = true;
