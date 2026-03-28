@@ -158,14 +158,6 @@ int main()
   cout << AMp2 << endl;
 
   jlt::mathmatrix<int> TMfromAMp2 = transition_matrix_from_map(ttv2[trk],AMp2);
-  // TODO(issue-3): this currently disagrees for this path; keep as
-  // printed diagnostic until map/peripheral labeling is completed.
-  if (TMp2 != TMfromAMp2)
-    {
-      std::cerr << "Warning: map/matrix mismatch in second freeword scenario.\n";
-      std::cerr << "Transition matrix:\n";
-      TMp2.printMatrixForm(std::cerr);
-      std::cerr << "Map-derived matrix:\n";
-      TMfromAMp2.printMatrixForm(std::cerr);
-    }
+  TMfromAMp2.transpose();
+  assert(TMp2 == TMfromAMp2);
 }
