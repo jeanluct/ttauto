@@ -23,6 +23,7 @@
 // LICENSE>
 
 #include <iostream>
+#include <cassert>
 #include <list>
 #include <jlt/stlio.hpp>
 #include "traintrack.hpp"
@@ -37,6 +38,28 @@ int main()
   using std::endl;
   using jlt::operator<<;
   using namespace traintracks;
+
+  // Core free_word/free_auto sanity checks.
+  {
+    free_word<int> w({1,2,-2,3,4,-4,-3});
+    w.reduce();
+    assert((w == free_word<int>({1}))); // 2,-2 and 3,4,-4,-3 cancel
+
+    free_word<int> wi = w.inverse();
+    assert((wi == free_word<int>({-1}))); // inverse of {1}
+
+    free_auto<int> id(3);
+    free_auto<int> a(3);
+    a[1] = {2};
+    a[2] = {-1,3};
+    a[3] = {3};
+
+    // Right identity under composition as currently implemented.
+    free_auto<int> aid = a * id;
+    assert((aid[1] == a[1]));
+    assert((aid[2] == a[2]));
+    assert((aid[3] == a[3]));
+  }
 
 #if 0
   free_word<int> w({-5,-1,1,2,2,-2,1,1,2,1,-2,2,-1});
@@ -74,9 +97,7 @@ int main()
   cout << endl << "T1*T2:\n" << T1*T2 << endl;
 #endif
   typedef ttfoldgraph<traintrack>			ttgraph;
-  typedef std::list<ttgraph>::const_iterator		cttgit;
   typedef jlt::vector<traintrack>			ttVec;
-  typedef ttVec::const_iterator				ttVeccit;
 
   int n = 3;
   ttVec ttv = ttbuild_list(n);

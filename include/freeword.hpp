@@ -25,6 +25,15 @@
 #ifndef FREEWORD_HPP
 #define FREEWORD_HPP
 
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <initializer_list>
+#include <iostream>
+#include <iomanip>
+#include <list>
+#include <vector>
+
 namespace traintracks {
 
 // Remove from container adjacent elements satisfying a comparison function.
@@ -85,17 +94,17 @@ public:
   free_word(std::initializer_list<T> l, int ngen_ = 0) : std::list<T>(l)
   {
     /* This is specialized to ints for now. */
-    int ngen = 0;
+    int ngen_found = 0;
     for (auto i : *this)
       {
-	ngen = std::max(std::abs(i),ngen);
+	ngen_found = std::max(std::abs(i),ngen_found);
       }
-    if (ngen_ && ngen > ngen_)
+    if (ngen_ && ngen_found > ngen_)
       {
 	std::cerr << "ngen is too small.\n";
 	std::exit(-1);
       }
-    ngen = std::max(ngen,ngen_);
+    ngen = std::max(ngen_found,ngen_);
   }
 
   /* Make a copy constructor and operator= that check gen. */
