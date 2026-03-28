@@ -30,6 +30,7 @@
 #include <jlt/polynomial.hpp>
 #include <jlt/exceptions.hpp>
 #include "freeword.hpp"
+#include "ttmap_labels.hpp"
 
 namespace traintracks {
 
@@ -162,8 +163,8 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   TrTr tt(tt0);
   const int ninf = tt0.total_prongs();
   const int n = tt0.edges();
-  const int ngen = n + ninf;
-  free_auto<int> AM(ngen);
+  const ttmap_labeler labels(n,ninf);
+  free_auto<int> AM(labels.num_generators());
 
   // Need to find two main edges and one infinitesimal edge.
   // main edge a: folding from
@@ -210,10 +211,12 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   if (isperm) return AM;
 
   // Now deal with the folded edges.
-  int e1 = row2+1, e21 = pp[row2]+1, e22 = col2+1;
+  int e1 = labels.main_gen(row2);
+  int e21 = labels.main_gen(pp[row2]);
+  int e22 = labels.main_gen(col2);
 
   AM[ppi[e22-1]+1] = {-e22};
-  int infinitesimal = -ngen; // placeholder
+  int infinitesimal = -labels.peripheral_gen(ninf-1); // placeholder
   if (f % 2 == 0)
     AM[e1] = {e21,infinitesimal,e22}; // fold clockwise
   else
@@ -222,6 +225,41 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   /* Check automorphism (see transition matrix) */
 
   return AM;
+}
+
+
+template<class TrTr>
+jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
+						const free_auto<int>& AM)
+{
+  const int n = tt.edges();
+  jlt::mathmatrix<int> TM(n,n,0);
+
+  if ((int)AM.numgens() < n)
+    {
+      std::cerr << "Automorphism has too few generators in ";
+      std::cerr << "traintracks::transition_matrix_from_map.\n";
+      std::exit(1);
+    }
+
+  for (int src = 0; src < n; ++src)
+    {
+      const int g = src + 1;
+      for (auto img : AM.get_action(g))
+	{
+	  int col = std::abs(img) - 1;
+	  if (col < 0)
+	    {
+	      std::cerr << "Bad generator in ";
+	      std::cerr << "traintracks::transition_matrix_from_map.\n";
+	      std::exit(1);
+	    }
+	  if (col >= n) continue; // Infinitesimal generator: ignore for main-edge TM.
+	  ++TM(col,src);
+	}
+    }
+
+  return TM;
 }
 
 

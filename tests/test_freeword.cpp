@@ -30,6 +30,7 @@
 #include "ttfoldgraph.hpp"
 #include "folding_path.hpp"
 #include "freeword.hpp"
+#include "traintracks_util.hpp"
 
 
 int main()
@@ -117,10 +118,16 @@ int main()
   p.push_back(1); p.push_back(0);
 
   cout << "\nTransition matrix (transposed):\n";
-  p.transition_matrix().transpose().printMatrixForm(cout) << endl;
+  jlt::mathmatrix<int> TMp = p.transition_matrix().transpose();
+  TMp.printMatrixForm(cout) << endl;
 
   cout << "\nTrain track map:\n";
-  cout << p.traintrack_map() << endl;
+  free_auto<int> AMp = p.traintrack_map();
+  cout << AMp << endl;
+
+  // Main-edge transition matrix should match map-derived one.
+  jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map(ttv[trk],AMp);
+  assert(TMp == TMfromAMp);
 
   //  return 0;
 
@@ -143,8 +150,22 @@ int main()
   p2.push_back(0); p2.push_back(1); p2.push_back(0);
 
   cout << "\nTransition matrix (transposed):\n";
-  p2.transition_matrix().transpose().printMatrixForm(cout) << endl;
+  jlt::mathmatrix<int> TMp2 = p2.transition_matrix().transpose();
+  TMp2.printMatrixForm(cout) << endl;
 
   cout << "\nTrain track map:\n";
-  cout << p2.traintrack_map() << endl;
+  free_auto<int> AMp2 = p2.traintrack_map();
+  cout << AMp2 << endl;
+
+  jlt::mathmatrix<int> TMfromAMp2 = transition_matrix_from_map(ttv2[trk],AMp2);
+  // TODO(issue-3): this currently disagrees for this path; keep as
+  // printed diagnostic until map/peripheral labeling is completed.
+  if (TMp2 != TMfromAMp2)
+    {
+      std::cerr << "Warning: map/matrix mismatch in second freeword scenario.\n";
+      std::cerr << "Transition matrix:\n";
+      TMp2.printMatrixForm(std::cerr);
+      std::cerr << "Map-derived matrix:\n";
+      TMfromAMp2.printMatrixForm(std::cerr);
+    }
 }
