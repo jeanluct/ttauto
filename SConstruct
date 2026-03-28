@@ -46,12 +46,12 @@ else:
 jltdir = '#extern/jlt'
 jltincdir = jltdir
 csparsedir = jltdir + '/extern/CSparse'
-csparselibdir = csparsedir + '/build'
+csparselibdir = csparsedir + '/build'  # make sure to link to static lib below
 csparseincdir = csparsedir + '/Include'
 env = Environment(CC = cc, CXX = cxx,
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
-                  LIBS = ['csparse', 'ttauto'],
-                  LIBPATH = ['#lib',csparselibdir],
+                  LIBS = ['ttauto',File(csparselibdir + '/libcsparse.a')],
+                  LIBPATH = ['#lib'],
                   CPPPATH = ['#include',csparseincdir,jltincdir])
 
 # Use profile=1 on the command-line to turn on profiling.
