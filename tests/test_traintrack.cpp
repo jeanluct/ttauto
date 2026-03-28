@@ -77,6 +77,13 @@ int main()
   // The equality (isotopy) operator.
   if (tt == tt2) cout << "Tracks match!\n"; else cout << "Don't match!\n";
 
+  // Exercise swapping in normalise()/minimise_coding repeatedly.
+  for (int i = 0; i < 20; ++i)
+    {
+      tt2.normalise();
+      tt2.check();
+    }
+
   // Make a train track from a coding.
   traintrack tt3(tt.coding());
   if (tt == tt3) cout << "Tracks match!\n"; else cout << "Don't match!\n";

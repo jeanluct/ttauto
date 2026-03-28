@@ -311,6 +311,11 @@ void multigon::erase_edge_pointer(const int p, const int e)
     {
       int en = Edge(p,ee)->which_ending(this);
       Edge(p,ee)->pre[en] = ee;
+      if (Edge(p,ee)->pr[en] != p || Edge(p,ee)->pre[en] != ee)
+        {
+          std::cerr << "Inconsistent edge metadata in multigon::erase_edge_pointer.\n";
+          std::exit(1);
+        }
     }
 }
 
@@ -339,12 +344,15 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 		  // (On the first pass, we used swap_endings if
 		  // necessary to ensure the the substitution occured
 		  // on the first ending -- see below.)
-		  Edge(p,e)->mg[1] = pm_new;
+		  Edge(p,e)->set_ending(1,pm_new,p,e);
 		  // For swap it's not strictly necessary to update p
 		  // and e, since they haven't changed.  Do it for
 		  // completeness, and so cycle_prongs can use this.
-		  Edge(p,e)->pr[1] = p;
-		  Edge(p,e)->pre[1] = e;
+		  if (Edge(p,e)->pr[1] != p || Edge(p,e)->pre[1] != e)
+		    {
+		      std::cerr << "Inconsistent edge metadata in multigon::update_edge_prong_pointers.\n";
+		      std::exit(1);
+		    }
 		}
 	      else
 		{
@@ -359,13 +367,16 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 	    {
 	      // Find which end points to the old multigon.
 	      int en = Edge(p,e)->which_ending(pm_old);
-	      Edge(p,e)->mg[en] = pm_new;
+	      Edge(p,e)->set_ending(en,pm_new,p,e);
 	      // For swap it's not strictly necessary to
 	      // update p and e, since they haven't changed.
 	      // Do it for completeness, and so cycle_prongs
 	      // can use this.
-	      Edge(p,e)->pr[en] = p;
-	      Edge(p,e)->pre[en] = e;
+	      if (Edge(p,e)->pr[en] != p || Edge(p,e)->pre[en] != e)
+		{
+		  std::cerr << "Inconsistent edge metadata in multigon::update_edge_prong_pointers.\n";
+		  std::exit(1);
+		}
 	      if (Edge(p,e)->attached_to_same_multigon() && en == 1)
 		{
 		  // As a final subtle point (grrr), if the
@@ -410,6 +421,10 @@ void swap(multigon& m1, multigon& m2)
 
   // Update the edge pointers for m2.
   m2.update_edge_prong_pointers(pm1);
+
+  // Local postcondition checks for swap consistency.
+  m1.check();
+  m2.check();
 
   if (multigon::debug)
     {

@@ -74,6 +74,10 @@ private:
   int lab;				// Label set.
   bool punct;				// Punctured?
 
+  // Ownership note:
+  // - multigon keeps owning pointers to incident edges in egv.
+  // - edge back-pointers to multigons are non-owning (raw pointers).
+
 public:
 
   // Create a k-pronged multigon.

@@ -58,7 +58,8 @@ public:
   static const bool exploit_symmetries = true;
 
 private:
-
+  // Ownership: traintrack is the sole owner of multigons.
+  // Internal cross-links between multigons and edges are non-owning.
   mgpVec mgv;
 
 public:
