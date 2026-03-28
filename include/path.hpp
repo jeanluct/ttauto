@@ -71,7 +71,9 @@ public:
 
   bool operator==(const path& pp) const
   {
-    return (m0 == pp.m0 && m1 == pp.m1 && std::operator==(*this,pp));
+    const jlt::vector<int>& self = *this;
+    const jlt::vector<int>& other = pp;
+    return (m0 == pp.m0 && m1 == pp.m1 && (self == other));
   }
 
   // Cycle through all paths of fixed length, letting values at each
@@ -115,7 +117,9 @@ public:
       }
     if (this->size() != pp.size()) return (this->size() < pp.size());
 
-    return std::operator<(*this,pp);
+    const jlt::vector<int>& self = *this;
+    const jlt::vector<int>& other = pp;
+    return (self < other);
   }
 
   bool operator>(const path& pp) const { return (pp < *this); }
