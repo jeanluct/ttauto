@@ -26,7 +26,7 @@ import subprocess
 from distutils.version import StrictVersion
 
 # Choose a particular compiler by specifying the version here.
-#GCC_version = StrictVersion('4.9.2');
+#GCC_version = StrictVersion('9.3.0');
 
 cc = 'gcc'
 cxx = 'g++'
@@ -34,18 +34,25 @@ cxx = 'g++'
 if 'GCC_version' not in locals():
    # If we didn't define a GCC version number, find out what it is.
    GCC_version = StrictVersion(
-      subprocess.check_output([cxx,'-dumpversion']))
+	       subprocess
+	       .check_output([cxx,'-dumpfullversion'])
+	       .decode('utf-8'))
 else:
    # If we define a version number, call the appropriate compiler.
    cc = cc + '-' + str(GCC_version)
    cxx = cxx + '-' + str(GCC_version)
 
 # A '#' means relative to the root directory.
+jltdir = '#extern/jlt'
+jltincdir = jltdir
+csparsedir = jltdir + '/extern/CSparse'
+csparselibdir = csparsedir + '/build'
+csparseincdir = csparsedir + '/Include'
 env = Environment(CC = cc, CXX = cxx,
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
                   LIBS = ['csparse', 'ttauto'],
-                  LIBPATH = ['#lib','#extern/CSparse'],
-                  CPPPATH = ['#include','#extern/CSparse','#extern/jlt'])
+                  LIBPATH = ['#lib',csparselibdir],
+                  CPPPATH = ['#include',csparseincdir,jltincdir])
 
 # Use profile=1 on the command-line to turn on profiling.
 profile = ARGUMENTS.get('profile', 0)
@@ -82,5 +89,6 @@ else:
    # This provides std::make_unique.
    env.PrependUnique(CXXFLAGS = ['-std=c++14'])
 
-env.SConscript(dirs = ['lib','examples','tests','extern/CSparse'],
-               exports = 'env')
+env.SConscript(dirs = ['lib','examples','tests',csparsedir],
+               exports = 'env',
+               must_exist = False)

@@ -188,7 +188,22 @@ struct folding_path<TrTr>::hash
 template<class TrTr>
 inline void folding_path<TrTr>::find_vertices(const int i0)
 {
-  for (int i = i0; i < (int)length(); ++i)
+  const path::size_type nfolds = length();
+
+  if (i0 < 0 || static_cast<path::size_type>(i0) > nfolds)
+    {
+      std::cerr << "Illegal initial index " << i0;
+      std::cerr << " in folding_path::find_vertices.\n";
+      std::exit(1);
+    }
+
+  if (vp.size() < nfolds + 1)
+    {
+      std::cerr << "Invalid vertex path size in folding_path::find_vertices.\n";
+      std::exit(1);
+    }
+
+  for (path::size_type i = static_cast<path::size_type>(i0); i < nfolds; ++i)
     {
       if (fp[i] < 0 || fp[i] > (ttg->foldings(vp[i])-1))
 	{
