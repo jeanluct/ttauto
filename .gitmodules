@@ -1,0 +1,3 @@
+[submodule "extern/jlt"]
+	path = extern/jlt
+	url = https://github.com/jeanluct/jlt.git
