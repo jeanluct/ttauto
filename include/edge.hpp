@@ -108,6 +108,9 @@ public:
   multigon* target_multigon(const multigon* mm, int& t_pr, int& t_pre) const;
 
   multigon* ending_multigon(const int en) const { return mg[en]; }
+  int ending_prong(const int en) const { return pr[en]; }
+  int ending_edge_index(const int en) const { return pre[en]; }
+  void set_ending_edge_index(const int en, const int e) { pre[en] = e; }
 
 private:
   // Be careful: pointers to edges are duplicated!

@@ -117,7 +117,7 @@ void multigon::insert_edge(edgep& eg, const int p, const int e)
   for (int ee = e+1; ee < edges(p); ++ee)
     {
       int en = Edge(p,ee)->which_ending(this);
-      Edge(p,ee)->pre[en] = ee;
+      Edge(p,ee)->set_ending_edge_index(en,ee);
     }
 }
 
@@ -133,13 +133,13 @@ bool multigon::check() const
 	      std::exit(1);
 	    }
 	  int en = Edge(p,e)->which_ending(this);
-	  if (Edge(p,e)->pr[en] != p)
+	  if (Edge(p,e)->ending_prong(en) != p)
 	    {
 	      std::cerr << "Inconsistent prong number";
 	      std::cerr << " in multigon::check.\n";
 	      std::exit(1);
 	    }
-	  if (Edge(p,e)->pre[en] != e)
+	  if (Edge(p,e)->ending_edge_index(en) != e)
 	    {
 	      std::cerr << "Inconsistent edge number";
 	      std::cerr << " in multigon::check.\n";
@@ -293,7 +293,8 @@ std::ostream& multigon::print_details(std::ostream& strm) const
       strm << "  prong " << p << ":";
       for (int e = 0; e < edges(p); ++e)
 	{
-	  strm << " (" << Edge(p,e)->mg[0] << "-" << Edge(p,e)->mg[1] << ")";
+	  strm << " (" << Edge(p,e)->ending_multigon(0)
+	       << "-" << Edge(p,e)->ending_multigon(1) << ")";
 	}
       strm << endl;
     }
@@ -310,8 +311,9 @@ void multigon::erase_edge_pointer(const int p, const int e)
   for (int ee = e; ee < edges(p); ++ee)
     {
       int en = Edge(p,ee)->which_ending(this);
-      Edge(p,ee)->pre[en] = ee;
-      if (Edge(p,ee)->pr[en] != p || Edge(p,ee)->pre[en] != ee)
+      Edge(p,ee)->set_ending_edge_index(en,ee);
+      if (Edge(p,ee)->ending_prong(en) != p ||
+	  Edge(p,ee)->ending_edge_index(en) != ee)
         {
           std::cerr << "Inconsistent edge metadata in multigon::erase_edge_pointer.\n";
           std::exit(1);
@@ -348,7 +350,8 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 		  // For swap it's not strictly necessary to update p
 		  // and e, since they haven't changed.  Do it for
 		  // completeness, and so cycle_prongs can use this.
-		  if (Edge(p,e)->pr[1] != p || Edge(p,e)->pre[1] != e)
+		  if (Edge(p,e)->ending_prong(1) != p ||
+		      Edge(p,e)->ending_edge_index(1) != e)
 		    {
 		      std::cerr << "Inconsistent edge metadata in multigon::update_edge_prong_pointers.\n";
 		      std::exit(1);
@@ -372,7 +375,8 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 	      // update p and e, since they haven't changed.
 	      // Do it for completeness, and so cycle_prongs
 	      // can use this.
-	      if (Edge(p,e)->pr[en] != p || Edge(p,e)->pre[en] != e)
+	      if (Edge(p,e)->ending_prong(en) != p ||
+		  Edge(p,e)->ending_edge_index(en) != e)
 		{
 		  std::cerr << "Inconsistent edge metadata in multigon::update_edge_prong_pointers.\n";
 		  std::exit(1);
