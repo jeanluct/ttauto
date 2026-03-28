@@ -43,11 +43,16 @@ else:
    cxx = cxx + '-' + str(GCC_version)
 
 # A '#' means relative to the root directory.
+jltdir = '#extern/jlt'
+jltincdir = jltdir
+csparsedir = jltdir + '/extern/CSparse'
+csparselibdir = csparsedir + '/build'
+csparseincdir = csparsedir + '/Include'
 env = Environment(CC = cc, CXX = cxx,
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
                   LIBS = ['csparse', 'ttauto'],
-                  LIBPATH = ['#lib','#extern/CSparse'],
-                  CPPPATH = ['#include','#extern/CSparse','#extern/jlt'])
+                  LIBPATH = ['#lib',csparselibdir],
+                  CPPPATH = ['#include',csparseincdir,jltincdir])
 
 # Use profile=1 on the command-line to turn on profiling.
 profile = ARGUMENTS.get('profile', 0)

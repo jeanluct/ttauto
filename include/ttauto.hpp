@@ -732,7 +732,7 @@ bool ttauto<TrTr>::descend_graph()
 	TM = p.transition_matrix();
 
       // Is path a pA?
-      if (!(TM.isReducible()))
+      if (!(TM.is_reducible()))
 	{
 	  if (debug) std::cerr << " irreducible";
 	  ++irreducible;

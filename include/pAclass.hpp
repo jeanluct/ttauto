@@ -32,6 +32,7 @@
 #include <unordered_map>
 #endif
 #include <jlt/mathmatrix.hpp>
+#include <jlt/mathematica.hpp>
 #include <jlt/polynomial.hpp>
 #include "folding_path.hpp"
 #include "traintracks_util.hpp"
@@ -198,8 +199,8 @@ public:
 	if (printed < max_paths_to_print || max_paths_to_print == 0)
 	  {
 	    strm << "{";
-	    pit->first.vertices().printMathematicaForm(strm) << ",";
-	    pit->second.printMathematicaForm(strm) << "}";
+	    printMathematicaForm(strm,pit->first.vertices()) << ",";
+	    printMathematicaForm(strm,pit->second) << "}";
 	    if (printed != max_paths_to_print-1 &&
 		printed != number_of_paths()-1) strm << ",";
 	  }
