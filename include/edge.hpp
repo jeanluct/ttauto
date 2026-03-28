@@ -107,10 +107,33 @@ public:
   // is hooked to from mm.  Needed by class traintrack.
   multigon* target_multigon(const multigon* mm, int& t_pr, int& t_pre) const;
 
+  // Access edge-ending metadata.
   multigon* ending_multigon(const int en) const { return mg[en]; }
+
   int ending_prong(const int en) const { return pr[en]; }
+
   int ending_edge_index(const int en) const { return pre[en]; }
+
   void set_ending_edge_index(const int en, const int e) { pre[en] = e; }
+
+  // Renumber the ending attached to a given multigon.
+  int renumber_ending(const multigon* mm, const int e)
+  {
+    int en = which_ending(mm);
+    pre[en] = e;
+    return en;
+  }
+
+  // Relink one ending from old_mm to new_mm with metadata.
+  int relink_ending(const multigon* old_mm, multigon* new_mm,
+                    const int p, const int e)
+  {
+    int en = which_ending(old_mm);
+    set_ending(en,new_mm,p,e);
+    return en;
+  }
+
+  // Validate one ending against expected attachment metadata.
   bool ending_matches(const int en, const multigon* mm,
                       const int p, const int e) const
   {

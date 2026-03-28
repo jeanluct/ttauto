@@ -132,8 +132,8 @@ void multigon::insert_edge(edgep& eg, const int p, const int e)
   // pointers and prongs don't need updating.
   for (int ee = e+1; ee < edges(p); ++ee)
     {
-      int en = Edge(p,ee)->which_ending(this);
-      Edge(p,ee)->set_ending_edge_index(en,ee);
+      int en = Edge(p,ee)->renumber_ending(this,ee);
+      require_ending_match(*Edge(p,ee),en,this,p,ee,"multigon::insert_edge");
     }
 }
 
@@ -326,8 +326,7 @@ void multigon::erase_edge_pointer(const int p, const int e)
   // pointers and prongs don't need updating.
   for (int ee = e; ee < edges(p); ++ee)
     {
-      int en = Edge(p,ee)->which_ending(this);
-      Edge(p,ee)->set_ending_edge_index(en,ee);
+      int en = Edge(p,ee)->renumber_ending(this,ee);
       require_ending_match(*Edge(p,ee),en,this,p,ee,
 			   "multigon::erase_edge_pointer");
     }
@@ -376,9 +375,8 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 	    }
 	  else
 	    {
-	      // Find which end points to the old multigon.
-	      int en = Edge(p,e)->which_ending(pm_old);
-	      Edge(p,e)->set_ending(en,pm_new,p,e);
+	      // Find which end points to the old multigon and relink.
+	      int en = Edge(p,e)->relink_ending(pm_old,pm_new,p,e);
 	      // For swap it's not strictly necessary to
 	      // update p and e, since they haven't changed.
 	      // Do it for completeness, and so cycle_prongs
