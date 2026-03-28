@@ -1,0 +1,145 @@
+
+> braid
+Enter number of braid strings: 6
+Enter braid generators separated by spaces, ending with 0:
+1 2 3 -5 -4 -3 0
+> train
+Now have an efficient fibred surface: Growth 2.01536, Entropy 0.700796
+Isotopy class is Reducible
+> print
+
+Graph on surface with 6 peripheral loops:
+Vertex number 1 with image vertex 7:
+Edges at vertex are: 1 -1 12
+Region 1
+
+Vertex number 2 with image vertex 2:
+Edges at vertex are: -4 10 5
+Region 4
+
+Vertex number 3 with image vertex 5:
+Edges at vertex are: 7 -7 -11
+Region 5
+
+Vertex number 4 with image vertex 1:
+Edges at vertex are: -2 13 2
+Region 1
+
+Vertex number 5 with image vertex 4:
+Edges at vertex are: -3 -8 9 3
+Region 2
+
+Vertex number 6 with image vertex 6:
+Edges at vertex are: -9 4 -5
+Region 3
+
+Vertex number 7 with image vertex 3:
+Edges at vertex are: -6 14 6
+Region 4
+
+Vertex number 8 with image vertex 8:
+Edges at vertex are: -12 8 -13
+Region 1
+
+Vertex number 9 with image vertex 9:
+Edges at vertex are: -14 -10 11
+Region 4
+
+Edge number 1 from vertex 1 to vertex 1:
+Type: Peripheral about puncture number 1
+Image is: 6
+Path (1 -> 1):  1 -1
+
+Edge number 2 from vertex 4 to vertex 4:
+Type: Peripheral about puncture number 2
+Image is: 1
+Path (1 -> 1):  -2 2
+
+Edge number 3 from vertex 5 to vertex 5:
+Type: Peripheral about puncture number 3
+Image is: 2
+Path (2 -> 2):  -3 3
+
+Edge number 4 from vertex 6 to vertex 2:
+Type: Peripheral about puncture number 4
+Image is: 4
+Path (3 -> 4):  -4
+
+Edge number 5 from vertex 2 to vertex 6:
+Type: Peripheral about puncture number 4
+Image is: 5
+Path (4 -> 3):  4
+
+Edge number 6 from vertex 7 to vertex 7:
+Type: Peripheral about puncture number 5
+Image is: 7
+Path (4 -> 4):  -5 5
+
+Edge number 7 from vertex 3 to vertex 3:
+Type: Peripheral about puncture number 6
+Image is: 3
+Path (5 -> 5):  -6 6
+
+Edge number 8 from vertex 8 to vertex 5:
+Type: Main
+Image is: -13
+Path (1 -> 2):  -2
+
+Edge number 9 from vertex 5 to vertex 6:
+Type: Main
+Image is: 13 8 -3 9
+Path (2 -> 3):  -3
+
+Edge number 10 from vertex 2 to vertex 9:
+Type: Main
+Image is: 10 -14 -6 14
+Path (4 -> 4):
+
+Edge number 11 from vertex 9 to vertex 3:
+Type: Main
+Image is: -10 -4 -9
+Path (4 -> 5):  -5
+
+Edge number 12 from vertex 1 to vertex 8:
+Type: Main
+Image is: 14 -10 -4 -9 3 -8
+Path (1 -> 1):
+
+Edge number 13 from vertex 4 to vertex 8:
+Type: Main
+Image is: 12
+Path (1 -> 1):
+
+Edge number 14 from vertex 7 to vertex 9:
+Type: Main
+Image is: -11
+Path (4 -> 4):
+
+Reducible Isotopy class
+Vertex 1:
+Gates are: {-1}, {12}, {1}
+Infinitesimal edges join -1 to 12, 1 to 12
+Vertex 2:
+Gates are: {10}, {5}, {-4}
+Infinitesimal edges join -4 to 10
+Vertex 3:
+Gates are: {-7}, {-11}, {7}
+Infinitesimal edges join -11 to -7, -11 to 7
+Vertex 4:
+Gates are: {13}, {2}, {-2}
+Infinitesimal edges join -2 to 13, 2 to 13
+Vertex 5:
+Gates are: {-8, 9}, {3}, {-3}
+Infinitesimal edges join -8 to -3, -8 to 3
+Vertex 6:
+Gates are: {4}, {-5}, {-9}
+Infinitesimal edges join -9 to 4
+Vertex 7:
+Gates are: {14}, {6}, {-6}
+Infinitesimal edges join -6 to 14, 6 to 14
+Vertex 8:
+Gates are: {8}, {-13}, {-12}
+Infinitesimal edges join -13 to 8, -13 to -12, -12 to 8
+Vertex 9:
+Gates are: {-10}, {11}, {-14}
+Infinitesimal edges join -14 to -10, -14 to 11, -10 to 11
