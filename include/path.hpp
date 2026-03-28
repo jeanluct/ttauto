@@ -66,7 +66,8 @@ public:
 	std::exit(1);
       }
 
-    return (path&)jlt::vector<int>::operator=(pp);
+    jlt::vector<int>::operator=(pp);
+    return *this;
   }
 
   bool operator==(const path& pp) const

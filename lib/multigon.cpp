@@ -32,6 +32,22 @@
 
 namespace traintracks {
 
+namespace {
+
+inline void require_ending_match(const edge& eg, const int en,
+                                 const multigon* mm,
+                                 const int p, const int e,
+                                 const char* where)
+{
+  if (!eg.ending_matches(en,mm,p,e))
+    {
+      std::cerr << "Inconsistent edge metadata in " << where << ".\n";
+      std::exit(1);
+    }
+}
+
+} // namespace
+
 // Attach a new edge to prong p, numbered edge e.
 // Prongs and outgoing edges are numbered clockwise.
 void multigon::attach_edge(const int p, const int e)
@@ -116,8 +132,8 @@ void multigon::insert_edge(edgep& eg, const int p, const int e)
   // pointers and prongs don't need updating.
   for (int ee = e+1; ee < edges(p); ++ee)
     {
-      int en = Edge(p,ee)->which_ending(this);
-      Edge(p,ee)->pre[en] = ee;
+      int en = Edge(p,ee)->renumber_ending(this,ee);
+      require_ending_match(*Edge(p,ee),en,this,p,ee,"multigon::insert_edge");
     }
 }
 
@@ -133,13 +149,13 @@ bool multigon::check() const
 	      std::exit(1);
 	    }
 	  int en = Edge(p,e)->which_ending(this);
-	  if (Edge(p,e)->pr[en] != p)
+	  if (Edge(p,e)->ending_prong(en) != p)
 	    {
 	      std::cerr << "Inconsistent prong number";
 	      std::cerr << " in multigon::check.\n";
 	      std::exit(1);
 	    }
-	  if (Edge(p,e)->pre[en] != e)
+	  if (Edge(p,e)->ending_edge_index(en) != e)
 	    {
 	      std::cerr << "Inconsistent edge number";
 	      std::cerr << " in multigon::check.\n";
@@ -293,7 +309,8 @@ std::ostream& multigon::print_details(std::ostream& strm) const
       strm << "  prong " << p << ":";
       for (int e = 0; e < edges(p); ++e)
 	{
-	  strm << " (" << Edge(p,e)->mg[0] << "-" << Edge(p,e)->mg[1] << ")";
+	  strm << " (" << Edge(p,e)->ending_multigon(0)
+	       << "-" << Edge(p,e)->ending_multigon(1) << ")";
 	}
       strm << endl;
     }
@@ -309,8 +326,9 @@ void multigon::erase_edge_pointer(const int p, const int e)
   // pointers and prongs don't need updating.
   for (int ee = e; ee < edges(p); ++ee)
     {
-      int en = Edge(p,ee)->which_ending(this);
-      Edge(p,ee)->pre[en] = ee;
+      int en = Edge(p,ee)->renumber_ending(this,ee);
+      require_ending_match(*Edge(p,ee),en,this,p,ee,
+			   "multigon::erase_edge_pointer");
     }
 }
 
@@ -332,19 +350,19 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 	      // let the loop carry on it'll see the first ending and
 	      // change it back.  So we interrupt the loop and update
 	      // the second edge ending.
-	      if (Edge(p,e)->mg[0] == pm_old)
+	      if (Edge(p,e)->ending_multigon(0) == pm_old)
 		{
 		  // We've already updated mg[0], so we must now
 		  // update mg[1].
 		  // (On the first pass, we used swap_endings if
 		  // necessary to ensure the the substitution occured
 		  // on the first ending -- see below.)
-		  Edge(p,e)->mg[1] = pm_new;
+		  Edge(p,e)->set_ending(1,pm_new,p,e);
 		  // For swap it's not strictly necessary to update p
 		  // and e, since they haven't changed.  Do it for
 		  // completeness, and so cycle_prongs can use this.
-		  Edge(p,e)->pr[1] = p;
-		  Edge(p,e)->pre[1] = e;
+		  require_ending_match(*Edge(p,e),1,pm_new,p,e,
+				       "multigon::update_edge_prong_pointers");
 		}
 	      else
 		{
@@ -357,15 +375,14 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 	    }
 	  else
 	    {
-	      // Find which end points to the old multigon.
-	      int en = Edge(p,e)->which_ending(pm_old);
-	      Edge(p,e)->mg[en] = pm_new;
+	      // Find which end points to the old multigon and relink.
+	      int en = Edge(p,e)->relink_ending(pm_old,pm_new,p,e);
 	      // For swap it's not strictly necessary to
 	      // update p and e, since they haven't changed.
 	      // Do it for completeness, and so cycle_prongs
 	      // can use this.
-	      Edge(p,e)->pr[en] = p;
-	      Edge(p,e)->pre[en] = e;
+	      require_ending_match(*Edge(p,e),en,pm_new,p,e,
+				   "multigon::update_edge_prong_pointers");
 	      if (Edge(p,e)->attached_to_same_multigon() && en == 1)
 		{
 		  // As a final subtle point (grrr), if the
@@ -410,6 +427,10 @@ void swap(multigon& m1, multigon& m2)
 
   // Update the edge pointers for m2.
   m2.update_edge_prong_pointers(pm1);
+
+  // Local postcondition checks for swap consistency.
+  m1.check();
+  m2.check();
 
   if (multigon::debug)
     {

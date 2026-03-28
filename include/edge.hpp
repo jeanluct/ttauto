@@ -46,6 +46,7 @@ public:
 private:
   double wt;			// Weight on edge.
   mgpVec mg;			// The multigon at each end of the edge.
+				// non-owning back-pointers.
   intVec pr;			// The mother prong of each multigon.
   intVec pre;			// Is this the 0th, 1st, etc. edge
 
@@ -106,6 +107,39 @@ public:
   // is hooked to from mm.  Needed by class traintrack.
   multigon* target_multigon(const multigon* mm, int& t_pr, int& t_pre) const;
 
+  // Access edge-ending metadata.
+  multigon* ending_multigon(const int en) const { return mg[en]; }
+
+  int ending_prong(const int en) const { return pr[en]; }
+
+  int ending_edge_index(const int en) const { return pre[en]; }
+
+  void set_ending_edge_index(const int en, const int e) { pre[en] = e; }
+
+  // Renumber the ending attached to a given multigon.
+  int renumber_ending(const multigon* mm, const int e)
+  {
+    int en = which_ending(mm);
+    pre[en] = e;
+    return en;
+  }
+
+  // Relink one ending from old_mm to new_mm with metadata.
+  int relink_ending(const multigon* old_mm, multigon* new_mm,
+                    const int p, const int e)
+  {
+    int en = which_ending(old_mm);
+    set_ending(en,new_mm,p,e);
+    return en;
+  }
+
+  // Validate one ending against expected attachment metadata.
+  bool ending_matches(const int en, const multigon* mm,
+                      const int p, const int e) const
+  {
+    return (mg[en] == mm && pr[en] == p && pre[en] == e);
+  }
+
 private:
   // Be careful: pointers to edges are duplicated!
   void copy(edge& enew, const edge& eold)
@@ -132,6 +166,13 @@ private:
     std::swap(mg[0],mg[1]);
     std::swap(pr[0],pr[1]);
     std::swap(pre[0],pre[1]);
+  }
+
+  void set_ending(const int en, multigon* mm, const int p, const int e)
+  {
+    mg[en] = mm;
+    pr[en] = p;
+    pre[en] = e;
   }
 
   void point_to_multigon(multigon* mm, const int p, const int e);
@@ -172,9 +213,7 @@ inline void edge::point_to_multigon(multigon* mm, const int p, const int e)
     {
       if (is_unattached(en))
 	{
-	  mg[en] = mm;
-	  pr[en] = p;
-	  pre[en] = e;
+	  set_ending(en,mm,p,e);
 	  return;
 	}
     }
@@ -202,12 +241,10 @@ inline void edge::detach_from_multigon(const multigon* mm)
   mg[en]->erase_edge_pointer(pr[en],pre[en]);
   // Zero everything on that ending.
 #if __cplusplus > 199711L
-  mg[en] = nullptr;
+  set_ending(en,nullptr,0,0);
 #else
-  mg[en] = 0;
+  set_ending(en,0,0,0);
 #endif
-  pr[en] = 0;
-  pre[en] = 0;
 }
 
 // Detach from both multigons completely.  Keeps only the weight.
@@ -219,12 +256,10 @@ inline void edge::detach_from_multigons()
       mg[en]->erase_edge_pointer(pr[en],pre[en]);
       // Zero everything.
 #if __cplusplus > 199711L
-      mg[en] = nullptr;
+      set_ending(en,nullptr,0,0);
 #else
-      mg[en] = 0;
+      set_ending(en,0,0,0);
 #endif
-      pr[en] = 0;
-      pre[en] = 0;
     }
 }
 

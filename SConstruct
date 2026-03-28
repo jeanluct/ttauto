@@ -46,12 +46,12 @@ else:
 jltdir = '#extern/jlt'
 jltincdir = jltdir
 csparsedir = jltdir + '/extern/CSparse'
-csparselibdir = csparsedir + '/build'
+csparselibdir = csparsedir + '/build'  # make sure to link to static lib below
 csparseincdir = csparsedir + '/Include'
 env = Environment(CC = cc, CXX = cxx,
                   CCFLAGS = ['-Wall','-O3','-ffast-math'],
-                  LIBS = ['csparse', 'ttauto'],
-                  LIBPATH = ['#lib',csparselibdir],
+                  LIBS = ['ttauto',File(csparselibdir + '/libcsparse.a')],
+                  LIBPATH = ['#lib'],
                   CPPPATH = ['#include',csparseincdir,jltincdir])
 
 # Use profile=1 on the command-line to turn on profiling.
@@ -86,8 +86,8 @@ elif GCC_version < StrictVersion('4.9'):
    env.PrependUnique(CXXFLAGS = ['-std=c++0x'])
 else:
    # Use cutting-edge C++ standard.
-   # This provides std::make_unique.
-   env.PrependUnique(CXXFLAGS = ['-std=c++14'])
+   # This provides std::make_unique (c++-14).
+   env.PrependUnique(CXXFLAGS = ['-std=c++17'])
 
 env.SConscript(dirs = ['lib','examples','tests',csparsedir],
                exports = 'env',

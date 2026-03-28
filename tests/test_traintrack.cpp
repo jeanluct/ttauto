@@ -77,9 +77,36 @@ int main()
   // The equality (isotopy) operator.
   if (tt == tt2) cout << "Tracks match!\n"; else cout << "Don't match!\n";
 
+  // Exercise swapping in normalise()/minimise_coding repeatedly.
+  for (int i = 0; i < 20; ++i)
+    {
+      tt2.normalise();
+      tt2.check();
+    }
+
   // Make a train track from a coding.
   traintrack tt3(tt.coding());
   if (tt == tt3) cout << "Tracks match!\n"; else cout << "Don't match!\n";
+
+  // Repeatedly apply one valid fold (if any), then normalise and check.
+  // This is a mutation stress test for relinking invariants.
+  traintrack tt4(tt3);
+  for (int step = 0; step < 30; ++step)
+    {
+      bool folded = false;
+      for (int f = 0; f < tt4.foldings(); ++f)
+        {
+          traintrack ttc(tt4);
+          if (!ttc.fold(f)) continue;
+          ttc.check();
+          ttc.normalise();
+          ttc.check();
+          tt4 = ttc;
+          folded = true;
+          break;
+        }
+      if (!folded) break;
+    }
 
   jlt::vector<double> w(tt.edges());
   for (int i = 0; i < tt.edges(); ++i) w[i] = i+1;
