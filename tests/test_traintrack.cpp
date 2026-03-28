@@ -88,6 +88,26 @@ int main()
   traintrack tt3(tt.coding());
   if (tt == tt3) cout << "Tracks match!\n"; else cout << "Don't match!\n";
 
+  // Repeatedly apply one valid fold (if any), then normalise and check.
+  // This is a mutation stress test for relinking invariants.
+  traintrack tt4(tt3);
+  for (int step = 0; step < 30; ++step)
+    {
+      bool folded = false;
+      for (int f = 0; f < tt4.foldings(); ++f)
+        {
+          traintrack ttc(tt4);
+          if (!ttc.fold(f)) continue;
+          ttc.check();
+          ttc.normalise();
+          ttc.check();
+          tt4 = ttc;
+          folded = true;
+          break;
+        }
+      if (!folded) break;
+    }
+
   jlt::vector<double> w(tt.edges());
   for (int i = 0; i < tt.edges(); ++i) w[i] = i+1;
   tt.weights(w.begin());
