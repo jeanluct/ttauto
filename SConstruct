@@ -86,8 +86,8 @@ elif GCC_version < StrictVersion('4.9'):
    env.PrependUnique(CXXFLAGS = ['-std=c++0x'])
 else:
    # Use cutting-edge C++ standard.
-   # This provides std::make_unique.
-   env.PrependUnique(CXXFLAGS = ['-std=c++14'])
+   # This provides std::make_unique (c++-14).
+   env.PrependUnique(CXXFLAGS = ['-std=c++17'])
 
 env.SConscript(dirs = ['lib','examples','tests',csparsedir],
                exports = 'env',

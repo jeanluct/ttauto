@@ -32,6 +32,22 @@
 
 namespace ttauto {
 
+namespace {
+
+inline void require_ending_match(const edge& eg, const int en,
+                                 const multigon* mm,
+                                 const int p, const int e,
+                                 const char* where)
+{
+  if (!eg.ending_matches(en,mm,p,e))
+    {
+      std::cerr << "Inconsistent edge metadata in " << where << ".\n";
+      std::exit(1);
+    }
+}
+
+} // namespace
+
 // Attach a new edge to prong p, numbered edge e.
 // Prongs and outgoing edges are numbered clockwise.
 void multigon::attach_edge(const int p, const int e)
@@ -312,11 +328,8 @@ void multigon::erase_edge_pointer(const int p, const int e)
     {
       int en = Edge(p,ee)->which_ending(this);
       Edge(p,ee)->set_ending_edge_index(en,ee);
-      if (!Edge(p,ee)->ending_matches(en,this,p,ee))
-        {
-          std::cerr << "Inconsistent edge metadata in multigon::erase_edge_pointer.\n";
-          std::exit(1);
-        }
+      require_ending_match(*Edge(p,ee),en,this,p,ee,
+			   "multigon::erase_edge_pointer");
     }
 }
 
@@ -349,11 +362,8 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 		  // For swap it's not strictly necessary to update p
 		  // and e, since they haven't changed.  Do it for
 		  // completeness, and so cycle_prongs can use this.
-		  if (!Edge(p,e)->ending_matches(1,pm_new,p,e))
-		    {
-		      std::cerr << "Inconsistent edge metadata in multigon::update_edge_prong_pointers.\n";
-		      std::exit(1);
-		    }
+		  require_ending_match(*Edge(p,e),1,pm_new,p,e,
+				       "multigon::update_edge_prong_pointers");
 		}
 	      else
 		{
@@ -373,11 +383,8 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 	      // update p and e, since they haven't changed.
 	      // Do it for completeness, and so cycle_prongs
 	      // can use this.
-	      if (!Edge(p,e)->ending_matches(en,pm_new,p,e))
-		{
-		  std::cerr << "Inconsistent edge metadata in multigon::update_edge_prong_pointers.\n";
-		  std::exit(1);
-		}
+	      require_ending_match(*Edge(p,e),en,pm_new,p,e,
+				   "multigon::update_edge_prong_pointers");
 	      if (Edge(p,e)->attached_to_same_multigon() && en == 1)
 		{
 		  // As a final subtle point (grrr), if the
