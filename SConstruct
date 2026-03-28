@@ -84,5 +84,6 @@ else:
    # This provides std::make_unique.
    env.PrependUnique(CXXFLAGS = ['-std=c++14'])
 
-env.SConscript(dirs = ['lib','examples','tests','extern/CSparse'],
-               exports = 'env')
+env.SConscript(dirs = ['lib','examples','tests',csparsedir],
+               exports = 'env',
+               must_exist = False)
