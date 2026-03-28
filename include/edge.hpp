@@ -111,6 +111,11 @@ public:
   int ending_prong(const int en) const { return pr[en]; }
   int ending_edge_index(const int en) const { return pre[en]; }
   void set_ending_edge_index(const int en, const int e) { pre[en] = e; }
+  bool ending_matches(const int en, const multigon* mm,
+                      const int p, const int e) const
+  {
+    return (mg[en] == mm && pr[en] == p && pre[en] == e);
+  }
 
 private:
   // Be careful: pointers to edges are duplicated!

@@ -312,8 +312,7 @@ void multigon::erase_edge_pointer(const int p, const int e)
     {
       int en = Edge(p,ee)->which_ending(this);
       Edge(p,ee)->set_ending_edge_index(en,ee);
-      if (Edge(p,ee)->ending_prong(en) != p ||
-	  Edge(p,ee)->ending_edge_index(en) != ee)
+      if (!Edge(p,ee)->ending_matches(en,this,p,ee))
         {
           std::cerr << "Inconsistent edge metadata in multigon::erase_edge_pointer.\n";
           std::exit(1);
@@ -350,8 +349,7 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 		  // For swap it's not strictly necessary to update p
 		  // and e, since they haven't changed.  Do it for
 		  // completeness, and so cycle_prongs can use this.
-		  if (Edge(p,e)->ending_prong(1) != p ||
-		      Edge(p,e)->ending_edge_index(1) != e)
+		  if (!Edge(p,e)->ending_matches(1,pm_new,p,e))
 		    {
 		      std::cerr << "Inconsistent edge metadata in multigon::update_edge_prong_pointers.\n";
 		      std::exit(1);
@@ -375,8 +373,7 @@ void multigon::update_edge_prong_pointers(const multigon* pm_old)
 	      // update p and e, since they haven't changed.
 	      // Do it for completeness, and so cycle_prongs
 	      // can use this.
-	      if (Edge(p,e)->ending_prong(en) != p ||
-		  Edge(p,e)->ending_edge_index(en) != e)
+	      if (!Edge(p,e)->ending_matches(en,pm_new,p,e))
 		{
 		  std::cerr << "Inconsistent edge metadata in multigon::update_edge_prong_pointers.\n";
 		  std::exit(1);
