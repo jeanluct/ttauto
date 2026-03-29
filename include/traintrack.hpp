@@ -193,6 +193,11 @@ public:
   // associated with fold index f in the current cusp ordering.
   int fold_infinitesimal_index(const int f) const;
 
+  // Return infinitesimal generator for fold index f, given the
+  // main-generator count nmain.
+  // Orientation is fixed by the global infinitesimal-loop convention.
+  int fold_infinitesimal_generator(const int f, const int nmain) const;
+
   // Return cusp location for fold index f in the current cusp ordering.
   // Output:
   // - mmc: multigon containing the cusp

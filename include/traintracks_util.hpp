@@ -296,8 +296,7 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   AM[labels.main_gen(dec.perm_inv[dec.col2])] = {-e22};
 
   // Infinitesimal edge chosen from fold cusp geometry.
-  int infix = tt0.fold_infinitesimal_index(f);
-  int infinitesimal = -labels.infinitesimal_gen(infix);
+  int infinitesimal = tt0.fold_infinitesimal_generator(f,n);
 
   // Fold direction determines ordering around the inserted infinitesimal edge.
   if (f % 2 == 0)

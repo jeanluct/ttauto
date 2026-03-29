@@ -196,9 +196,8 @@ int main()
           assert(TMstepT == TMfromMapT);
 
           // In one-step fold maps, the selected infinitesimal generator should
-          // appear once with negative orientation in non-permutation folds.
-          int infix = ttvf.fold_infinitesimal_index(f);
-          int infg = labels.infinitesimal_gen(infix);
+          // appear once with the fixed global orientation in non-permutation folds.
+          int infg = std::abs(ttvf.fold_infinitesimal_generator(f,labels.nmain));
           int ninf = 0, nneg = 0, npos = 0;
           for (int g = 1; g <= labels.nmain; ++g)
             {
@@ -215,24 +214,24 @@ int main()
           else
             {
               assert(ninf == 1);
-              assert(nneg == 1);
-              assert(npos == 0);
+              assert(npos == 1);
+              assert(nneg == 0);
             }
         }
     }
 
   // Hand-checked mapping example alignment (issue #3):
-  // a=1, b=2, peripheral generator at folded cusp is 5.
-  // Step 1: f=1 (clockwise): a->-a, b->a -5 b.
+  // a=1, b=2, infinitesimal generator at folded cusp has index 5.
+  // Step 1: f=1 (clockwise): a->-a, b->a 5 b.
   const free_auto<int>& AMf1 = ttg.traintrack_map(0,1);
   assert((AMf1[1] == free_word<int>({-1})));
-  assert((AMf1[2] == free_word<int>({1,-5,2})));
+  assert((AMf1[2] == free_word<int>({1,5,2})));
 
   // Step 2 candidate: f=0 from the target of step 1.
   // Keep this as diagnostic until we fully lock geometric labeling/orientation.
   const int v_after_f1 = ttg.target_vertex(0,1);
   const free_auto<int>& AMf0_after_f1 = ttg.traintrack_map(v_after_f1,0);
-  assert((AMf0_after_f1[1] == free_word<int>({1,-5,2})));
+  assert((AMf0_after_f1[1] == free_word<int>({1,5,2})));
   assert((AMf0_after_f1[2] == free_word<int>({-2})));
 
   cout << "\nTransition matrix (transposed):\n";
@@ -250,9 +249,10 @@ int main()
   assert(AMp[1] == AMcheck[1]);
   assert(AMp[2] == AMcheck[2]);
 
-  // Hand-checked composed map for step sequence [1,0].
-  assert((AMp[1] == free_word<int>({-2,5,-1})));
-  assert((AMp[2] == free_word<int>({1,-5,2,-5,-2})));
+  // Hand-checked composed map for step sequence [1,0]
+  // under the current infinitesimal orientation convention.
+  assert((AMp[1] == free_word<int>({-2,-5,-1})));
+  assert((AMp[2] == free_word<int>({1,5,2,5,-2})));
 
   // Main-edge transition matrix should match map-derived one.
   jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map_transposed(ttv[trk],AMp);
@@ -310,8 +310,7 @@ int main()
             transition_matrix_from_map_transposed(ttg2.traintrack(v),ttg2.traintrack_map(v,f));
           assert(TMstepT == TMfromMapT);
 
-          int infix = ttvf.fold_infinitesimal_index(f);
-          int infg = labels.infinitesimal_gen(infix);
+          int infg = std::abs(ttvf.fold_infinitesimal_generator(f,labels.nmain));
           int ninf = 0, nneg = 0, npos = 0;
           for (int g = 1; g <= labels.nmain; ++g)
             {
@@ -328,8 +327,8 @@ int main()
           else
             {
               assert(ninf == 1);
-              assert(nneg == 1);
-              assert(npos == 0);
+              assert(npos == 1);
+              assert(nneg == 0);
             }
         }
     }

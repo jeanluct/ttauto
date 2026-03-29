@@ -572,6 +572,17 @@ int traintrack::fold_infinitesimal_index(const int f) const
   return multigon_prong_index(mi,pc);
 }
 
+int traintrack::fold_infinitesimal_generator(const int f, const int nmain) const
+{
+  multigon* mmc = 0;
+  int pc = -1, ec = -1;
+  fold_cusp_location(f,mmc,pc,ec);
+
+  const int mi = multigon_index(mmc);
+  const int infix = multigon_prong_index(mi,pc);
+  return nmain + infix + 1;
+}
+
 bool traintrack::recursive_find_cusp(multigon& mm,
 				     const int pin, const int ein,
 				     int& fcusp, multigon*& mmc,
