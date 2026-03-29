@@ -23,7 +23,10 @@
 // LICENSE>
 
 #include <cassert>
+#include <cstdlib>
 #include <iostream>
+#include <random>
+#include <string>
 
 #include "folding_path.hpp"
 #include "traintrack.hpp"
@@ -73,7 +76,47 @@ void check_path_map_matrix(const traintracks::ttfoldgraph<TrTr>& ttg,
 }
 
 
-int main()
+template<class TrTr>
+void stress_random_paths(const traintracks::ttfoldgraph<TrTr>& ttg,
+                         const TrTr& tt,
+                         const int initial_vertex,
+                         const int npaths,
+                         const int max_len,
+                         std::mt19937& rng,
+                         const std::string& label)
+{
+  std::uniform_int_distribution<int> len_dist(1,max_len);
+
+  for (int k = 0; k < npaths; ++k)
+    {
+      traintracks::folding_path<TrTr> p(ttg,initial_vertex);
+      int v = initial_vertex;
+      const int L = len_dist(rng);
+
+      for (int step = 0; step < L; ++step)
+        {
+          const int nf = ttg.foldings(v);
+          if (nf <= 0) break;
+          std::uniform_int_distribution<int> fold_dist(0,nf-1);
+          const int f = fold_dist(rng);
+          p.push_back(f);
+          v = ttg.target_vertex(v,f);
+        }
+
+      jlt::mathmatrix<int> TMpath = p.transition_matrix().transpose();
+      traintracks::free_auto<int> AMpath = p.traintrack_map();
+      jlt::mathmatrix<int> TMfromAM =
+        traintracks::transition_matrix_from_map_transposed(tt,AMpath);
+
+      assert(TMpath == TMfromAM);
+    }
+
+  std::cout << "[ttmap-random] " << label << " -> OK"
+            << " (paths=" << npaths << ", max_len=" << max_len << ")\n";
+}
+
+
+int main(int argc, char** argv)
 {
   using traintracks::traintrack;
 
@@ -104,5 +147,31 @@ int main()
                           "n=4, trk=1, path [0,1,0,1,0]");
   }
 
-  std::cout << "test_ttmap_from_path: ok\n";
+  {
+    // Randomized stress over all tracks for n=3..7 (path choice random only).
+    // Optional argv[1] sets the RNG seed. Default keeps runs reproducible.
+    unsigned seed = 123456u;
+    if (argc > 1)
+      {
+        seed = static_cast<unsigned>(std::strtoul(argv[1],0,10));
+      }
+    std::mt19937 rng(seed);
+
+    std::cout << "\n";
+
+    for (int n = 3; n <= 7; ++n)
+      {
+        ttVec ttv = traintracks::ttbuild_list(n);
+        for (int trk = 0; trk < (int)ttv.size(); ++trk)
+          {
+            ttgraph ttg(ttv[trk]);
+            std::string label = "n=" + std::to_string(n) +
+                                ", trk=" + std::to_string(trk) +
+                                " random paths";
+            stress_random_paths(ttg,ttv[trk],0,20,10,rng,label);
+          }
+      }
+  }
+
+  std::cout << "\ntest_ttmap_from_path: ok\n";
 }
