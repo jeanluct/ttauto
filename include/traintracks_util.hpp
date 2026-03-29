@@ -136,6 +136,14 @@ inline permplus1_decode decode_fold_map_structure(const TrTr& tt0, const int f)
   return decode_transposed_permplus1(fold_transition_matrix(tt0,f).transpose());
 }
 
+template<class TrTr>
+jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
+						const free_auto<int>& AM);
+
+template<class TrTr>
+jlt::mathmatrix<int> transition_matrix_from_map_transposed(const TrTr& tt,
+							   const free_auto<int>& AM);
+
 // If two vectors are cyclically equivalent, return a vector p0v of
 // offsets between them such that v1[v] == v2[(v+p0v[i]) % size()].
 // Return empty p0v if they are not cyclically equivalent.
@@ -304,7 +312,13 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   else
     AM[e1] = {e22,infinitesimal,e21}; // fold clockwise
 
-  /* Check automorphism (see transition matrix) */
+  // Main-edge transition consistency check.
+  if (transition_matrix_from_map_transposed(tt0,AM) !=
+      fold_transition_matrix(tt0,f).transpose())
+    {
+      std::cerr << "Map/transition mismatch in traintracks::fold_traintrack_map.\n";
+      std::exit(1);
+    }
 
   return AM;
 }
