@@ -37,11 +37,11 @@ int main()
       traintrack tt(n);
 
       // Make train track folding automaton graph.
-      traintracks::ttfoldgraph<traintrack> ttg(tt);
+      ttauto::ttfoldgraph<traintrack> ttg(tt);
 
       // Number of vertices in full automaton.
       std::cout << n << "\t" << ttg.vertices();
       // Number of vertices in main automaton (that supports pA's).
-      std::cout << "\t" << subgraphs(ttg).front().vertices() << std::endl;
+      std::cout << "\t" << ttauto::subgraphs(ttg).front().vertices() << std::endl;
     }
 }

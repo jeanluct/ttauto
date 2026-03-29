@@ -38,7 +38,7 @@ int main()
   using std::cout;
   using std::endl;
   using traintracks::traintrack;
-  using traintracks::folding_path;
+  using ttauto::folding_path;
 
   typedef traintrack TrTr;
 #if 1
@@ -56,11 +56,11 @@ int main()
   cout << "Train track has " << tt.punctures() << " punctures and ";
   cout << tt.edges() << " edges\n";
 
-  traintracks::ttfoldgraph<TrTr> ttg(tt);
+  ttauto::ttfoldgraph<TrTr> ttg(tt);
 
   cout << "TT folding graph has " << ttg.vertices() << " vertices\n";
 
-  jlt::matrix<std::list<folding_path<TrTr> > > pbad(badwords(ttg,maxplen));
+  jlt::matrix<std::list<folding_path<TrTr> > > pbad(ttauto::badwords(ttg,maxplen));
 
   cout << "Bad words:\n";
 

@@ -41,6 +41,7 @@ int main()
   using std::endl;
   using jlt::operator<<;
   using namespace traintracks;
+  using namespace ttauto;
 
   typedef ttfoldgraph<traintrack> ttgraph;
   typedef jlt::vector<traintrack> ttVec;

@@ -51,7 +51,10 @@
 // print_coding
 //
 
-namespace traintracks {
+namespace ttauto {
+
+using traintracks::freeauto;
+using traintracks::mathmatrix_permplus1;
 
 template<class TrTr> class ttfoldgraph;
 
@@ -847,6 +850,6 @@ print_subgraphs(const std::list<ttfoldgraph<TrTr> >& ttg,
   return strm;
 }
 
-} // namespace traintracks
+} // namespace ttauto
 
 #endif // TTFOLDGRAPH_HPP

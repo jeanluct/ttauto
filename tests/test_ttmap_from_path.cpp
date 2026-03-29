@@ -36,7 +36,7 @@
 
 
 template<class TrTr>
-void check_path_map_matrix(const traintracks::ttfoldgraph<TrTr>& ttg,
+void check_path_map_matrix(const ttauto::ttfoldgraph<TrTr>& ttg,
                            const TrTr& tt,
                            const int initial_vertex,
                            const std::initializer_list<int>& folds,
@@ -45,7 +45,7 @@ void check_path_map_matrix(const traintracks::ttfoldgraph<TrTr>& ttg,
   std::cout << "\n[ttmap-check] " << label << "\n";
 
   // Build an explicit folding path in the automaton.
-  traintracks::folding_path<TrTr> p(ttg,initial_vertex);
+  ttauto::folding_path<TrTr> p(ttg,initial_vertex);
   for (int f : folds) p.push_back(f);
 
   std::cout << "  folds:";
@@ -76,7 +76,7 @@ void check_path_map_matrix(const traintracks::ttfoldgraph<TrTr>& ttg,
 
 
 template<class TrTr>
-void stress_random_paths(const traintracks::ttfoldgraph<TrTr>& ttg,
+void stress_random_paths(const ttauto::ttfoldgraph<TrTr>& ttg,
                          const TrTr& tt,
                          const int initial_vertex,
                          const int npaths,
@@ -88,7 +88,7 @@ void stress_random_paths(const traintracks::ttfoldgraph<TrTr>& ttg,
 
   for (int k = 0; k < npaths; ++k)
     {
-      traintracks::folding_path<TrTr> p(ttg,initial_vertex);
+      ttauto::folding_path<TrTr> p(ttg,initial_vertex);
       int v = initial_vertex;
       const int L = len_dist(rng);
 
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
 {
   using traintracks::traintrack;
 
-  typedef traintracks::ttfoldgraph<traintrack> ttgraph;
+  typedef ttauto::ttfoldgraph<traintrack> ttgraph;
   typedef jlt::vector<traintrack> ttVec;
 
   {

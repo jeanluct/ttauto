@@ -33,7 +33,11 @@
 #include "ttfoldgraph.hpp"
 #include "freeauto.hpp"
 
-namespace traintracks {
+namespace ttauto {
+
+using traintracks::freeauto;
+using traintracks::path;
+using ttauto::ttfoldgraph;
 
 template<class TrTr> class folding_path;
 
@@ -547,6 +551,6 @@ std::ostream& operator<<(std::ostream& strm, const folding_path<TrTr>& pp)
   return (strm << pp.fp);
 }
 
-} // namespace traintracks
+} // namespace ttauto
 
 #endif // FOLDING_PATH_HPP

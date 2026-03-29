@@ -44,7 +44,9 @@
 #include "pAclass.hpp"
 #include "badwords.hpp"
 
-namespace traintracks {
+namespace ttauto {
+
+using traintracks::findroot;
 
 template<class TrTr>
 class ttauto
@@ -959,6 +961,6 @@ inline void ttauto<TrTr>::record_pA()
 }
 
 
-} // namespace traintracks
+} // namespace ttauto
 
 #endif // TTAUTO_HPP

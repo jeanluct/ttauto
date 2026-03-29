@@ -38,7 +38,7 @@ int main()
   using std::endl;
   using traintracks::traintrack;
 
-  typedef traintracks::ttfoldgraph<traintrack>		ttgraph;
+  typedef ttauto::ttfoldgraph<traintrack>		ttgraph;
   typedef std::list<ttgraph>::const_iterator		cttgit;
   typedef jlt::vector<traintrack>			ttVec;
 
@@ -70,10 +70,10 @@ int main()
 
   // Make a list of train track graphs.  The main graph is the first
   // element.
-  std::list<ttgraph> ttg(subgraphs(ttgraph(ttv[trk])));
+  std::list<ttgraph> ttg(ttauto::subgraphs(ttgraph(ttv[trk])));
 
   cout << "\nFolding subgraphs from initial train track: \n";
-  traintracks::print_subgraphs(ttg);
+  ttauto::print_subgraphs(ttg);
 
   for (cttgit i = ttg.begin(); i != ttg.end(); ++i)
     {
@@ -82,7 +82,7 @@ int main()
       cout << " with " << i->vertices();
       cout << (i->vertices() == 1 ? " vertex\n\n" : " vertices\n\n");
 
-      traintracks::ttauto<traintrack> tta(*i);
+      ttauto::ttauto<traintrack> tta(*i);
       tta.max_dilatation(dilmax).check_norms();
       tta.search();
     }

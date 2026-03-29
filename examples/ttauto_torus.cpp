@@ -55,11 +55,11 @@ int main()
       ttv[trk].print_singularity_data(cout) << endl;
 
       // Create the train track graph (automaton).
-      traintracks::ttfoldgraph<traintrack> ttg(ttv[trk]);
+      ttauto::ttfoldgraph<traintrack> ttg(ttv[trk]);
 
       cout << "\nSearching automaton graph with " << ttg.vertices();
       cout << " vertices for pseudo-Anosovs...\n";
-      traintracks::ttauto<traintrack> tta(ttg);
+      ttauto::ttauto<traintrack> tta(ttg);
       tta.max_dilatation(dilmax[trk]).badword_length(0).check_norms();
       tta.search();
 
