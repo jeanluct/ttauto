@@ -29,6 +29,7 @@
 #include <string>
 
 #include "folding_path.hpp"
+#include "traintrack_build.hpp"
 #include "traintrack.hpp"
 #include "traintrack_map.hpp"
 #include "ttfoldgraph.hpp"
@@ -123,7 +124,7 @@ int main(int argc, char** argv)
   {
     // Small hand-checked scenario used in issue #3 work.
     const int n = 3;
-    ttVec ttv = traintracks::ttbuild_list(n);
+    ttVec ttv = traintracks::build_traintrack_list(n);
     const int trk = 0;
     ttgraph ttg(ttv[trk]);
 
@@ -135,7 +136,7 @@ int main(int argc, char** argv)
   {
     // Secondary scenario on a larger automaton.
     const int n = 4;
-    ttVec ttv = traintracks::ttbuild_list(n);
+    ttVec ttv = traintracks::build_traintrack_list(n);
     const int trk = 1;
     ttgraph ttg(ttv[trk]);
 
@@ -158,7 +159,7 @@ int main(int argc, char** argv)
 
     for (int n = 3; n <= 7; ++n)
       {
-        ttVec ttv = traintracks::ttbuild_list(n);
+        ttVec ttv = traintracks::build_traintrack_list(n);
         for (int trk = 0; trk < (int)ttv.size(); ++trk)
           {
             ttgraph ttg(ttv[trk]);

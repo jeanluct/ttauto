@@ -27,6 +27,7 @@
 #include <iostream>
 #include <jlt/vector.hpp>
 #include "traintrack.hpp"
+#include "traintrack_build.hpp"
 #include "ttfoldgraph.hpp"
 #include "ttauto.hpp"
 
@@ -45,7 +46,7 @@ int main()
   int trk = 3;			// Initial train track to search.
   double dilmax = 3;		// Max dilatation to look for.
 
-  ttVec ttv = traintracks::ttbuild_list(n);
+  ttVec ttv = traintracks::build_traintrack_list(n);
 
   //
   // 5 punctures:

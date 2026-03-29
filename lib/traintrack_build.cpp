@@ -26,7 +26,7 @@
 #include <jlt/vector.hpp>
 #include "edge.hpp"
 #include "multigon.hpp"
-#include "traintrack.hpp"
+#include "traintrack_build.hpp"
 
 // Build predefined train tracks.
 
@@ -383,28 +383,28 @@ void traintrack::monogon_to_multigon(const int L, const int K)
 // Non-member helper functions for building tracks
 //
 
-jlt::vector<traintrack> ttbuild_list2(const int N)
+jlt::vector<traintrack> build_traintrack_list_sweep_bigons(const int N)
 {
   jlt::vector<traintrack> ttv;
 
   // Tracks with punctured monogons and bigons only.
   for (int N2 = 0; N2 <= N-3; ++N2)
     {
-      jlt::vector<traintrack> ttv2 = ttbuild_list(N-N2,N2);
+      jlt::vector<traintrack> ttv2 = build_traintrack_list(N-N2,N2);
       ttv.insert(ttv.end(),ttv2.begin(),ttv2.end());
     }
 
   return ttv;
 }
 
-jlt::vector<traintrack> ttbuild_list(const int N, const int N2)
+jlt::vector<traintrack> build_traintrack_list(const int N, const int N2)
 {
   typedef traintrack::intVec intVec;
   typedef std::list<intVec>::const_iterator cit;
 
   if (N < 3)
     {
-      std::cerr << "traintracks::ttbuild_list: Need at least 3 puntures.\n";
+      std::cerr << "traintracks::build_traintrack_list: Need at least 3 puntures.\n";
       std::exit(1);
     }
 

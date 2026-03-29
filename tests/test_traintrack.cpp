@@ -26,6 +26,7 @@
 #include "edge.hpp"
 #include "multigon.hpp"
 #include "traintrack.hpp"
+#include "traintrack_build.hpp"
 
 
 int main()
@@ -121,5 +122,5 @@ int main()
 
   // Built a list of representatives of all allowable train tracks
   // with 8 punctures (monogons).
-  jlt::vector<traintrack> ttv = traintracks::ttbuild_list(8);
+  jlt::vector<traintrack> ttv = traintracks::build_traintrack_list(8);
 }

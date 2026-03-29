@@ -29,6 +29,7 @@
 #include <jlt/prompt.hpp>
 #include <jlt/vcs.hpp>
 #include "traintrack.hpp"
+#include "traintrack_build.hpp"
 #include "ttfoldgraph.hpp"
 #include "ttauto.hpp"
 
@@ -51,7 +52,7 @@ int main()
 
   int n = jlt::read_number("\nNumber of punctures",3,20,5);
 
-  ttVec ttv = traintracks::ttbuild_list(n);
+  ttVec ttv = traintracks::build_traintrack_list(n);
   cout << "\nList of strata:\n";
   for (ttVeccit i = ttv.begin(); i != ttv.end(); ++i)
     {

@@ -25,6 +25,7 @@
 #include <iostream>
 #include <vector>
 #include "traintrack.hpp"
+#include "traintrack_build.hpp"
 #include "ttfoldgraph.hpp"
 #include "ttauto.hpp"
 
@@ -67,7 +68,7 @@ int main()
   const int n = 5;
 
   // Build list of initial train tracks.
-  vector<traintrack> ttv = traintracks::ttbuild_list(n);
+  vector<traintrack> ttv = traintracks::build_traintrack_list(n);
 
   // Minimum dilatations for each stratum (see Ham & Song 2007).
   vector<double> dilmax(ttv.size());

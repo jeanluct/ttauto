@@ -30,6 +30,7 @@
 #include "ttfoldgraph.hpp"
 #include "folding_path.hpp"
 #include "freeauto.hpp"
+#include "traintrack_build.hpp"
 #include "traintrack_map.hpp"
 #include "ttmap_labels.hpp"
 
@@ -45,7 +46,7 @@ int main()
   typedef jlt::vector<traintrack> ttVec;
 
   int n = 3;
-  ttVec ttv = ttbuild_list(n);
+  ttVec ttv = build_traintrack_list(n);
   int trk = 0;
 
   cout << "\nTrain track has " << ttv[trk].punctures() << " punctures and ";
@@ -170,7 +171,7 @@ int main()
 
   // Secondary scenario: broader consistency checks over a larger automaton.
   n = 4;
-  ttVec ttv2 = ttbuild_list(n);
+  ttVec ttv2 = build_traintrack_list(n);
   trk = 1;
 
   cout << "\nTrain track has " << ttv2[trk].punctures() << " punctures and ";

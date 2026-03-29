@@ -92,7 +92,7 @@ public:
 
 
   //
-  // Constructors for specific train tracks (defined in ttbuild.cpp)
+  // Constructors for specific train tracks (defined in traintrack_build.cpp)
   //
 
   // Track with N monogons around punctures and a (N-2)-gon on the
@@ -246,7 +246,7 @@ public:
 
 private:
   //
-  // Helper methods for building tracks (defined in ttbuild.cpp)
+  // Helper methods for building tracks (defined in traintrack_build.cpp)
   //
 
   // Track with N monogons around punctures and a (N-2)-gon on the
@@ -344,12 +344,8 @@ private:
 
 
 //
-// Helper function for building tracks (defined in ttbuild.cpp)
+// Helper function for building tracks (defined in traintrack_build.cpp)
 //
-
-jlt::vector<traintrack> ttbuild_list2(const int N);
-
-jlt::vector<traintrack> ttbuild_list(const int N, const int N2 = 0);
 
 // Comparison function for sorting strata.
 bool compare_strata(const jlt::vector<int>& first,
