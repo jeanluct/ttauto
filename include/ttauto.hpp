@@ -762,7 +762,7 @@ bool ttauto<TrTr>::descend_graph()
 	    {
 	      std::cerr << "Oops!  lambda = " << lambda << " shoulnd't ";
 	      std::cerr << "exceed upper bound " << lambdaupper << std::endl;
-	      exit(-1);
+	      exit(1);
 	    }
 
 #ifdef TTAUTO_USE_FORTRAN

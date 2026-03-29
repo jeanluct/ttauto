@@ -49,7 +49,7 @@ struct ttmap_labeler
   {
     if (nmain_ < 0 || ninf_ < 0)
       {
-        std::cerr << "Negative generator counts in ttmap_labeler.\n";
+        std::cerr << "Negative generator counts in traintracks::ttmap_labeler::ttmap_labeler.\n";
         std::exit(1);
       }
   }
@@ -70,7 +70,7 @@ struct ttmap_labeler
   {
     if (!is_main_generator(g))
       {
-        std::cerr << "Not a main generator in ttmap_labeler.\n";
+        std::cerr << "Not a main generator in traintracks::ttmap_labeler::main_generator_index.\n";
         std::exit(1);
       }
     return std::abs(g) - 1;
@@ -80,7 +80,7 @@ struct ttmap_labeler
   {
     if (edge_index < 0 || edge_index >= nmain)
       {
-        std::cerr << "Main edge index out of range in ttmap_labeler.\n";
+        std::cerr << "Main edge index out of range in traintracks::ttmap_labeler::main_gen.\n";
         std::exit(1);
       }
     return edge_index + 1;
@@ -90,7 +90,7 @@ struct ttmap_labeler
   {
     if (infinitesimal_index < 0 || infinitesimal_index >= ninf)
       {
-        std::cerr << "Infinitesimal index out of range in ttmap_labeler.\n";
+        std::cerr << "Infinitesimal index out of range in traintracks::ttmap_labeler::infinitesimal_gen.\n";
         std::exit(1);
       }
     return nmain + infinitesimal_index + 1;

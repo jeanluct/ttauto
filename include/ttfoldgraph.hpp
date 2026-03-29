@@ -189,7 +189,7 @@ private:
     if (debug)
       {
 	std::cerr << "Deleting vertex " << vv;
-	std::cerr << " in ttfoldgraph::delete_vertex.\n";
+	std::cerr << " in ttauto::ttfoldgraph::delete_vertex.\n";
       }
 
     // Erase vertex vv from graph.
@@ -243,7 +243,7 @@ private:
 		if (debug)
 		  {
 		    std::cerr << "Deleting branch pointing to deletee";
-		    std::cerr << " in ttfoldgraph::delete_vertex.\n";
+		    std::cerr << " in ttauto::ttfoldgraph::delete_vertex.\n";
 		  }
 		// it and iTM will be pointing to the next item, so
 		// don't incremement them.
@@ -285,7 +285,7 @@ private:
 
     if (v1 < 0 || v1 >= vertices() || v2 < 0 || v2 >= vertices())
       {
-	std::cerr << "Error: v1 or v2 out of range in swap_vertices().\n";
+	std::cerr << "Error: v1 or v2 out of range in ttauto::ttfoldgraph::swap_vertices().\n";
 	exit(1);
       }
 
@@ -343,7 +343,7 @@ private:
   {
     if (!exploit_symmetries)
       {
-	std::cerr << "find_symmetries() error: ";
+	std::cerr << "ttauto::ttfoldgraph::find_symmetries() error: ";
 	std::cerr << "exploit_symmetries is false.\n";
 	std::exit(1);
       }
@@ -389,7 +389,7 @@ private:
   {
     if (!exploit_symmetries)
       {
-	std::cerr << "sort_by_symmetries() error: ";
+	std::cerr << "ttauto::ttfoldgraph::sort_by_symmetries() error: ";
 	std::cerr << "exploit_symmetries is false.\n";
 	std::exit(1);
       }
@@ -411,7 +411,7 @@ private:
       }
     if ((double)rs/2 != (double)(rs/2))
       {
-	std::cerr << "Error in sort_by_symmetries(): ";
+	std::cerr << "Error in ttauto::ttfoldgraph::sort_by_symmetries(): ";
 	std::cerr << "odd number of reflection-symmetric doubles.\n";
 	exit(1);
       }
@@ -500,7 +500,7 @@ public:
   {
     if (!exploit_symmetries)
       {
-	std::cerr << "symmetric_double() error: ";
+	std::cerr << "ttauto::ttfoldgraph::symmetric_double() error: ";
 	std::cerr << "exploit_symmetries is false.\n";
 	std::exit(1);
       }

@@ -100,7 +100,7 @@ public:
     if (ngen_ && ngen_found > ngen_)
       {
 	std::cerr << "ngen is too small.\n";
-	std::exit(-1);
+	std::exit(1);
       }
     ngen = std::max(ngen_found,ngen_);
   }

@@ -177,7 +177,7 @@ inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
 
   if (TMfromAM != TM)
     {
-      std::cerr << "Map/transition mismatch in traintracks::fold_traintrack_map.\n";
+      std::cerr << "Map/transition mismatch in traintracks::check_fold_map_main_transition.\n";
       std::exit(1);
     }
 }

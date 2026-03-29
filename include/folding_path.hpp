@@ -198,13 +198,13 @@ inline void folding_path<TrTr>::find_vertices(const int i0)
   if (i0 < 0 || static_cast<path::size_type>(i0) > nfolds)
     {
       std::cerr << "Illegal initial index " << i0;
-      std::cerr << " in folding_path::find_vertices.\n";
+      std::cerr << " in ttauto::folding_path::find_vertices.\n";
       std::exit(1);
     }
 
   if (vp.size() < nfolds + 1)
     {
-      std::cerr << "Invalid vertex path size in folding_path::find_vertices.\n";
+      std::cerr << "Invalid vertex path size in ttauto::folding_path::find_vertices.\n";
       std::exit(1);
     }
 
@@ -213,7 +213,7 @@ inline void folding_path<TrTr>::find_vertices(const int i0)
       if (fp[i] < 0 || fp[i] > (ttg->foldings(vp[i])-1))
 	{
 	  std::cerr << "Illegal folding " << fp[i] << " at vertex " << vp[i];
-	  std::cerr << " in folding_path::find_vertices.\n";
+	  std::cerr << " in ttauto::folding_path::find_vertices.\n";
 	  std::exit(1);
 	}
       vp[i+1] = ttg->target_vertex(vp[i],fp[i]);
@@ -247,7 +247,7 @@ folding_path<TrTr>& folding_path<TrTr>::operator=(const folding_path& pp)
   if (ttg != pp.ttg)
     {
       std::cerr << "The two paths are associated with different graphs";
-      std::cerr << " in folding_path::operator=.\n";
+      std::cerr << " in ttauto::folding_path::operator=.\n";
       std::exit(1);
     }
   fp = pp.fp;
@@ -264,7 +264,7 @@ void folding_path<TrTr>::initial_vertex(const int vi_)
   else
     {
       std::cerr << "Can only change initial vertex for an empty path";
-      std::cerr << " in folding_path::initial_vertex.\n";
+      std::cerr << " in ttauto::folding_path::initial_vertex.\n";
       std::exit(1);
     }
 }
@@ -276,7 +276,7 @@ void folding_path<TrTr>::push_back(const int f)
   if (debug && (f < 0 || f > ttg->foldings(vp.back())-1))
     {
       std::cerr << "Illegal folding " << f << " at vertex " << vp.back();
-      std::cerr << " in folding_path::push_back.\n";
+      std::cerr << " in ttauto::folding_path::push_back.\n";
       std::exit(1);
     }
   fp.push_back(f);
@@ -386,7 +386,7 @@ folding_path<TrTr>::transition_matrix() const
       if (*i >= ttg->foldings(v))
 	{
 	  std::cerr << "Illegal folding " << *i << " at vertex " << v;
-	  std::cerr << " in folding_path::transition_matrix.\n";
+	  std::cerr << " in ttauto::folding_path::transition_matrix.\n";
 	  std::exit(1);
 	}
       TM = ttg->transition_matrix(v,*i) * TM;
@@ -410,7 +410,7 @@ folding_path<TrTr>::traintrack_map() const
       if (*i >= ttg->foldings(v))
 	{
 	  std::cerr << "Illegal folding " << *i << " at vertex " << v;
-	  std::cerr << " in folding_path::traintrack_map.\n";
+	  std::cerr << " in ttauto::folding_path::traintrack_map.\n";
 	  std::exit(1);
 	}
       // Keep composition order consistent with traintracks_util.hpp notes.
@@ -502,13 +502,13 @@ folding_path<TrTr>::operator*=(const folding_path<TrTr>& pp)
   if (ttg != pp.ttg)
     {
       std::cerr << "The two paths are associated with different graphs";
-      std::cerr << " in folding_path::operator*=.\n";
+      std::cerr << " in ttauto::folding_path::operator*=.\n";
       std::exit(1);
     }
   if (final_vertex() != pp.initial_vertex())
     {
       std::cerr << "Second path must begin at final vertex of first path";
-      std::cerr << " in folding_path::operator*=.\n";
+      std::cerr << " in ttauto::folding_path::operator*=.\n";
       std::exit(1);
     }
 

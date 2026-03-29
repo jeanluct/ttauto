@@ -133,7 +133,7 @@ public:
     // Is the path closed?  It better be.
     if (!p.closed())
       {
-	std::cerr << "Vertex path not closed in pAclass::add_path.\n";
+	std::cerr << "Vertex path not closed in ttauto::pAclass::add_path.\n";
 	std::exit(1);
       }
 

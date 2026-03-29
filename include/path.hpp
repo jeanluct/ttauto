@@ -62,7 +62,7 @@ public:
   {
     if (m0 != pp.m0 || m1 != pp.m1)
       {
-	std::cerr << "Cannot be equated in path::operator=.\n";
+	std::cerr << "Cannot be equated in traintracks::path::operator=.\n";
 	std::exit(1);
       }
 
@@ -113,7 +113,7 @@ public:
   {
     if (m0 != pp.m0 || m1 != pp.m1)
       {
-	std::cerr << "Cannot be compared in path::operator=.\n";
+	std::cerr << "Cannot be compared in traintracks::path::operator<.\n";
 	std::exit(1);
       }
     if (this->size() != pp.size()) return (this->size() < pp.size());

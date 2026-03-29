@@ -105,7 +105,7 @@ int main()
   else
     {
       cerr << "\n**** Too many punctures! ****\n\n";
-      exit(-1);
+      exit(1);
     }
 
   // Loop over strata and find pA's with dilatation <= dilmax.

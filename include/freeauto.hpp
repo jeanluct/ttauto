@@ -60,12 +60,12 @@ public:
     if (a == 0)
       {
 	std::cerr << "Cannot specify action on identity.\n";
-	std::exit(-1);
+	std::exit(1);
       }
     if (a < 0)
       {
 	std::cerr << "Assign to positive generators only.\n";
-	std::exit(-1);
+	std::exit(1);
       }
     // Only store the action on positive generators.
     return std::vector<freeword<T> >::operator[](a);
@@ -79,12 +79,12 @@ public:
     if (a == 0)
       {
 	std::cerr << "Cannot specify action on identity.\n";
-	std::exit(-1);
+	std::exit(1);
       }
     if (a < 0)
       {
 	std::cerr << "Assign to positive generators only.\n";
-	std::exit(-1);
+	std::exit(1);
       }
     // Only store the action on positive generators.
     return std::vector<freeword<T> >::operator[](a);
@@ -97,7 +97,7 @@ public:
     if (a == 0)
       {
 	std::cerr << "Cannot specify action on identity.\n";
-	std::exit(-1);
+	std::exit(1);
       }
     if (a > 0)
       return std::vector<freeword<T> >::operator[](a);
@@ -111,7 +111,7 @@ public:
       {
 	std::cerr << "Can only compose freeauto objects with ";
 	std::cerr << "the same number of generators.\n";
-	std::exit(-1);
+	std::exit(1);
       }
     freeauto<T> res(std::vector<freeword<T> >(numgens()+1));
     for (size_t i = 1; i <= numgens(); ++i)

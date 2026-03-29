@@ -217,7 +217,7 @@ inline void edge::point_to_multigon(multigon* mm, const int p, const int e)
 	  return;
 	}
     }
-  std::cerr << "No unattached edge ending in edge::point_to_multigon.\n";
+  std::cerr << "No unattached edge ending in traintracks::edge::point_to_multigon.\n";
   std::exit(1);
 }
 
@@ -228,7 +228,7 @@ inline int edge::which_ending(const multigon* mm) const
       if (mg[en] == mm) return en;
     }
   std::cerr << "Could not find pointer back to prong";
-  std::cerr << " in edge::which_ending.\n";
+  std::cerr << " in traintracks::edge::which_ending.\n";
   std::exit(1);
 }
 
@@ -281,7 +281,7 @@ inline bool edge::check() const
     {
       if (is_unattached(en))
 	{
-	  std::cerr << "Unhooked edge in edge::check.\n";
+	  std::cerr << "Unhooked edge in traintracks::edge::check.\n";
 	  std::exit(1);
 	}
 #ifdef TTAUTO_NO_SHARED_PTR
@@ -290,13 +290,13 @@ inline bool edge::check() const
       if (mg[en]->egv[pr[en]][pre[en]].get() != this)
 #endif
 	{
-	  std::cerr << "Inconsistent pointer in edge::check.\n";
+	  std::cerr << "Inconsistent pointer in traintracks::edge::check.\n";
 	  std::exit(1);
 	}
     }
   if (attached_to_same_multigon())
     {
-      std::cerr << "Both ends hooked to same multigon in edge::check.\n";
+      std::cerr << "Both ends hooked to same multigon in traintracks::edge::check.\n";
       std::exit(1);
     }
   return true;

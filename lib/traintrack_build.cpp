@@ -55,14 +55,14 @@ traintrack::traintrack(const int N, const int K)
   if (K == 1)
     {
       std::cerr << "Specify monogons via N, the number of punctures,";
-      std::cerr << " in traintrack::traintrack(N,K).\n";
+      std::cerr << " in traintracks::traintrack::traintrack(N,K).\n";
       std::exit(1);
     }
 
   if (N < K+1)
     {
       std::cerr << "Not a valid train track for K > N-1";
-      std::cerr << " in traintrack::traintrack(N,K).\n";
+      std::cerr << " in traintracks::traintrack::traintrack(N,K).\n";
       std::exit(1);
     }
 
@@ -79,14 +79,14 @@ traintrack::traintrack(const int N, const int K1, const int K2)
   if (K1 == 1 || K2 == 1)
     {
       std::cerr << "Specify monogons via N, the number of punctures,";
-      std::cerr << " in traintrack::traintrack(N,K1,K2).\n";
+      std::cerr << " in traintracks::traintrack::traintrack(N,K1,K2).\n";
       std::exit(1);
     }
 
   if (N < K1+K2-1)
     {
       std::cerr << "Not a valid train track for N < K1+K2-1";
-      std::cerr << " in traintrack::traintrack(N,K1,K2).\n";
+      std::cerr << " in traintracks::traintrack::traintrack(N,K1,K2).\n";
       std::exit(1);
     }
 
@@ -104,14 +104,14 @@ traintrack::traintrack(const int N, const int K1, const int K2, const int K3)
   if (K1 == 1 || K2 == 1 || K3 == 1)
     {
       std::cerr << "Specify monogons via N, the number of punctures,";
-      std::cerr << " in traintrack::traintrack(N,K1,K2,K3).\n";
+      std::cerr << " in traintracks::traintrack::traintrack(N,K1,K2,K3).\n";
       std::exit(1);
     }
 
   if (N < K1+K2+K3-2)
     {
       std::cerr << "Not a valid train track for N < K1+K2+K3-2";
-      std::cerr << " in traintrack::traintrack(N,K1,K2,K3).\n";
+      std::cerr << " in traintracks::traintrack::traintrack(N,K1,K2,K3).\n";
       std::exit(1);
     }
 
@@ -194,7 +194,7 @@ void traintrack::ttbuild_monogons_and_multigons(const int N,
       if (Kv[i] == 1)
 	{
 	  std::cerr << "Specify monogons via N, the number of punctures,";
-	  std::cerr << " in traintrack::traintrack(N,Kv)\n";
+	  std::cerr << " in traintracks::traintrack::traintrack(N,Kv)\n";
 	  std::exit(1);
 	}
     }
@@ -232,7 +232,7 @@ void traintrack::ttbuild_monogoncusps(const int N, const intVec& Kv)
   if (boundary_prongs(N,Kv) == 1 && Kv.size() > 2)
     {
       std::cerr << "Use traintrack(N,Kv) for 1 cusp and >2 multigons";
-      std::cerr << " in traintrack::ttbuild_monogoncusps.\n";
+      std::cerr << " in traintracks::traintrack::ttbuild_monogoncusps.\n";
       std::exit(1);
     }
 
@@ -243,7 +243,7 @@ void traintrack::ttbuild_monogoncusps(const int N, const intVec& Kv)
       if (Kv[i] == 1)
 	{
 	  std::cerr << "Specify monogons via N, the number of punctures,";
-	  std::cerr << " in traintrack::ttbuild_monogoncusps.\n";
+	  std::cerr << " in traintracks::traintrack::ttbuild_monogoncusps.\n";
 	  std::exit(1);
 	}
     }
@@ -253,7 +253,7 @@ void traintrack::ttbuild_monogoncusps(const int N, const intVec& Kv)
   if (N < Nmin)
     {
       std::cerr << "Need at least " << Nmin << " monogons";
-      std::cerr << " in traintrack::ttbuild_monogoncusps.\n";
+      std::cerr << " in traintracks::traintrack::ttbuild_monogoncusps.\n";
       std::exit(1);
     }
 
@@ -327,7 +327,7 @@ void traintrack::capoff()
 	      if (ua0 && ua1)
 		{
 		  std::cerr << "Both ends unattached";
-		  std::cerr << " in traintrack::capoff.\n";
+		  std::cerr << " in traintracks::traintrack::capoff.\n";
 		  std::exit(1);
 		}
 	      if (ua0 || ua1)
@@ -354,7 +354,7 @@ void traintrack::monogon_to_multigon(const int L, const int K)
   if (Multigon(L).prongs() != 1)
     {
       std::cerr << "Not a monogon";
-      std::cerr << " in traintracks::ttbuild_monogon_to_multigon\n";
+      std::cerr << " in traintracks::traintrack::monogon_to_multigon\n";
       std::exit(1);
     }
 
