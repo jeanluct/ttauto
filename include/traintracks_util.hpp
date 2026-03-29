@@ -240,7 +240,7 @@ jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
 						const free_auto<int>& AM)
 {
   // Returns the main-edge transition matrix in non-transposed form.
-  // Infinitesimal/peripheral generators are ignored for this projection.
+  // Infinitesimal generators are ignored for this projection.
   const int n = tt.edges();
   const ttmap_labeler labels(n,tt.total_prongs());
   jlt::mathmatrix<int> TM(n,n,0);

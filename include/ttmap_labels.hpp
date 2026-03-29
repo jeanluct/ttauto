@@ -33,14 +33,15 @@ namespace traintracks {
 // Unified generator labeling for train-track maps.
 //
 // Main edges are numbered 1..nmain.
-// Infinitesimal (peripheral) edges are numbered nmain+1..nmain+ninf.
+// Infinitesimal edges are numbered nmain+1..nmain+ninf.
+// (Use "peripheral" specifically for edges around monogons.)
 // Orientation is encoded by sign (negative means inverse orientation).
 
 struct ttmap_labeler
 {
   // Number of main edges.
   const int nmain;
-  // Number of infinitesimal/peripheral edges.
+  // Number of infinitesimal edges.
   const int ninf;
 
   ttmap_labeler(const int nmain_, const int ninf_)

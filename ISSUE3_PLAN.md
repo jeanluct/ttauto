@@ -139,7 +139,7 @@ behavior before touching map construction logic.
 
 ## Progress notes
 
-- Added `ttmap_labeler` for unified main/peripheral generator numbering.
+- Added `ttmap_labeler` for unified main/infinitesimal generator numbering.
 - Added matrix-from-map consistency checks in `test_freeword` and aligned
   transpose conventions.
 - Replaced the old infinitesimal placeholder selector with a geometry-based

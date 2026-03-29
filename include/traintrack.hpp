@@ -189,7 +189,7 @@ public:
   //  f odd  = fold clockwise
   bool fold(const int f);
 
-  // Return the infinitesimal/peripheral generator index (0-based)
+  // Return the infinitesimal generator index (0-based)
   // associated with fold index f in the current cusp ordering.
   int fold_infinitesimal_index(const int f) const;
 
