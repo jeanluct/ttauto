@@ -136,6 +136,25 @@ int main()
       cout << ttg.traintrack_map(0,f) << endl;
     }
 
+  // For each one-step fold from each automaton vertex, verify matrix/map
+  // consistency in both non-transposed and transposed conventions.
+  for (int v = 0; v < ttg.vertices(); ++v)
+    {
+      for (int f = 0; f < ttg.foldings(v); ++f)
+        {
+          jlt::mathmatrix<int> TMstep(ttg.transition_matrix(v,f).full());
+          jlt::mathmatrix<int> TMfromMap =
+            transition_matrix_from_map(ttg.traintrack(v),ttg.traintrack_map(v,f));
+          assert(TMstep == TMfromMap);
+
+          jlt::mathmatrix<int> TMstepT(TMstep);
+          TMstepT.transpose();
+          jlt::mathmatrix<int> TMfromMapT =
+            transition_matrix_from_map_transposed(ttg.traintrack(v),ttg.traintrack_map(v,f));
+          assert(TMstepT == TMfromMapT);
+        }
+    }
+
   // Hand-checked mapping example alignment (issue #3):
   // a=1, b=2, peripheral generator at folded cusp is 5.
   // Step 1: f=1 (clockwise): a->-a, b->a -5 b.
@@ -194,6 +213,23 @@ int main()
       int infix = ttv2[trk].fold_infinitesimal_index(f);
       assert(infix >= 0);
       assert(infix < ttv2[trk].total_prongs());
+    }
+
+  for (int v = 0; v < ttg2.vertices(); ++v)
+    {
+      for (int f = 0; f < ttg2.foldings(v); ++f)
+        {
+          jlt::mathmatrix<int> TMstep(ttg2.transition_matrix(v,f).full());
+          jlt::mathmatrix<int> TMfromMap =
+            transition_matrix_from_map(ttg2.traintrack(v),ttg2.traintrack_map(v,f));
+          assert(TMstep == TMfromMap);
+
+          jlt::mathmatrix<int> TMstepT(TMstep);
+          TMstepT.transpose();
+          jlt::mathmatrix<int> TMfromMapT =
+            transition_matrix_from_map_transposed(ttg2.traintrack(v),ttg2.traintrack_map(v,f));
+          assert(TMstepT == TMfromMapT);
+        }
     }
 
   // Make a folding path through the automaton.
