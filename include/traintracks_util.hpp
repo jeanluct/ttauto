@@ -71,6 +71,7 @@ inline bool cyclic_equal(const Vec& v1, const Vec& v2)
 }
 
 
+// Compare two matrices by zero/nonzero pattern only.
 template<class Mat>
 inline bool pattern_equal(const Mat& A, const Mat& B)
 {
@@ -91,8 +92,8 @@ jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f)
 {
   // Conventions:
   // - We represent one fold by TM(f).
-  // - Applying f1 then f2 corresponds to left-multiplication:
-  //     TM(f2 followed by f1) = TM(f2) * TM(f1).
+  // - Applying f1, then f2, composes by left-multiplication:
+  //     TM_total = TM(f2) * TM(f1).
 
   TrTr tt(tt0);
   const int n = tt0.edges();

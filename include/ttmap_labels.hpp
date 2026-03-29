@@ -54,18 +54,22 @@ struct ttmap_labeler
       }
   }
 
+  // Total generator count (main + infinitesimal).
   int num_generators() const { return nmain + ninf; }
 
+  // True when g is a nonzero generator index in range.
   bool is_valid_generator(const int g) const
   {
     return (g != 0 && std::abs(g) <= num_generators());
   }
 
+  // True when g indexes a main-edge generator (up to sign).
   bool is_main_generator(const int g) const
   {
     return (g != 0 && std::abs(g) <= nmain);
   }
 
+  // Convert signed main generator label to zero-based edge index.
   int main_generator_index(const int g) const
   {
     if (!is_main_generator(g))
@@ -76,6 +80,7 @@ struct ttmap_labeler
     return std::abs(g) - 1;
   }
 
+  // Convert zero-based main-edge index to positive generator label.
   int main_gen(const int edge_index) const
   {
     if (edge_index < 0 || edge_index >= nmain)
@@ -86,6 +91,7 @@ struct ttmap_labeler
     return edge_index + 1;
   }
 
+  // Convert zero-based infinitesimal index to positive generator label.
   int infinitesimal_gen(const int infinitesimal_index) const
   {
     if (infinitesimal_index < 0 || infinitesimal_index >= ninf)

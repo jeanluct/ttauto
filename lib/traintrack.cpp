@@ -101,6 +101,7 @@ traintrack::traintrack(const char* codes)
   normalise();
 }
 
+// Recursively consume coding blocks and attach descendant multigons.
 void traintrack::recursive_build(traintrack::edgep& ee,
 				 traintrack::intVec::const_iterator& ci)
 {
@@ -521,6 +522,7 @@ bool traintrack::fold(const int f)
   return fold(*mmc,pc,ec,fdir);
 }
 
+// Resolve fold index f to the concrete cusp location on the current track.
 void traintrack::fold_cusp_location(const int f, multigon*& mmc, int& pc, int& ec) const
 {
   if (f < 0 || f >= foldings())
@@ -561,6 +563,7 @@ void traintrack::fold_cusp_location(const int f, multigon*& mmc, int& pc, int& e
     }
 }
 
+// Return zero-based infinitesimal edge index selected by fold f.
 int traintrack::fold_infinitesimal_index(const int f) const
 {
   multigon* mmc = 0;
@@ -571,6 +574,7 @@ int traintrack::fold_infinitesimal_index(const int f) const
   return multigon_prong_index(mi,pc);
 }
 
+// Return signed-generator label for fold f after nmain main generators.
 int traintrack::fold_infinitesimal_generator(const int f, const int nmain) const
 {
   multigon* mmc = 0;
@@ -582,6 +586,7 @@ int traintrack::fold_infinitesimal_generator(const int f, const int nmain) const
   return nmain + infix + 1;
 }
 
+// Depth-first cusp locator used by fold() and fold_cusp_location().
 bool traintrack::recursive_find_cusp(multigon& mm,
 				     const int pin, const int ein,
 				     int& fcusp, multigon*& mmc,
@@ -872,6 +877,7 @@ std::ostream& traintrack::printMathematicaForm(std::ostream& strm) const
 }
 
 
+// Find index of multigon pointer within mgv.
 inline int traintrack::multigon_index(const multigon* mm) const
 {
   int m = 0;
@@ -888,6 +894,7 @@ inline int traintrack::multigon_index(const multigon* mm) const
   return m;
 }
 
+// Convert (multigon index, prong index) to global prong index.
 int traintrack::multigon_prong_index(const int mi, const int pi) const
 {
   int ix = 0;

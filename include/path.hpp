@@ -58,6 +58,7 @@ public:
   {
   }
 
+  // Assign from another path with the same allowed value range.
   path& operator=(const path& pp)
   {
     if (m0 != pp.m0 || m1 != pp.m1)
@@ -70,6 +71,7 @@ public:
     return *this;
   }
 
+  // Equality includes both the value range [m0,m1] and branch sequence.
   bool operator==(const path& pp) const
   {
     const jlt::vector<int>& self = *this;
@@ -109,6 +111,7 @@ public:
 
   // Almost the same as the vector < for paths of equal lengths, but
   // shorter paths are smaller than longer ones.
+  // Lexicographic ordering with shorter paths ordered first.
   bool operator<(const path& pp) const
   {
     if (m0 != pp.m0 || m1 != pp.m1)

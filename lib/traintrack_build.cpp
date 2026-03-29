@@ -383,6 +383,7 @@ void traintrack::monogon_to_multigon(const int L, const int K)
 // Non-member helper functions for building tracks
 //
 
+// Aggregate build_traintrack_list across all admissible punctured-bigon counts.
 jlt::vector<traintrack> build_traintrack_list_sweep_bigons(const int N)
 {
   jlt::vector<traintrack> ttv;
@@ -397,6 +398,7 @@ jlt::vector<traintrack> build_traintrack_list_sweep_bigons(const int N)
   return ttv;
 }
 
+// Enumerate and build all train tracks for punctures N and bigons N2.
 jlt::vector<traintrack> build_traintrack_list(const int N, const int N2)
 {
   typedef traintrack::intVec intVec;

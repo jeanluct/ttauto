@@ -126,8 +126,10 @@ public:
     return *this;
   }
 
+  // Return mutable edge pointer at prong p, edge slot e.
   edgep& Edge(const int p, const int e);
 
+  // Return read-only edge pointer at prong p, edge slot e.
   const edgep& Edge(const int p, const int e) const;
 
   // Cycle through edges, incrementing the prong as needed.
@@ -161,6 +163,7 @@ public:
 
   void weight(const int p, const int b, const double w) const;
 
+  // Verify local edge attachment invariants for this multigon.
   bool check() const;
 
   // Attach a new edge at prong p, branch e.
@@ -227,8 +230,10 @@ private:
     return true;
   }
 
+  // Remove an edge slot and renumber following edge indices on that prong.
   void erase_edge_pointer(const int p, const int e);
 
+  // Attach edge pointer eg to (prong p, edge slot b) without creating edges.
   void point_to_edge(edgep& eg, const int p, const int b);
 
   // Print detailed information about the multigon.

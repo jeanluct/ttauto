@@ -126,6 +126,7 @@ public:
   // Public methods
   //
 
+  // Return read-only access to the m-th multigon.
   const multigon& Multigon(const int m) const;
 
   int edges() const { return mgv.size()-1; } /* Count explicitly */
@@ -159,6 +160,7 @@ public:
   // The symmetry is Delta^order, where Delta = sigma_1 ... sigma_(n-1).
   mathmatrix_permplus1 cyclic_symmetry();
 
+  // Set label of multigon m, then renormalise coding order.
   void set_label(const int m, const int lb);
 
   // Give unique label to each punctured multigon; label 0 if unpunctured.
@@ -217,6 +219,7 @@ public:
 #endif
 
   // Fold and find transition matrix and train track map.
+  // Apply fold f, return corresponding map, and output transition matrix M.
   freeauto<int> fold_transition_matrix(const int f, jlt::mathmatrix<int>& M)
   {
     M = traintracks::fold_transition_matrix(*this,f);
@@ -295,6 +298,7 @@ private:
   // The coding of a train track is a sequence of coding_blocks.
   struct coding_block;
 
+  // Deep-copy track topology and relink all edge/multigon attachments.
   void copy(traintrack& ttnew, const traintrack& ttexist);
 
   // Find the index of a multigon edge in the vector, given a pointer.
@@ -306,19 +310,24 @@ private:
   // Do two normalised tracks have the same multigons?
   bool same_multigons(const traintrack& tt) const;
 
+  // Recursively reconstruct a track from coding blocks.
   void recursive_build(edgep& ee, intVec::const_iterator& cd);
 
+  // Recursively emit coding blocks while traversing adjacent multigons.
   void recursive_coding(const multigon& mm, const int pp, const int ee,
 			intVec& code, const int dir) const;
 
+  // Recursively collect edge weights in coding traversal order.
   void recursive_get_weights(const multigon& mm, const int pp, const int ee,
 			     dblVec& wv) const;
 
+  // Recursively assign edge weights in coding traversal order.
   void recursive_set_weights(const multigon& mm, const int pp, const int ee,
 			     dblVec::const_iterator& wi);
 
+  // Recursively locate cusp fcusp and return its multigon/prong/edge location.
   bool recursive_find_cusp(multigon& mm, const int pp, const int ee,
-			   int& fcusp, multigon*& mmc, int& pc, int& ec) const;
+		   int& fcusp, multigon*& mmc, int& pc, int& ec) const;
 
   // Minimise coding over uncusped monogons, such that the min is
   // obtained from the first position.

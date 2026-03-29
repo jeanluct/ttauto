@@ -99,6 +99,7 @@ public:
 
   double dilatation() const { return lambda; }
 
+  // Number of representative closed paths stored for this class.
   int number_of_paths() const { return pathl.size(); }
 
   // The minimum path length over all the paths in this class.
@@ -160,6 +161,7 @@ public:
       }
   }
 
+  // Print saved path representatives, optionally capped at max_paths_to_print.
   std::ostream& print_paths(std::ostream& strm = std::cout,
 			    const int max_paths_to_print = 0) const
   {
@@ -179,8 +181,9 @@ public:
     return strm;
   }
 
+  // Print polynomial, dilatation, paths, and matrices in Mathematica form.
   std::ostream& print_pA_MathematicaForm(std::ostream& strm = std::cout,
-					 const int max_paths_to_print = 0)
+				 const int max_paths_to_print = 0)
     const
   {
     using std::setw;

@@ -105,6 +105,7 @@ public:
       return (std::vector<freeword<T> >::operator[](-a)).inverse();
   }
 
+  // Compose automorphisms: this = this followed by a.
   freeauto<T>& operator*=(const freeauto<T>& a)
   {
     if (numgens() != a.numgens())

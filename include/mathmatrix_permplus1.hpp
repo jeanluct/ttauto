@@ -121,6 +121,7 @@ public:
       }
   }
 
+  // Expand sparse representation back into a dense square matrix.
   Mat full() const
   {
     const int n = this->dim();
@@ -137,6 +138,7 @@ public:
 
   const Vec& row_perm() const { return rperm; }
 
+  // Return inverse permutation as column permutation indices.
   Vec column_perm() const
   {
     const int n = this->dim();

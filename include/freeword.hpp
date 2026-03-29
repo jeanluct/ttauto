@@ -88,7 +88,7 @@ class freeword : public std::list<T>
 public:
   freeword(int ngen_ = 1) : ngen(ngen_) {}
 
-  // Forward initializer list to base class.
+  // Construct from generator list and infer/validate generator count.
   freeword(std::initializer_list<T> l, int ngen_ = 0) : std::list<T>(l)
   {
     /* This is specialized to ints for now. */

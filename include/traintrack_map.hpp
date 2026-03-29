@@ -39,9 +39,12 @@ jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f);
 
 struct permplus1_decode
 {
+  // True when the matrix is a pure permutation (no extra +1 entry).
   bool is_perm;
+  // Row/column indices of the extra +1 when is_perm is false.
   int row2;
   int col2;
+  // Row permutation and its inverse, with optional +1 entry removed.
   jlt::mathvector<int> perm;
   jlt::mathvector<int> perm_inv;
 };
@@ -131,6 +134,7 @@ inline permplus1_decode decode_permplus1(const jlt::mathmatrix<int>& TM)
 }
 
 
+// Decode fold structure once and convert to map-indexing conventions.
 template<class TrTr>
 inline permplus1_decode decode_fold_map_structure(const TrTr& tt0, const int f)
 {
@@ -150,6 +154,7 @@ inline permplus1_decode decode_fold_map_structure(const TrTr& tt0, const int f)
 }
 
 
+// Validate that the map and transition matrix agree on main edges.
 template<class TrTr>
 inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
 					   const freeauto<int>& AM)
@@ -183,6 +188,7 @@ inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
 }
 
 
+// Build one-fold train-track map on main and infinitesimal generators.
 template<class TrTr>
 freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 {

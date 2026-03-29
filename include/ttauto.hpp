@@ -280,6 +280,7 @@ public:
   // Output of pAs
   //
 
+  // Access the map of recorded pseudo-Anosov classes.
   const pAlist& pA_list() const { return pAl; }
 
   std::ostream& print_pA_list(std::ostream& strm = std::cout) const;
@@ -291,6 +292,7 @@ public:
   // Do it: Search the automaton starting from vertex tt00
   //
 
+  // Explore folding paths from starting vertex tt00 and record pA classes.
   void search(const int tt00 = 0);
 
 private:
@@ -305,6 +307,7 @@ private:
     max_path_length = (int)maxnorm;
   }
 
+  // Build todo_list while removing one side of reflection-symmetric pairs.
   void eliminate_pairs();
 
   void reset_counters()
@@ -325,10 +328,13 @@ private:
     badwordsomitted = 0;
   }
 
+  // Run depth-first search from current tt0 and collect qualifying classes.
   bool find_pAs();
 
+  // Advance one DFS step, including pruning and closed-path checks.
   bool descend_graph();
 
+  // Apply matrix-based lower-bound pruning for current path.
   bool check_all_norms();
 
   void check_OstrovskiSchneider();
@@ -347,6 +353,7 @@ private:
     return true;
   }
 
+  // Extend path by one fold and update traversal/matrix stacks.
   void new_vertex();
 
   // Save info about a pA class to a list.

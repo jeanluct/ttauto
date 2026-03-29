@@ -459,41 +459,52 @@ private:
 
 public:
 
+  // Number of vertices (train tracks) in the folding graph.
   int vertices() const { return trtrv.size(); }
 
+  // Maximum number of fold slots per vertex (including invalid/id slots).
   int foldings() const { return nfoldsmax; }
 
+  // Number of valid outgoing fold branches at vertex v.
   int foldings(const int v) const { return nfoldsv[v]; }
 
+  // Minimum outgoing branch count over all vertices.
   int minfoldings() const
   {
     return *std::min_element(nfoldsv.begin(),nfoldsv.end());
   }
 
+  // Maximum outgoing branch count over all vertices.
   int maxfoldings() const
   {
     return *std::max_element(nfoldsv.begin(),nfoldsv.end());
   }
 
+  // Number of main train-track edges represented at each vertex.
   int edges() const { return n; }
 
+  // Transition matrix for branch br out of vertex idx.
   const Matpp1& transition_matrix(const int idx, const int br) const
   {
     return TMv[idx][br];
   }
 
+  // Train-track map for branch br out of vertex idx.
   const freeauto<int>& traintrack_map(const int idx, const int br) const
   {
     return AMv[idx][br];
   }
 
+  // Target vertex reached by branch br out of vertex idx.
   int target_vertex(const int idx, const int br) const
   {
     return tv[idx][br];
   }
 
+  // Read-only access to train track stored at vertex idx.
   const TrTr& traintrack(const int idx) const { return trtrv[idx]; }
 
+  // Read-only access to all train tracks in vertex order.
   const jlt::vector<TrTr>& traintracks() const { return trtrv; }
 
   const int symmetric_double(const int idx) const

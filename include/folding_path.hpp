@@ -72,6 +72,7 @@ public:
 
   folding_path& operator=(const folding_path& pp);
 
+  // Initial vertex where this path starts.
   int initial_vertex() const { return vp.front(); }
 
   void initial_vertex(const int vi_);
@@ -97,18 +98,22 @@ public:
   // "Rotate" a closed path by shifting the starting point.
   void cycle_path(const int i);
 
+  // Final vertex reached after applying all folds.
   int final_vertex() const { return vp.back(); }
 
   bool closed() const;
 
+  // Number of fold choices currently available at the final vertex.
   int number_of_foldings() const { return ttg->foldings(final_vertex()); }
 
   const path& foldings() const { return fp; }
 
   const path& vertices() const { return vp; }
 
+  // Cumulative transition matrix along the full fold sequence.
   Mat transition_matrix() const;
 
+  // Cumulative train-track map along the full fold sequence.
   freeauto<int> traintrack_map() const;
 
   // Return a subpath of length |nf|.

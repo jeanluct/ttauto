@@ -117,6 +117,7 @@ public:
   void set_ending_edge_index(const int en, const int e) { pre[en] = e; }
 
   // Renumber the ending attached to a given multigon.
+  // Update the edge index metadata for the ending attached to mm.
   int renumber_ending(const multigon* mm, const int e)
   {
     int en = which_ending(mm);
@@ -125,6 +126,7 @@ public:
   }
 
   // Relink one ending from old_mm to new_mm with metadata.
+  // Move one ending attachment from old_mm to new_mm with new metadata.
   int relink_ending(const multigon* old_mm, multigon* new_mm,
                     const int p, const int e)
   {
@@ -159,6 +161,7 @@ private:
   bool attached_to_same_multigon() const
   { return (mg[0] == mg[1]); }
 
+  // Swap the two ending records (used when a temporary duplicate occurs).
   void swap_endings()
   {
     // This is one of the few methods that explicitly assumes a branch
