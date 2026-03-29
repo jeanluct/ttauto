@@ -26,11 +26,7 @@
 #define TTAUTO_PACLASS_HPP
 
 #include <iostream>
-#ifdef TRAINTRACKS_OLD_HASH
-#include <ext/hash_map>
-#else
 #include <unordered_map>
-#endif
 #include <jlt/mathmatrix.hpp>
 #include <jlt/mathematica.hpp>
 #include <jlt/polynomial.hpp>
@@ -64,11 +60,7 @@ private:
   //   be nice to use map since we could easily keep the list sorted
   //   by length, but when there are millions of pAs it's better to
   //   use folding_path's hash function to speed up checking.
-#ifdef TRAINTRACKS_OLD_HASH
-  typedef typename __gnu_cxx::hash_map<folding_path<TrTr>,Mat,path_hash>
-#else
   typedef typename std::unordered_map<folding_path<TrTr>,Mat,path_hash>
-#endif
   pathlist;
 
   pathlist pathl;	// List of vertex paths/transition matrix

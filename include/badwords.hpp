@@ -28,11 +28,7 @@
 #include <iostream>
 #undef TTAUTO_HASH_BADWORDS
 #ifdef TTAUTO_HASH_BADWORDS
-#ifdef TRAINTRACKS_OLD_HASH
-#include <ext/hash_set>
-#else
 #include <unordered_set>
-#endif
 #else
 #include <list>
 #endif
@@ -62,15 +58,9 @@ struct direct_equal_to
 };
 
 template<class TrTr>
-#ifdef TRAINTRACKS_OLD_HASH
-jlt::matrix<__gnu_cxx::hash_set<folding_path<TrTr>,
-				typename folding_path<TrTr>::hash,
-				direct_equal_to<TrTr> > >
-#else
 jlt::matrix<std::unordered_set<folding_path<TrTr>,
 			       typename folding_path<TrTr>::hash,
 			       direct_equal_to<TrTr> > >
-#endif
 #else
 template<class TrTr>
 jlt::matrix<std::list<folding_path<TrTr> > >
@@ -84,13 +74,8 @@ badwords(const ttfoldgraph<TrTr>& ttg, const int maxplen)
   typedef jlt::mathmatrix<int> Mat;
   typedef folding_path<TrTr> fpath;
 #ifdef TTAUTO_HASH_BADWORDS
-#ifdef TRAINTRACKS_OLD_HASH
-  typedef __gnu_cxx::hash_set<fpath,typename fpath::hash,
-			    direct_equal_to<TrTr> > badword_list;
-#else
   typedef std::unordered_set<fpath,typename fpath::hash,
 			     direct_equal_to<TrTr> > badword_list;
-#endif
 #else
   typedef std::list<folding_path<TrTr> > badword_list;
 #endif

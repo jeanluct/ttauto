@@ -68,13 +68,8 @@ public:
   typedef folding_path<TrTr>			fpath;
   typedef long long int				llint;
 #ifdef TTAUTO_HASH_BADWORDS
-#ifdef TRAINTRACKS_OLD_HASH
-  typedef __gnu_cxx::hash_set<fpath,typename fpath::hash,
-			      direct_equal_to<TrTr> > badword_list;
-#else
   typedef std::unordered_set<fpath,typename fpath::hash,
 			     direct_equal_to<TrTr> > badword_list;
-#endif
 #else
   typedef std::list<fpath>			badword_list;
 #endif

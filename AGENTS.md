@@ -63,7 +63,6 @@ See `TESTING.md` for the project-maintained recommended matrix and timing notes.
 - Current default language level in `SConstruct` is `-std=c++17` (for modern GCC branch).
 - Keep changes portable with existing compatibility macros:
   - `TRAINTRACKS_NO_SHARED_PTR`
-  - `TRAINTRACKS_OLD_HASH`
 
 ## Code Style (Observed Conventions)
 

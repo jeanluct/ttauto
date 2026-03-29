@@ -23,11 +23,7 @@
 // LICENSE>
 
 #include <iostream>
-#ifdef TRAINTRACKS_OLD_HASH
-#include <ext/hash_map>
-#else
 #include <unordered_map>
-#endif
 #include <jlt/mathmatrix.hpp>
 #include "traintrack.hpp"
 #include "ttfoldgraph.hpp"
@@ -90,12 +86,8 @@ int main()
   else
     cout << "Paths are unequal...\n";
 
-  typedef folding_path<TrTr>::hash path_hash;
-#ifdef TRAINTRACKS_OLD_HASH
-  typedef __gnu_cxx::hash_map<folding_path<TrTr>,int,path_hash> pathlist;
-#else
+typedef folding_path<TrTr>::hash path_hash;
   typedef std::unordered_map<folding_path<TrTr>,int,path_hash> pathlist;
-#endif
 
   pathlist pl;
 

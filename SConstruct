@@ -73,21 +73,13 @@ if int(win32):
    env.AppendUnique(CXXFLAGS = ['-DTRAINTRACKS_NO_SHARED_PTR'])
    env.Tool('crossmingw', toolpath = ['./devel'])
 
-if GCC_version < StrictVersion('4.5'):
-   # For hash_set/hash_map with.
-   # Eventually replaced by unordered_set/unordered_map.
-   env.AppendUnique(CXXFLAGS = ['-DTRAINTRACKS_OLD_HASH'])
-   if StrictVersion('4.3') <= GCC_version:
-      # For hash_set/hash_map with gcc >= 4.3.3.
-      env.PrependUnique(CXXFLAGS = ['-Wno-deprecated'])
-elif GCC_version < StrictVersion('4.9'):
-   # Use modern C++ standard.
-   # This obviates the need for boost library.
-   env.PrependUnique(CXXFLAGS = ['-std=c++0x'])
-else:
-   # Use cutting-edge C++ standard.
-   # This provides std::make_unique (c++-14).
-   env.PrependUnique(CXXFLAGS = ['-std=c++17'])
+# Require a modern C++ standard across all builds.
+env.PrependUnique(CXXFLAGS = ['-std=c++17'])
+
+# Keep toolchain expectations explicit.
+if GCC_version < StrictVersion('7.0'):
+   print("Error: GCC >= 7.0 is required (C++17 baseline).")
+   Exit(1)
 
 env.SConscript(dirs = ['lib','examples','tests',csparsedir],
                exports = 'env',
