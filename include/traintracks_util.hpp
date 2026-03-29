@@ -34,6 +34,99 @@
 
 namespace traintracks {
 
+struct permplus1_decode
+{
+  bool is_perm;
+  int row2;
+  int col2;
+  jlt::mathvector<int> perm;
+  jlt::mathvector<int> perm_inv;
+};
+
+
+inline permplus1_decode decode_transposed_permplus1(const jlt::mathmatrix<int>& TM)
+{
+  const int n = TM.dim();
+  permplus1_decode d{true,-1,-1,jlt::mathvector<int>(n,-1),jlt::mathvector<int>(n,-1)};
+
+  for (int i = 0; i < n; ++i)
+    {
+      int colsum = 0, rowsum = 0;
+      for (int j = 0; j < n; ++j)
+        {
+          if (!(TM(i,j) == 0 || TM(i,j) == 1))
+            {
+              std::cerr << "Matrix should contain only ones or zeros in ";
+              std::cerr << "traintracks::decode_transposed_permplus1.\n";
+              std::exit(1);
+            }
+          colsum += TM(i,j);
+          rowsum += TM(j,i);
+        }
+
+      if (colsum == 2)
+        {
+          if (d.row2 != -1)
+            {
+              std::cerr << "More than one +1 row in ";
+              std::cerr << "traintracks::decode_transposed_permplus1.\n";
+              std::exit(1);
+            }
+          d.row2 = i;
+        }
+      else if (colsum != 1)
+        {
+          std::cerr << "Bad row sum in traintracks::decode_transposed_permplus1.\n";
+          std::exit(1);
+        }
+
+      if (rowsum == 2)
+        {
+          if (d.col2 != -1)
+            {
+              std::cerr << "More than one +1 col in ";
+              std::cerr << "traintracks::decode_transposed_permplus1.\n";
+              std::exit(1);
+            }
+          d.col2 = i;
+        }
+      else if (rowsum != 1)
+        {
+          std::cerr << "Bad col sum in traintracks::decode_transposed_permplus1.\n";
+          std::exit(1);
+        }
+    }
+
+  d.is_perm = (d.row2 == -1 && d.col2 == -1);
+  if ((d.row2 == -1) != (d.col2 == -1))
+    {
+      std::cerr << "Inconsistent +1 row/col in ";
+      std::cerr << "traintracks::decode_transposed_permplus1.\n";
+      std::exit(1);
+    }
+
+  jlt::mathmatrix<int> P(TM);
+  if (!d.is_perm) P(d.row2,d.col2) = 0;
+
+  for (int i = 0; i < n; ++i)
+    for (int j = 0; j < n; ++j)
+      if (P(i,j) == 1)
+        {
+          d.perm[i] = j;
+          d.perm_inv[j] = i;
+        }
+
+  for (int i = 0; i < n; ++i)
+    if (d.perm[i] < 0 || d.perm_inv[i] < 0)
+      {
+        std::cerr << "Not a permutation(+1) matrix in ";
+        std::cerr << "traintracks::decode_transposed_permplus1.\n";
+        std::exit(1);
+      }
+
+  return d;
+}
+
 // If two vectors are cyclically equivalent, return a vector p0v of
 // offsets between them such that v1[v] == v2[(v+p0v[i]) % size()].
 // Return empty p0v if they are not cyclically equivalent.
@@ -181,52 +274,20 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   // so use the transposed fold transition matrix here.
   jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f).transpose();
 
-  // Check that the transition matrix is permutation+1 or identity.
-  int col2 = -1, row2 = -1;
-  if (TM != jlt::identity_matrix<int>(n))
-    {
-      for (int i = 0; i < n; ++i)
-	{
-	  int colsum = 0, rowsum = 0;
-	  for (int j = 0; j < n; ++j)
-	    {
-	      colsum += TM(i,j);
-	      rowsum += TM(j,i);
-	    }
-	  if (colsum == 2) row2 = i;
-	  if (rowsum == 2) col2 = i;
-	}
-    }
-  //  std::cerr << "row with two ones is " << row2 << std::endl;
-  //  std::cerr << "col with two ones is " << col2 << std::endl;
-  bool isperm = (col2 == -1 && row2 == -1);
+  permplus1_decode dec = decode_transposed_permplus1(TM);
 
-  if ((col2 == -1) != (row2 == -1))
-    {
-      std::cerr << "Inconsistent fold matrix in traintracks::fold_traintrack_map.\n";
-      std::exit(1);
-    }
-
-  // Turn back into a permutation matrix.
-  if (!isperm) TM(row2,col2) = 0;
-
-  // Find permutation and its inverse.
-  jlt::mathvector<int> pp(n), ppi(n);
-  for (int i = 0; i < n; ++i)
-    for (int j = 0; j < n; ++j)
-      if (TM(i,j) == 1) { pp[i] = j; ppi[j] = i; }
   // Copy permutation over to train track map (main generators only).
   for (int i = 0; i < n; ++i)
-    AM[labels.main_gen(i)] = {labels.main_gen(pp[i])};
+    AM[labels.main_gen(i)] = {labels.main_gen(dec.perm[i])};
 
-  if (isperm) return AM;
+  if (dec.is_perm) return AM;
 
   // Now deal with the folded edges.
-  int e1 = labels.main_gen(row2);
-  int e21 = labels.main_gen(pp[row2]);
-  int e22 = labels.main_gen(col2);
+  int e1 = labels.main_gen(dec.row2);
+  int e21 = labels.main_gen(dec.perm[dec.row2]);
+  int e22 = labels.main_gen(dec.col2);
 
-  AM[labels.main_gen(ppi[col2])] = {-e22};
+  AM[labels.main_gen(dec.perm_inv[dec.col2])] = {-e22};
   int infix = tt0.fold_infinitesimal_index(f);
   int infinitesimal = -labels.peripheral_gen(infix);
   if (f % 2 == 0)
