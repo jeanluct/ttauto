@@ -154,6 +154,10 @@ behavior before touching map construction logic.
 - Added explicit assertions for a hand-checked two-step composition example
   (`n=3`, steps `[1,0]`) to lock composition order and symbolic map output.
 - Added one-step sign/orientation checks that non-permutation folds inject
-  exactly one negative infinitesimal generator into main-edge images.
+  exactly one fixed-orientation infinitesimal generator into main-edge images.
+- Adopted convention B (fixed global infinitesimal-loop orientation) and
+  updated locked examples/assertions accordingly.
+- Added internal fold-map consistency guard in `fold_traintrack_map` that
+  verifies map-derived and matrix-derived main-edge transitions agree.
 - Important caveat: this is a first geometry-based implementation, not the
   final semantic proof for infinitesimal orientation/sign under all folds.
