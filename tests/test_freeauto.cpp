@@ -25,7 +25,7 @@
 #include <iostream>
 #include <cassert>
 #include "freeauto.hpp"
-#include "traintracks_util.hpp"
+#include "traintrack_map.hpp"
 
 
 int main()

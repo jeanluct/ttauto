@@ -29,6 +29,7 @@
 #include <jlt/vector.hpp>
 #include "path.hpp"
 #include "traintracks_util.hpp"
+#include "traintrack_map.hpp"
 #include "ttfoldgraph.hpp"
 #include "freeauto.hpp"
 

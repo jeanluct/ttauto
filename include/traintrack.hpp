@@ -31,6 +31,7 @@
 #include "edge.hpp"
 #include "multigon.hpp"
 #include "traintracks_util.hpp"
+#include "traintrack_map.hpp"
 #include "mathmatrix_permplus1.hpp"
 #include "freeauto.hpp"
 

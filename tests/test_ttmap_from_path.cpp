@@ -30,7 +30,7 @@
 
 #include "folding_path.hpp"
 #include "traintrack.hpp"
-#include "traintracks_util.hpp"
+#include "traintrack_map.hpp"
 #include "ttfoldgraph.hpp"
 
 
