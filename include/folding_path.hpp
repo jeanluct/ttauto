@@ -26,16 +26,15 @@
 #define TTAUTO_FOLDING_PATH_HPP
 
 #include <iostream>
+#include <jlt/freeauto.hpp>
 #include <jlt/vector.hpp>
 #include "path.hpp"
 #include "traintracks_util.hpp"
 #include "traintrack_map.hpp"
 #include "ttfoldgraph.hpp"
-#include "freeauto.hpp"
 
 namespace ttauto {
 
-using traintracks::freeauto;
 using traintracks::path;
 using ttauto::ttfoldgraph;
 
@@ -114,7 +113,7 @@ public:
   Mat transition_matrix() const;
 
   // Cumulative train-track map along the full fold sequence.
-  freeauto<int> traintrack_map() const;
+  jlt::freeauto<int> traintrack_map() const;
 
   // Return a subpath of length |nf|.
   // nf > 0 measure from initial vertex;
@@ -401,14 +400,14 @@ folding_path<TrTr>::transition_matrix() const
 }
 
 template<class TrTr>
-freeauto<int>
+jlt::freeauto<int>
 folding_path<TrTr>::traintrack_map() const
 {
   const int nmain = ttg->edges();
   const int ninf = ttg->traintrack(0).total_prongs();
   const int ngen = nmain + ninf;
   int v = initial_vertex();
-  freeauto<int> AM(ngen);
+  jlt::freeauto<int> AM(ngen);
 
   for (auto i = fp.begin(); i != fp.end(); ++i)
     {

@@ -53,7 +53,6 @@
 
 namespace ttauto {
 
-using traintracks::freeauto;
 using traintracks::mathmatrix_permplus1;
 
 template<class TrTr> class ttfoldgraph;
@@ -79,7 +78,7 @@ private:
   // Transition matrix on a branch.
   jlt::vector<jlt::vector<Matpp1> > TMv;
   // Train track automorphism on a branch.
-  jlt::vector<jlt::vector<freeauto<int> > > AMv;
+  jlt::vector<jlt::vector<jlt::freeauto<int> > > AMv;
   // Number of foldings (outgoing branches) at each vertex.
   jlt::vector<int> nfoldsv;
   /* The train track should have this info.  Ditch the sequential
@@ -115,7 +114,7 @@ public:
   ttfoldgraph(const jlt::vector<TrTr>& trtrv_,
 	      const jlt::vector<jlt::vector<int> >& tv_,
 	      const jlt::vector<jlt::vector<Matpp1> >& TMv_,
-	      const jlt::vector<jlt::vector<freeauto<int> > >& AMv_,
+	      const jlt::vector<jlt::vector<jlt::freeauto<int> > >& AMv_,
 	      const jlt::vector<int>& nfoldsv_)
     : trtrv(trtrv_), tv(tv_), TMv(TMv_), AMv(AMv_), nfoldsv(nfoldsv_),
       n(trtrv.front().edges()), nfoldsmax(trtrv.front().foldings()), TM(n,n),
@@ -144,7 +143,7 @@ private:
 	// Add an outgoing matrix.
 	TMv.push_back(jlt::vector<Matpp1>());
 	// Add an outgoing train track map.
-	AMv.push_back(jlt::vector<freeauto<int> >());
+	AMv.push_back(jlt::vector<jlt::freeauto<int> >());
 	// Initalise the vector giving the number of foldings.
 	nfoldsv.push_back(0);
 	// The index of the vertex we just added.
@@ -164,7 +163,7 @@ private:
       {
 	// Fold and find the transition matrix.
 	TrTr trtr0(trtr);
-	freeauto<int> AM = trtr0.fold_transition_matrix(f,TM);
+	jlt::freeauto<int> AM = trtr0.fold_transition_matrix(f,TM);
 	if (TM != id)
 	  {
 	    ++nfoldsv[idx];
@@ -490,7 +489,7 @@ public:
   }
 
   // Train-track map for branch br out of vertex idx.
-  const freeauto<int>& traintrack_map(const int idx, const int br) const
+  const jlt::freeauto<int>& traintrack_map(const int idx, const int br) const
   {
     return AMv[idx][br];
   }
@@ -772,7 +771,7 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
       jlt::vector<TrTr> trtrv_sub;
       jlt::vector<Vec> tv_sub;
       jlt::vector<jlt::vector<mathmatrix_permplus1> > TMv_sub;
-      jlt::vector<jlt::vector<freeauto<int> > > AMv_sub;
+      jlt::vector<jlt::vector<jlt::freeauto<int> > > AMv_sub;
       Vec nfoldsv_sub;
 
       // Loop over train tracks in this block.

@@ -27,9 +27,10 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <jlt/freeauto.hpp>
+#include <jlt/freeword.hpp>
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
-#include "freeauto.hpp"
 #include "ttmap_labels.hpp"
 
 namespace traintracks {
@@ -157,7 +158,7 @@ inline permplus1_decode decode_fold_map_structure(const TrTr& tt0, const int f)
 // Validate that the map and transition matrix agree on main edges.
 template<class TrTr>
 inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
-					   const freeauto<int>& AM)
+					   const jlt::freeauto<int>& AM)
 {
   const int n = tt0.edges();
   const ttmap_labeler labels(n,tt0.total_prongs());
@@ -190,7 +191,7 @@ inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
 
 // Build one-fold train-track map on main and infinitesimal generators.
 template<class TrTr>
-freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
+jlt::freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 {
   // Conventions:
   // - We represent one fold by AM(f).
@@ -201,7 +202,7 @@ freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   const int ninf = tt0.total_prongs();
   const int n = tt0.edges();
   const ttmap_labeler labels(n,ninf);
-  freeauto<int> AM(labels.num_generators());
+  jlt::freeauto<int> AM(labels.num_generators());
 
   // Need to find two main edges and one infinitesimal edge.
   // main edge a: folding from
@@ -244,7 +245,7 @@ freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
 template<class TrTr>
 jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
-					 const freeauto<int>& AM)
+					 const jlt::freeauto<int>& AM)
 {
   // Returns the main-edge transition matrix in non-transposed form.
   // Infinitesimal generators are ignored for this projection.

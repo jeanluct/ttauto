@@ -57,7 +57,7 @@ void check_path_map_matrix(const ttauto::ttfoldgraph<TrTr>& ttg,
 
   // Train-track map (automorphism on main+infinitesimal generators) derived
   // by composing one-step fold maps along the same path.
-  traintracks::freeauto<int> AMpath = p.traintrack_map();
+  jlt::freeauto<int> AMpath = p.traintrack_map();
   std::cout << "  train-track map:\n";
   std::cout << AMpath;
 
@@ -103,7 +103,7 @@ void stress_random_paths(const ttauto::ttfoldgraph<TrTr>& ttg,
         }
 
       jlt::mathmatrix<int> TMpath = p.transition_matrix();
-      traintracks::freeauto<int> AMpath = p.traintrack_map();
+      jlt::freeauto<int> AMpath = p.traintrack_map();
       jlt::mathmatrix<int> TMfromAM = traintracks::transition_matrix_from_map(tt,AMpath);
 
       assert(TMpath == TMfromAM);

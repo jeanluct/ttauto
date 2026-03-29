@@ -25,11 +25,11 @@
 #include <iostream>
 #include <cassert>
 #include <list>
+#include <jlt/freeauto.hpp>
 #include <jlt/stlio.hpp>
 #include "traintrack.hpp"
 #include "ttfoldgraph.hpp"
 #include "folding_path.hpp"
-#include "freeauto.hpp"
 #include "traintrack_build.hpp"
 #include "traintrack_map.hpp"
 #include "ttmap_labels.hpp"
@@ -40,6 +40,8 @@ int main()
   using std::cout;
   using std::endl;
   using jlt::operator<<;
+  using jlt::freeauto;
+  using jlt::freeword;
   using namespace traintracks;
   using namespace ttauto;
 

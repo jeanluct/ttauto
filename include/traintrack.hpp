@@ -26,6 +26,7 @@
 #define TRAINTRACKS_TRAINTRACK_HPP
 
 #include <memory>
+#include <jlt/freeauto.hpp>
 #include <jlt/vector.hpp>
 #include <jlt/mathmatrix.hpp>
 #include "edge.hpp"
@@ -33,7 +34,6 @@
 #include "traintracks_util.hpp"
 #include "traintrack_map.hpp"
 #include "mathmatrix_permplus1.hpp"
-#include "freeauto.hpp"
 
 
 namespace traintracks {
@@ -220,10 +220,10 @@ public:
 
   // Fold and find transition matrix and train track map.
   // Apply fold f, return corresponding map, and output transition matrix M.
-  freeauto<int> fold_transition_matrix(const int f, jlt::mathmatrix<int>& M)
+  jlt::freeauto<int> fold_transition_matrix(const int f, jlt::mathmatrix<int>& M)
   {
     M = traintracks::fold_transition_matrix(*this,f);
-    freeauto<int> AM(traintracks::fold_traintrack_map(*this,f));
+    jlt::freeauto<int> AM(traintracks::fold_traintrack_map(*this,f));
     fold(f);
     return AM;
   }
