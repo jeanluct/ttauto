@@ -105,12 +105,6 @@ int main()
             transition_matrix_from_map(ttg.traintrack(v),ttg.traintrack_map(v,f));
           assert(TMstep == TMfromMap);
 
-          jlt::mathmatrix<int> TMstepT(TMstep);
-          TMstepT.transpose();
-          jlt::mathmatrix<int> TMfromMapT =
-            transition_matrix_from_map_transposed(ttg.traintrack(v),ttg.traintrack_map(v,f));
-          assert(TMstepT == TMfromMapT);
-
           // In one-step fold maps, the selected infinitesimal generator should
           // appear once with the fixed global orientation in non-permutation folds.
           int infg = std::abs(ttvf.fold_infinitesimal_generator(f,labels.nmain));
@@ -150,8 +144,8 @@ int main()
   assert((AMf0_after_f1[1] == freeword<int>({1,5,2})));
   assert((AMf0_after_f1[2] == freeword<int>({-2})));
 
-  cout << "\nTransition matrix (transposed):\n";
-  jlt::mathmatrix<int> TMp = p.transition_matrix().transpose();
+  cout << "\nTransition matrix:\n";
+  jlt::mathmatrix<int> TMp = p.transition_matrix();
   TMp.printMatrixForm(cout) << endl;
 
   cout << "\nTrain track map:\n";
@@ -171,7 +165,7 @@ int main()
   assert((AMp[2] == freeword<int>({1,5,2,5,-2})));
 
   // Main-edge transition matrix should match map-derived one.
-  jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map_transposed(ttv[trk],AMp);
+  jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map(ttv[trk],AMp);
   assert(TMp == TMfromAMp);
 
   // Secondary scenario: broader consistency checks over a larger automaton.
@@ -217,12 +211,6 @@ int main()
             transition_matrix_from_map(ttg2.traintrack(v),ttg2.traintrack_map(v,f));
           assert(TMstep == TMfromMap);
 
-          jlt::mathmatrix<int> TMstepT(TMstep);
-          TMstepT.transpose();
-          jlt::mathmatrix<int> TMfromMapT =
-            transition_matrix_from_map_transposed(ttg2.traintrack(v),ttg2.traintrack_map(v,f));
-          assert(TMstepT == TMfromMapT);
-
           int infg = std::abs(ttvf.fold_infinitesimal_generator(f,labels.nmain));
           int ninf = 0, nneg = 0, npos = 0;
           for (int g = 1; g <= labels.nmain; ++g)
@@ -250,15 +238,15 @@ int main()
   folding_path<traintrack> p2(ttg2,0);
   p2.push_back(0); p2.push_back(1); p2.push_back(0);
 
-  cout << "\nTransition matrix (transposed):\n";
-  jlt::mathmatrix<int> TMp2 = p2.transition_matrix().transpose();
+  cout << "\nTransition matrix:\n";
+  jlt::mathmatrix<int> TMp2 = p2.transition_matrix();
   TMp2.printMatrixForm(cout) << endl;
 
   cout << "\nTrain track map:\n";
   freeauto<int> AMp2 = p2.traintrack_map();
   cout << AMp2 << endl;
 
-  jlt::mathmatrix<int> TMfromAMp2 = transition_matrix_from_map_transposed(ttv2[trk],AMp2);
+  jlt::mathmatrix<int> TMfromAMp2 = transition_matrix_from_map(ttv2[trk],AMp2);
   assert(TMp2 == TMfromAMp2);
 
   return 0;

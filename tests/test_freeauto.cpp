@@ -47,7 +47,7 @@ int main()
   // Decode helper sanity checks (transposed convention).
   {
     jlt::mathmatrix<int> I(jlt::identity_matrix<int>(3));
-    permplus1_decode d = decode_transposed_permplus1(I);
+    permplus1_decode d = decode_permplus1(I);
     assert(d.is_perm);
     assert(d.row2 == -1 && d.col2 == -1);
     assert(d.perm[0] == 0 && d.perm[1] == 1 && d.perm[2] == 2);
@@ -61,7 +61,7 @@ int main()
     M(2,2) = 1;
     M(0,1) = 1;
 
-    permplus1_decode d = decode_transposed_permplus1(M);
+    permplus1_decode d = decode_permplus1(M);
     assert(!d.is_perm);
     assert(d.row2 == 0);
     assert(d.col2 == 1);

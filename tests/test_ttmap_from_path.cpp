@@ -51,9 +51,8 @@ void check_path_map_matrix(const traintracks::ttfoldgraph<TrTr>& ttg,
   for (int f : folds) std::cout << " " << f;
   std::cout << "\n";
 
-  // Matrix tracked directly along the path (library convention uses transpose
-  // for reporting/printing path transition matrices in this context).
-  jlt::mathmatrix<int> TMpath = p.transition_matrix().transpose();
+  // Matrix tracked directly along the path.
+  jlt::mathmatrix<int> TMpath = p.transition_matrix();
 
   // Train-track map (automorphism on main+infinitesimal generators) derived
   // by composing one-step fold maps along the same path.
@@ -61,10 +60,9 @@ void check_path_map_matrix(const traintracks::ttfoldgraph<TrTr>& ttg,
   std::cout << "  train-track map:\n";
   std::cout << AMpath;
 
-  // Project automorphism back to the main-edge transition matrix in the same
-  // transposed convention and require exact agreement.
-  jlt::mathmatrix<int> TMfromAM =
-    traintracks::transition_matrix_from_map_transposed(tt,AMpath);
+  // Project automorphism back to the main-edge transition matrix and require
+  // exact agreement.
+  jlt::mathmatrix<int> TMfromAM = traintracks::transition_matrix_from_map(tt,AMpath);
 
   std::cout << "  transition matrix (path):\n";
   TMpath.printMatrixForm(std::cout);
@@ -103,10 +101,9 @@ void stress_random_paths(const traintracks::ttfoldgraph<TrTr>& ttg,
           v = ttg.target_vertex(v,f);
         }
 
-      jlt::mathmatrix<int> TMpath = p.transition_matrix().transpose();
+      jlt::mathmatrix<int> TMpath = p.transition_matrix();
       traintracks::freeauto<int> AMpath = p.traintrack_map();
-      jlt::mathmatrix<int> TMfromAM =
-        traintracks::transition_matrix_from_map_transposed(tt,AMpath);
+      jlt::mathmatrix<int> TMfromAM = traintracks::transition_matrix_from_map(tt,AMpath);
 
       assert(TMpath == TMfromAM);
     }

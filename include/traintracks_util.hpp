@@ -44,7 +44,7 @@ struct permplus1_decode
 };
 
 
-inline permplus1_decode decode_transposed_permplus1(const jlt::mathmatrix<int>& TM)
+inline permplus1_decode decode_permplus1(const jlt::mathmatrix<int>& TM)
 {
   const int n = TM.dim();
   permplus1_decode d{true,-1,-1,jlt::mathvector<int>(n,-1),jlt::mathvector<int>(n,-1)};
@@ -57,7 +57,7 @@ inline permplus1_decode decode_transposed_permplus1(const jlt::mathmatrix<int>& 
           if (!(TM(i,j) == 0 || TM(i,j) == 1))
             {
               std::cerr << "Matrix should contain only ones or zeros in ";
-              std::cerr << "traintracks::decode_transposed_permplus1.\n";
+              std::cerr << "traintracks::decode_permplus1.\n";
               std::exit(1);
             }
           colsum += TM(i,j);
@@ -69,14 +69,14 @@ inline permplus1_decode decode_transposed_permplus1(const jlt::mathmatrix<int>& 
           if (d.row2 != -1)
             {
               std::cerr << "More than one +1 row in ";
-              std::cerr << "traintracks::decode_transposed_permplus1.\n";
+              std::cerr << "traintracks::decode_permplus1.\n";
               std::exit(1);
             }
           d.row2 = i;
         }
       else if (colsum != 1)
         {
-          std::cerr << "Bad row sum in traintracks::decode_transposed_permplus1.\n";
+          std::cerr << "Bad row sum in traintracks::decode_permplus1.\n";
           std::exit(1);
         }
 
@@ -85,14 +85,14 @@ inline permplus1_decode decode_transposed_permplus1(const jlt::mathmatrix<int>& 
           if (d.col2 != -1)
             {
               std::cerr << "More than one +1 col in ";
-              std::cerr << "traintracks::decode_transposed_permplus1.\n";
+              std::cerr << "traintracks::decode_permplus1.\n";
               std::exit(1);
             }
           d.col2 = i;
         }
       else if (rowsum != 1)
         {
-          std::cerr << "Bad col sum in traintracks::decode_transposed_permplus1.\n";
+          std::cerr << "Bad col sum in traintracks::decode_permplus1.\n";
           std::exit(1);
         }
     }
@@ -101,7 +101,7 @@ inline permplus1_decode decode_transposed_permplus1(const jlt::mathmatrix<int>& 
   if ((d.row2 == -1) != (d.col2 == -1))
     {
       std::cerr << "Inconsistent +1 row/col in ";
-      std::cerr << "traintracks::decode_transposed_permplus1.\n";
+      std::cerr << "traintracks::decode_permplus1.\n";
       std::exit(1);
     }
 
@@ -120,7 +120,7 @@ inline permplus1_decode decode_transposed_permplus1(const jlt::mathmatrix<int>& 
     if (d.perm[i] < 0 || d.perm_inv[i] < 0)
       {
         std::cerr << "Not a permutation(+1) matrix in ";
-        std::cerr << "traintracks::decode_transposed_permplus1.\n";
+        std::cerr << "traintracks::decode_permplus1.\n";
         std::exit(1);
       }
 
@@ -131,9 +131,19 @@ inline permplus1_decode decode_transposed_permplus1(const jlt::mathmatrix<int>& 
 template<class TrTr>
 inline permplus1_decode decode_fold_map_structure(const TrTr& tt0, const int f)
 {
-  // Main-edge map (AM) is represented in transposed transition convention,
-  // so decode the transposed fold transition matrix.
-  return decode_transposed_permplus1(fold_transition_matrix(tt0,f).transpose());
+  // fold_traintrack_map uses generator-action composition conventions where
+  // permutation data is read in the dual (column-action) indexing. Decode the
+  // non-transposed transition matrix, then convert indices/permutations once.
+  permplus1_decode d0 = decode_permplus1(fold_transition_matrix(tt0,f));
+  const int n = d0.perm.size();
+  permplus1_decode d{d0.is_perm,d0.col2,d0.row2,
+                     jlt::mathvector<int>(n,-1),jlt::mathvector<int>(n,-1)};
+  for (int i = 0; i < n; ++i)
+    {
+      d.perm[i] = d0.perm_inv[i];
+      d.perm_inv[i] = d0.perm[i];
+    }
+  return d;
 }
 
 
@@ -160,9 +170,7 @@ inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
 	  ++TMfromAM(col,src);
 	}
     }
-  TMfromAM.transpose();
-
-  jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f).transpose();
+  jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f);
 
   if (TMfromAM != TM)
     {
@@ -380,16 +388,6 @@ jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
 	}
     }
 
-  return TM;
-}
-
-
-template<class TrTr>
-jlt::mathmatrix<int> transition_matrix_from_map_transposed(const TrTr& tt,
-						   const freeauto<int>& AM)
-{
-  jlt::mathmatrix<int> TM = transition_matrix_from_map(tt,AM);
-  TM.transpose();
   return TM;
 }
 
