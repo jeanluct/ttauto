@@ -86,14 +86,14 @@ struct ttmap_labeler
     return edge_index + 1;
   }
 
-  int peripheral_gen(const int peripheral_index) const
+  int infinitesimal_gen(const int infinitesimal_index) const
   {
-    if (peripheral_index < 0 || peripheral_index >= ninf)
+    if (infinitesimal_index < 0 || infinitesimal_index >= ninf)
       {
-        std::cerr << "Peripheral index out of range in ttmap_labeler.\n";
+        std::cerr << "Infinitesimal index out of range in ttmap_labeler.\n";
         std::exit(1);
       }
-    return nmain + peripheral_index + 1;
+    return nmain + infinitesimal_index + 1;
   }
 };
 

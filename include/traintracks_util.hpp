@@ -294,7 +294,7 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
   AM[labels.main_gen(dec.perm_inv[dec.col2])] = {-e22};
   int infix = tt0.fold_infinitesimal_index(f);
-  int infinitesimal = -labels.peripheral_gen(infix);
+  int infinitesimal = -labels.infinitesimal_gen(infix);
   if (f % 2 == 0)
     AM[e1] = {e21,infinitesimal,e22}; // fold counterclockwise
   else

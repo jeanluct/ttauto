@@ -198,7 +198,7 @@ int main()
           // In one-step fold maps, the selected infinitesimal generator should
           // appear once with negative orientation in non-permutation folds.
           int infix = ttvf.fold_infinitesimal_index(f);
-          int infg = labels.peripheral_gen(infix);
+          int infg = labels.infinitesimal_gen(infix);
           int ninf = 0, nneg = 0, npos = 0;
           for (int g = 1; g <= labels.nmain; ++g)
             {
@@ -311,7 +311,7 @@ int main()
           assert(TMstepT == TMfromMapT);
 
           int infix = ttvf.fold_infinitesimal_index(f);
-          int infg = labels.peripheral_gen(infix);
+          int infg = labels.infinitesimal_gen(infix);
           int ninf = 0, nneg = 0, npos = 0;
           for (int g = 1; g <= labels.nmain; ++g)
             {
