@@ -193,6 +193,13 @@ public:
   // associated with fold index f in the current cusp ordering.
   int fold_infinitesimal_index(const int f) const;
 
+  // Return cusp location for fold index f in the current cusp ordering.
+  // Output:
+  // - mmc: multigon containing the cusp
+  // - pc:  prong index in mmc
+  // - ec:  cusp index on that prong (first edge encountered clockwise)
+  void fold_cusp_location(const int f, multigon*& mmc, int& pc, int& ec) const;
+
 #if 0
   // Fold and find transition matrix.
   jlt::mathmatrix<int> fold_transition_matrix(const int f)

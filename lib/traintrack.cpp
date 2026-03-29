@@ -522,11 +522,11 @@ bool traintrack::fold(const int f)
   return fold(*mmc,pc,ec,fdir);
 }
 
-int traintrack::fold_infinitesimal_index(const int f) const
+void traintrack::fold_cusp_location(const int f, multigon*& mmc, int& pc, int& ec) const
 {
   if (f < 0 || f >= foldings())
     {
-      std::cerr << "Illegal folding index in traintrack::fold_infinitesimal_index.\n";
+      std::cerr << "Illegal folding index in traintrack::fold_cusp_location.\n";
       std::exit(1);
     }
 
@@ -540,7 +540,7 @@ int traintrack::fold_infinitesimal_index(const int f) const
     }
   if (mono == (int)mgv.size())
     {
-      std::cerr << "Could not find monogon in traintrack::fold_infinitesimal_index.\n";
+      std::cerr << "Could not find monogon in traintrack::fold_cusp_location.\n";
       std::exit(1);
     }
 
@@ -550,15 +550,23 @@ int traintrack::fold_infinitesimal_index(const int f) const
     Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
 
   // Reuse recursive cusp ordering to locate cusp cs.
-  multigon* mmc = 0;
-  int pc = -1, ec = -1;
+  mmc = 0;
+  pc = -1;
+  ec = -1;
   recursive_find_cusp(*egmono,pmono,pemono,cs,mmc,pc,ec);
 
-  if (mmc == 0 || pc < 0)
+  if (mmc == 0 || pc < 0 || ec < 0)
     {
-      std::cerr << "Could not resolve cusp in traintrack::fold_infinitesimal_index.\n";
+      std::cerr << "Could not resolve cusp in traintrack::fold_cusp_location.\n";
       std::exit(1);
     }
+}
+
+int traintrack::fold_infinitesimal_index(const int f) const
+{
+  multigon* mmc = 0;
+  int pc = -1, ec = -1;
+  fold_cusp_location(f,mmc,pc,ec);
 
   int mi = multigon_index(mmc);
   return multigon_prong_index(mi,pc);

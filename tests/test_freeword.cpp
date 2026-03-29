@@ -145,6 +145,13 @@ int main()
       int infix = ttv[trk].fold_infinitesimal_index(f);
       assert(infix >= 0);
       assert(infix < ttv[trk].total_prongs());
+
+      multigon* mmc = 0;
+      int pc = -1, ec = -1;
+      ttv[trk].fold_cusp_location(f,mmc,pc,ec);
+      assert(mmc != 0);
+      assert(pc >= 0);
+      assert(ec >= 0);
     }
 
   // Make a folding path through the automaton.
@@ -240,6 +247,13 @@ int main()
       int infix = ttv2[trk].fold_infinitesimal_index(f);
       assert(infix >= 0);
       assert(infix < ttv2[trk].total_prongs());
+
+      multigon* mmc = 0;
+      int pc = -1, ec = -1;
+      ttv2[trk].fold_cusp_location(f,mmc,pc,ec);
+      assert(mmc != 0);
+      assert(pc >= 0);
+      assert(ec >= 0);
     }
 
   for (int v = 0; v < ttg2.vertices(); ++v)
