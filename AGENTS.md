@@ -42,10 +42,10 @@
   - `./examples/ttauto <<'EOF'`
   - `EOF`
 - Long-running programs (use intentionally):
-  - `./examples/ttauto_count`
-  - `./examples/ttauto_labels`
+  - `./examples/ttauto_count` (~2 minutes)
+  - `./examples/ttauto_labels` (~100 minutes)
 
-See `TESTING.md` for the project-maintained recommended matrix.
+See `TESTING.md` for the project-maintained recommended matrix and timing notes.
 
 ## External jlt / CSparse Notes
 
@@ -130,10 +130,3 @@ Avoid: large one-shot pointer-model conversions across `edge`/`multigon`/`traint
 - Do not revert unrelated working-tree changes.
 - Avoid destructive git commands unless explicitly requested.
 - If generated files appear during testing, clean them before committing.
-
-## Cursor / Copilot Rules in This Repo
-
-- `.cursorrules`: not present.
-- `.cursor/rules/`: not present.
-- `.github/copilot-instructions.md`: not present.
-- No extra rule files are active beyond AGENTS guidance.

@@ -99,6 +99,21 @@ Deliverable: main-edge mapping validated by tests and matrix agreement.
 
 Deliverable: composed map includes both main and infinitesimal edges.
 
+### Phase 3b - Infinitesimal image mapping (next)
+
+Current state maps main generators and injects one infinitesimal generator in
+non-permutation folds, but does not yet derive full images for infinitesimal
+generators themselves from fold geometry.
+
+1. Define expected one-step action on infinitesimal generators under a fold.
+2. Implement infinitesimal-generator image updates in `fold_traintrack_map`.
+3. Add focused assertions that composed infinitesimal images are consistent
+   across path composition and matrix/map checks.
+4. Validate against hand-worked examples (including `TTMAP_EXAMPLE.md`).
+
+Deliverable: full train-track map action includes explicit infinitesimal-edge
+images, not only main-edge images.
+
 ### Phase 4 - Integration cleanup
 
 1. Remove or de-prioritize matrix-guessing paths for map recovery where
