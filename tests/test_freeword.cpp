@@ -31,6 +31,7 @@
 #include "folding_path.hpp"
 #include "freeword.hpp"
 #include "traintracks_util.hpp"
+#include "ttmap_labels.hpp"
 
 
 int main()
@@ -176,6 +177,11 @@ int main()
     {
       for (int f = 0; f < ttg.foldings(v); ++f)
         {
+          const traintrack& ttvf = ttg.traintrack(v);
+          const ttmap_labeler labels(ttvf.edges(),ttvf.total_prongs());
+          const free_auto<int>& AMstep = ttg.traintrack_map(v,f);
+          const mathmatrix_permplus1& PM = ttg.transition_matrix(v,f);
+
           jlt::mathmatrix<int> TMstep(ttg.transition_matrix(v,f).full());
           jlt::mathmatrix<int> TMfromMap =
             transition_matrix_from_map(ttg.traintrack(v),ttg.traintrack_map(v,f));
@@ -186,6 +192,30 @@ int main()
           jlt::mathmatrix<int> TMfromMapT =
             transition_matrix_from_map_transposed(ttg.traintrack(v),ttg.traintrack_map(v,f));
           assert(TMstepT == TMfromMapT);
+
+          // In one-step fold maps, the selected infinitesimal generator should
+          // appear once with negative orientation in non-permutation folds.
+          int infix = ttvf.fold_infinitesimal_index(f);
+          int infg = labels.peripheral_gen(infix);
+          int ninf = 0, nneg = 0, npos = 0;
+          for (int g = 1; g <= labels.nmain; ++g)
+            {
+              for (auto img : AMstep.get_action(g))
+                {
+                  if (img == -infg) { ++ninf; ++nneg; }
+                  else if (img == infg) { ++ninf; ++npos; }
+                }
+            }
+          if (PM.is_perm())
+            {
+              assert(ninf == 0);
+            }
+          else
+            {
+              assert(ninf == 1);
+              assert(nneg == 1);
+              assert(npos == 0);
+            }
         }
     }
 
@@ -260,6 +290,11 @@ int main()
     {
       for (int f = 0; f < ttg2.foldings(v); ++f)
         {
+          const traintrack& ttvf = ttg2.traintrack(v);
+          const ttmap_labeler labels(ttvf.edges(),ttvf.total_prongs());
+          const free_auto<int>& AMstep = ttg2.traintrack_map(v,f);
+          const mathmatrix_permplus1& PM = ttg2.transition_matrix(v,f);
+
           jlt::mathmatrix<int> TMstep(ttg2.transition_matrix(v,f).full());
           jlt::mathmatrix<int> TMfromMap =
             transition_matrix_from_map(ttg2.traintrack(v),ttg2.traintrack_map(v,f));
@@ -270,6 +305,28 @@ int main()
           jlt::mathmatrix<int> TMfromMapT =
             transition_matrix_from_map_transposed(ttg2.traintrack(v),ttg2.traintrack_map(v,f));
           assert(TMstepT == TMfromMapT);
+
+          int infix = ttvf.fold_infinitesimal_index(f);
+          int infg = labels.peripheral_gen(infix);
+          int ninf = 0, nneg = 0, npos = 0;
+          for (int g = 1; g <= labels.nmain; ++g)
+            {
+              for (auto img : AMstep.get_action(g))
+                {
+                  if (img == -infg) { ++ninf; ++nneg; }
+                  else if (img == infg) { ++ninf; ++npos; }
+                }
+            }
+          if (PM.is_perm())
+            {
+              assert(ninf == 0);
+            }
+          else
+            {
+              assert(ninf == 1);
+              assert(nneg == 1);
+              assert(npos == 0);
+            }
         }
     }
 
