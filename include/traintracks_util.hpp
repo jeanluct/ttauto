@@ -118,7 +118,7 @@ jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f)
   // Check that the transition matrix is permutation+1 or identity.
   if (TM != jlt::identity_matrix<int>(n))
     {
-      bool notfoundcol2 = false, notfoundrow2 = false, bad = false;
+      bool notfoundcol2 = true, notfoundrow2 = true, bad = false;
       for (int i = 0; i < n; ++i)
 	{
 	  int colsum = 0, rowsum = 0;
@@ -173,7 +173,7 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   // Need to find two main edges and one infinitesimal edge.
   // main edge a: folding from
   // main edge b: folding onto
-  //  inf edge  : in between
+  // infinitesimal edge: in between
 
   // The cusp should give us the in-between edge.
 
