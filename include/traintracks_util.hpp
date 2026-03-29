@@ -210,8 +210,9 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   for (int i = 0; i < n; ++i)
     for (int j = 0; j < n; ++j)
       if (TM(i,j) == 1) { pp[i] = j; ppi[j] = i; }
-  // Copy permutation over to train track map.
-  for (int i = 0; i < n; ++i) AM[i+1] = {pp[i]+1};
+  // Copy permutation over to train track map (main generators only).
+  for (int i = 0; i < n; ++i)
+    AM[labels.main_gen(i)] = {labels.main_gen(pp[i])};
 
   if (isperm) return AM;
 
@@ -220,8 +221,9 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   int e21 = labels.main_gen(pp[row2]);
   int e22 = labels.main_gen(col2);
 
-  AM[ppi[e22-1]+1] = {-e22};
-  int infinitesimal = -labels.peripheral_gen(ninf-1); // placeholder
+  AM[labels.main_gen(ppi[col2])] = {-e22};
+  int infix = tt0.fold_infinitesimal_index(f);
+  int infinitesimal = -labels.peripheral_gen(infix);
   if (f % 2 == 0)
     AM[e1] = {e21,infinitesimal,e22}; // fold clockwise
   else
@@ -266,6 +268,16 @@ jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
 	}
     }
 
+  return TM;
+}
+
+
+template<class TrTr>
+jlt::mathmatrix<int> transition_matrix_from_map_transposed(const TrTr& tt,
+							   const free_auto<int>& AM)
+{
+  jlt::mathmatrix<int> TM = transition_matrix_from_map(tt,AM);
+  TM.transpose();
   return TM;
 }
 

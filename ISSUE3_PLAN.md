@@ -136,3 +136,16 @@ Deliverable: issue #3 either closed or split into clearly scoped follow-ups.
 
 Start Phase 0: wire `test_freeword` into default tests and establish baseline
 behavior before touching map construction logic.
+
+## Progress notes
+
+- Added `ttmap_labeler` for unified main/peripheral generator numbering.
+- Added matrix-from-map consistency checks in `test_freeword` and aligned
+  transpose conventions.
+- Replaced the old infinitesimal placeholder selector with a geometry-based
+  index lookup:
+  - `traintrack::fold_infinitesimal_index(f)`
+  - resolves cusp index using existing fold-order traversal
+  - maps cusp prong to global peripheral generator index
+- Important caveat: this is a first geometry-based implementation, not the
+  final semantic proof for infinitesimal orientation/sign under all folds.

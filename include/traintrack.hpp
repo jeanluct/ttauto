@@ -189,6 +189,10 @@ public:
   //  f odd  = fold clockwise
   bool fold(const int f);
 
+  // Return the infinitesimal/peripheral generator index (0-based)
+  // associated with fold index f in the current cusp ordering.
+  int fold_infinitesimal_index(const int f) const;
+
 #if 0
   // Fold and find transition matrix.
   jlt::mathmatrix<int> fold_transition_matrix(const int f)

@@ -126,7 +126,7 @@ int main()
   cout << AMp << endl;
 
   // Main-edge transition matrix should match map-derived one.
-  jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map(ttv[trk],AMp);
+  jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map_transposed(ttv[trk],AMp);
   assert(TMp == TMfromAMp);
 
   //  return 0;
@@ -157,7 +157,6 @@ int main()
   free_auto<int> AMp2 = p2.traintrack_map();
   cout << AMp2 << endl;
 
-  jlt::mathmatrix<int> TMfromAMp2 = transition_matrix_from_map(ttv2[trk],AMp2);
-  TMfromAMp2.transpose();
+  jlt::mathmatrix<int> TMfromAMp2 = transition_matrix_from_map_transposed(ttv2[trk],AMp2);
   assert(TMp2 == TMfromAMp2);
 }

@@ -522,6 +522,48 @@ bool traintrack::fold(const int f)
   return fold(*mmc,pc,ec,fdir);
 }
 
+int traintrack::fold_infinitesimal_index(const int f) const
+{
+  if (f < 0 || f >= foldings())
+    {
+      std::cerr << "Illegal folding index in traintrack::fold_infinitesimal_index.\n";
+      std::exit(1);
+    }
+
+  int cs = f/2;
+  int mono = 0;
+
+  // Find the 0th monogon, where coding starts.
+  for (; mono < (int)mgv.size(); ++mono)
+    {
+      if (Multigon(mono).prongs() == 1 && Multigon(mono).edges() == 1) break;
+    }
+  if (mono == (int)mgv.size())
+    {
+      std::cerr << "Could not find monogon in traintrack::fold_infinitesimal_index.\n";
+      std::exit(1);
+    }
+
+  // Start by finding the multigon the monogon edge is attached to.
+  int pmono, pemono;
+  multigon* egmono =
+    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
+
+  // Reuse recursive cusp ordering to locate cusp cs.
+  multigon* mmc = 0;
+  int pc = -1, ec = -1;
+  recursive_find_cusp(*egmono,pmono,pemono,cs,mmc,pc,ec);
+
+  if (mmc == 0 || pc < 0)
+    {
+      std::cerr << "Could not resolve cusp in traintrack::fold_infinitesimal_index.\n";
+      std::exit(1);
+    }
+
+  int mi = multigon_index(mmc);
+  return multigon_prong_index(mi,pc);
+}
+
 bool traintrack::recursive_find_cusp(multigon& mm,
 				     const int pin, const int ein,
 				     int& fcusp, multigon*& mmc,
