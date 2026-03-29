@@ -136,13 +136,40 @@ inline permplus1_decode decode_fold_map_structure(const TrTr& tt0, const int f)
   return decode_transposed_permplus1(fold_transition_matrix(tt0,f).transpose());
 }
 
-template<class TrTr>
-jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
-						const free_auto<int>& AM);
 
 template<class TrTr>
-jlt::mathmatrix<int> transition_matrix_from_map_transposed(const TrTr& tt,
-							   const free_auto<int>& AM);
+inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
+						   const free_auto<int>& AM)
+{
+  const int n = tt0.edges();
+  const ttmap_labeler labels(n,tt0.total_prongs());
+  jlt::mathmatrix<int> TMfromAM(n,n,0);
+
+  for (int src = 0; src < n; ++src)
+    {
+      const int g = src + 1;
+      for (auto img : AM.get_action(g))
+	{
+	  if (!labels.is_valid_generator(img))
+	    {
+	      std::cerr << "Bad generator in traintracks::check_fold_map_main_transition.\n";
+	      std::exit(1);
+	    }
+	  if (!labels.is_main_generator(img)) continue;
+	  int col = labels.main_generator_index(img);
+	  ++TMfromAM(col,src);
+	}
+    }
+  TMfromAM.transpose();
+
+  jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f).transpose();
+
+  if (TMfromAM != TM)
+    {
+      std::cerr << "Map/transition mismatch in traintracks::fold_traintrack_map.\n";
+      std::exit(1);
+    }
+}
 
 // If two vectors are cyclically equivalent, return a vector p0v of
 // offsets between them such that v1[v] == v2[(v+p0v[i]) % size()].
@@ -313,12 +340,7 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
     AM[e1] = {e22,infinitesimal,e21}; // fold clockwise
 
   // Main-edge transition consistency check.
-  if (transition_matrix_from_map_transposed(tt0,AM) !=
-      fold_transition_matrix(tt0,f).transpose())
-    {
-      std::cerr << "Map/transition mismatch in traintracks::fold_traintrack_map.\n";
-      std::exit(1);
-    }
+  check_fold_map_main_transition(tt0,f,AM);
 
   return AM;
 }
