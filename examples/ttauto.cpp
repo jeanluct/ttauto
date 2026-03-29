@@ -43,7 +43,7 @@ int main()
   using std::endl;
   using traintracks::traintrack;
 
-  typedef traintracks::ttfoldgraph<traintrack>		ttgraph;
+  typedef ttauto::ttfoldgraph<traintrack>		ttgraph;
   typedef std::list<ttgraph>::const_iterator		cttgit;
   typedef jlt::vector<traintrack>			ttVec;
   typedef ttVec::const_iterator				ttVeccit;
@@ -81,9 +81,9 @@ int main()
     {
       cout << "\nDividing automaton into invariant subgraphs...\n";
       // Make a list of train track graphs. The main graph is the 1st element.
-      std::list<ttgraph> ttgdiv(subgraphs(ttg0));
+      std::list<ttgraph> ttgdiv(ttauto::subgraphs(ttg0));
       // Copy to master list.
-      std::copy(ttgdiv.begin(),ttgdiv.end(),back_inserter(ttg));
+      std::copy(ttgdiv.begin(),ttgdiv.end(),std::back_inserter(ttg));
     }
   else
     {
@@ -92,7 +92,7 @@ int main()
     }
 
   cout << "\nSubgraphs:\n";
-  traintracks::print_subgraphs(ttg);
+  ttauto::print_subgraphs(ttg);
 
   if (jlt::yesno("\nWrite subgraphs to file",false))
     {
@@ -128,7 +128,7 @@ int main()
   if (div) ostr << "_" << fg+1 << "_inv";
   std::string pAfile = "pA" + ostr.str() + ".m";
 
-  traintracks::ttauto<traintrack> tta(*ifg);
+  ttauto::ttauto<traintrack> tta(*ifg);
   tta.output_file(pAfile.c_str());
   tta.max_pathlength(len);
   tta.search();
