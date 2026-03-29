@@ -260,8 +260,7 @@ int main()
 
   //  return 0;
 
-  /* Something's weird in the rest... */
-  /* Doesn't reproduce the correct automaton? */
+  // Secondary scenario: broader consistency checks over a larger automaton.
   n = 4;
   ttVec ttv2 = ttbuild_list(n);
   trk = 1;
