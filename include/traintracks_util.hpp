@@ -165,7 +165,6 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   //     AM(f2 followed by f1) = AM(f1) * AM(f2).
   // This matches free_auto<T>::operator*= semantics.
 
-  TrTr tt(tt0);
   const int ninf = tt0.total_prongs();
   const int n = tt0.edges();
   const ttmap_labeler labels(n,ninf);
@@ -178,7 +177,7 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
   // The cusp should give us the in-between edge.
 
-  /* Kludge: compute transition matrix first to figure it out. */
+  // Current implementation infers the folded main-edge relation from TM.
   jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f);
   TM.transpose(); // Transpose the transition matrix.
 
@@ -225,9 +224,9 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   int infix = tt0.fold_infinitesimal_index(f);
   int infinitesimal = -labels.peripheral_gen(infix);
   if (f % 2 == 0)
-    AM[e1] = {e21,infinitesimal,e22}; // fold clockwise
+    AM[e1] = {e21,infinitesimal,e22}; // fold counterclockwise
   else
-    AM[e1] = {e22,infinitesimal,e21}; // fold counterclockwise
+    AM[e1] = {e22,infinitesimal,e21}; // fold clockwise
 
   /* Check automorphism (see transition matrix) */
 
