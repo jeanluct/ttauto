@@ -90,8 +90,10 @@ inline bool pattern_equal(const Mat& A, const Mat& B)
 template<class TrTr>
 jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f)
 {
-  // Chaining two folds amounts to left-multiplication of
-  // transition matrices: TM(12)=TM(2)*TM(1).
+  // Conventions:
+  // - We represent one fold by TM(f).
+  // - Applying f1 then f2 corresponds to left-multiplication:
+  //     TM(f2 followed by f1) = TM(f2) * TM(f1).
 
   TrTr tt(tt0);
   const int n = tt0.edges();
@@ -157,8 +159,11 @@ jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f)
 template<class TrTr>
 free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 {
-  // Chaining two folds amounts to composition of automorphisms:
-  // AM(12)=AM(1)*TM(2).
+  // Conventions:
+  // - We represent one fold by AM(f).
+  // - Applying f1 then f2 corresponds to right-composition in free_auto:
+  //     AM(f2 followed by f1) = AM(f1) * AM(f2).
+  // This matches free_auto<T>::operator*= semantics.
 
   TrTr tt(tt0);
   const int ninf = tt0.total_prongs();
@@ -232,6 +237,8 @@ template<class TrTr>
 jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
 						const free_auto<int>& AM)
 {
+  // Returns the main-edge transition matrix in non-transposed form.
+  // Infinitesimal/peripheral generators are ignored for this projection.
   const int n = tt.edges();
   jlt::mathmatrix<int> TM(n,n,0);
 
