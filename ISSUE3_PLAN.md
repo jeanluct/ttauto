@@ -147,5 +147,7 @@ behavior before touching map construction logic.
   - `traintrack::fold_infinitesimal_index(f)`
   - resolves cusp index using existing fold-order traversal
   - maps cusp prong to global peripheral generator index
+- Added test coverage that `fold_infinitesimal_index(f)` stays in range for all
+  fold indices in the two `test_freeword` scenarios.
 - Important caveat: this is a first geometry-based implementation, not the
   final semantic proof for infinitesimal orientation/sign under all folds.

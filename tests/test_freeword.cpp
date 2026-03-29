@@ -112,6 +112,14 @@ int main()
   cout << "\nFolding automaton has " << ttg.vertices();
   cout << (ttg.vertices() > 1 ? " vertices\n" : " vertex\n");
 
+  // The fold->infinitesimal index map should stay within range.
+  for (int f = 0; f < ttv[trk].foldings(); ++f)
+    {
+      int infix = ttv[trk].fold_infinitesimal_index(f);
+      assert(infix >= 0);
+      assert(infix < ttv[trk].total_prongs());
+    }
+
   // Make a folding path through the automaton.
   // This is the example in devel/iss03
   folding_path<traintrack> p(ttg,0);
@@ -144,6 +152,13 @@ int main()
   ttgraph ttg2(ttv2[trk]);
   cout << "\nFolding automaton has " << ttg2.vertices();
   cout << (ttg2.vertices() > 1 ? " vertices\n" : " vertex\n");
+
+  for (int f = 0; f < ttv2[trk].foldings(); ++f)
+    {
+      int infix = ttv2[trk].fold_infinitesimal_index(f);
+      assert(infix >= 0);
+      assert(infix < ttv2[trk].total_prongs());
+    }
 
   // Make a folding path through the automaton.
   folding_path<traintrack> p2(ttg2,0);
