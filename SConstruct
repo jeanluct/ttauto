@@ -70,13 +70,13 @@ if int(static):
 # On Linux, a cross-compiler such as mingw32 needs to be installed.
 win32 = ARGUMENTS.get('win32', 0)
 if int(win32):
-   env.AppendUnique(CXXFLAGS = ['-DTTAUTO_NO_SHARED_PTR'])
+   env.AppendUnique(CXXFLAGS = ['-DTRAINTRACKS_NO_SHARED_PTR'])
    env.Tool('crossmingw', toolpath = ['./devel'])
 
 if GCC_version < StrictVersion('4.5'):
    # For hash_set/hash_map with.
    # Eventually replaced by unordered_set/unordered_map.
-   env.AppendUnique(CXXFLAGS = ['-DTTAUTO_OLD_HASH'])
+   env.AppendUnique(CXXFLAGS = ['-DTRAINTRACKS_OLD_HASH'])
    if StrictVersion('4.3') <= GCC_version:
       # For hash_set/hash_map with gcc >= 4.3.3.
       env.PrependUnique(CXXFLAGS = ['-Wno-deprecated'])

@@ -22,13 +22,13 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef BADWORDS_HPP
-#define BADWORDS_HPP
+#ifndef TTAUTO_BADWORDS_HPP
+#define TTAUTO_BADWORDS_HPP
 
 #include <iostream>
 #undef TTAUTO_HASH_BADWORDS
 #ifdef TTAUTO_HASH_BADWORDS
-#ifdef TTAUTO_OLD_HASH
+#ifdef TRAINTRACKS_OLD_HASH
 #include <ext/hash_set>
 #else
 #include <unordered_set>
@@ -62,7 +62,7 @@ struct direct_equal_to
 };
 
 template<class TrTr>
-#ifdef TTAUTO_OLD_HASH
+#ifdef TRAINTRACKS_OLD_HASH
 jlt::matrix<__gnu_cxx::hash_set<folding_path<TrTr>,
 				typename folding_path<TrTr>::hash,
 				direct_equal_to<TrTr> > >
@@ -84,7 +84,7 @@ badwords(const ttfoldgraph<TrTr>& ttg, const int maxplen)
   typedef jlt::mathmatrix<int> Mat;
   typedef folding_path<TrTr> fpath;
 #ifdef TTAUTO_HASH_BADWORDS
-#ifdef TTAUTO_OLD_HASH
+#ifdef TRAINTRACKS_OLD_HASH
   typedef __gnu_cxx::hash_set<fpath,typename fpath::hash,
 			    direct_equal_to<TrTr> > badword_list;
 #else
@@ -247,4 +247,4 @@ badwords(const ttfoldgraph<TrTr>& ttg, const int maxplen)
 
 } // namespace ttauto
 
-#endif // BADWORDS_HPP
+#endif // TTAUTO_BADWORDS_HPP

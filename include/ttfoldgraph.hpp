@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef TTFOLDGRAPH_HPP
-#define TTFOLDGRAPH_HPP
+#ifndef TTAUTO_TTFOLDGRAPH_HPP
+#define TTAUTO_TTFOLDGRAPH_HPP
 
 #include <iostream>
 #include <list>
@@ -863,4 +863,4 @@ print_subgraphs(const std::list<ttfoldgraph<TrTr> >& ttg,
 
 } // namespace ttauto
 
-#endif // TTFOLDGRAPH_HPP
+#endif // TTAUTO_TTFOLDGRAPH_HPP

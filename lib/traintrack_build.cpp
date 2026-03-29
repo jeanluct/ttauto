@@ -160,7 +160,7 @@ traintrack::traintrack(const intVec& Kv)
 void traintrack::ttbuild_all_monogons(const int N)
 {
   // A monogon (puncture).
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   // C++14 has make_unique.
   mgv.push_back(mgonp(std::make_unique<multigon>(1)));
 #else
@@ -268,7 +268,7 @@ void traintrack::ttbuild_monogoncusps(const int N, const intVec& Kv)
     }
 
   traintrack tt;
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   // C++14 has make_unique.
   mgv.push_back(mgonp(std::make_unique<multigon>(1)));
 #else
@@ -277,7 +277,7 @@ void traintrack::ttbuild_monogoncusps(const int N, const intVec& Kv)
   for (int i = 0; i < L; ++i)
     {
       // Kv[i]-gon.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
       // C++14 has make_unique.
       mgv.push_back(mgonp(std::make_unique<multigon>(Kv[i])));
 #else
@@ -332,7 +332,7 @@ void traintrack::capoff()
 		}
 	      if (ua0 || ua1)
 		{
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
 		  // C++14 has make_unique.
 		  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
 #else
@@ -361,13 +361,13 @@ void traintrack::monogon_to_multigon(const int L, const int K)
   // Save a pointer to the edge multigon L was pointing to.
   edgep ep = Multigon(L).Edge(0,0);
   // Detach the edge.
-#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 199711L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   Multigon(L).Edge(0,0)->detach_from_multigon(mgv[L].get());
 #else
   Multigon(L).Edge(0,0)->detach_from_multigon(mgv[L]);
 #endif
   // Now make a new multigon, overwriting the old one.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   // C++14 has make_unique.
   mgv[L] = mgonp(std::make_unique<multigon>(K));
 #else

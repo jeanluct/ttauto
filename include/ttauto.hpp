@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef TTAUTO_HPP
-#define TTAUTO_HPP
+#ifndef TTAUTO_TTAUTO_HPP
+#define TTAUTO_TTAUTO_HPP
 
 #include <iostream>
 #include <fstream>
@@ -68,7 +68,7 @@ public:
   typedef folding_path<TrTr>			fpath;
   typedef long long int				llint;
 #ifdef TTAUTO_HASH_BADWORDS
-#ifdef TTAUTO_OLD_HASH
+#ifdef TRAINTRACKS_OLD_HASH
   typedef __gnu_cxx::hash_set<fpath,typename fpath::hash,
 			      direct_equal_to<TrTr> > badword_list;
 #else
@@ -968,4 +968,4 @@ inline void ttauto<TrTr>::record_pA()
 
 } // namespace ttauto
 
-#endif // TTAUTO_HPP
+#endif // TTAUTO_TTAUTO_HPP

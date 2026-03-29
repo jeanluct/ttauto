@@ -35,7 +35,7 @@ namespace traintracks {
 traintrack::traintrack(const traintrack::intVec& code)
 {
   // Train track always starts with an uncusped monogon.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   // C++14 has make_unique.
   mgv.push_back(mgonp(std::make_unique<multigon>(1)));
 #else
@@ -84,7 +84,7 @@ traintrack::traintrack(const char* codes)
   /* traintracl(code); */
 
   // Train track always starts with an uncusped monogon.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   // C++14 has make_unique.
   mgv.push_back(mgonp(std::make_unique<multigon>(1)));
 #else
@@ -121,7 +121,7 @@ void traintrack::recursive_build(traintrack::edgep& ee,
 
   // Add a new multigon, copying label.
   // Could replace new by std::make_unique<multigon> in C++14.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   // C++14 has make_unique.
   mgv.push_back(mgonp(std::make_unique<multigon>(inb.nprongs, inb.label)));
 #else
@@ -173,7 +173,7 @@ void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
   for (int m = 0; m < ttexist.multigons(); ++m)
     {
       // Allocate the new multigons.
-#if __cplusplus > 201103L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
       // C++14 has make_unique.
       ttnew.mgv.push_back(mgonp(std::make_unique<multigon>
 				(ttexist.Multigon(m).prongs(),
@@ -201,7 +201,7 @@ void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
 	      int t_m = 0;
 	      for (; t_m < (int)ttexist.multigons(); ++t_m)
 		{
-#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 199711L && !defined(TRAINTRACKS_NO_SHARED_PTR)
 		  if (ttexist.mgv[t_m].get() == t_mp) break;
 #else
 		  if (ttexist.mgv[t_m] == t_mp) break;

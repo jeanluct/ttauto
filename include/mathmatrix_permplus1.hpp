@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef MATHMATRIX_PERMPLUS1_HPP
-#define MATHMATRIX_PERMPLUS1_HPP
+#ifndef TRAINTRACKS_MATHMATRIX_PERMPLUS1_HPP
+#define TRAINTRACKS_MATHMATRIX_PERMPLUS1_HPP
 
 #include <iostream>
 #include <jlt/vector.hpp>
@@ -288,4 +288,4 @@ std::ostream& operator<<(std::ostream& strm, const mathmatrix_permplus1& pm)
 
 } // namespace traintracks
 
-#endif // MATHMATRIX_PERMPLUS1_HPP
+#endif // TRAINTRACKS_MATHMATRIX_PERMPLUS1_HPP

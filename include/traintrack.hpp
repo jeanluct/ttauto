@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef TRAINTRACK_HPP
-#define TRAINTRACK_HPP
+#ifndef TRAINTRACKS_TRAINTRACK_HPP
+#define TRAINTRACKS_TRAINTRACK_HPP
 
 #include <memory>
 #include <jlt/vector.hpp>
@@ -44,7 +44,7 @@ class traintrack
 
 public:
   using edgep = multigon::edgep;
-#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 199711L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   // There is only one owner for each multigon, so use std::unique_ptr (C++11).
   using mgonp = std::unique_ptr<multigon>;
 #else
@@ -539,4 +539,4 @@ operator<<(std::ostream& strm, const traintrack::coding_block& b)
 
 } // namespace traintracks
 
-#endif // TRAINTRACK_HPP
+#endif // TRAINTRACKS_TRAINTRACK_HPP

@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef FOLDING_PATH_HPP
-#define FOLDING_PATH_HPP
+#ifndef TTAUTO_FOLDING_PATH_HPP
+#define TTAUTO_FOLDING_PATH_HPP
 
 #include <iostream>
 #include <jlt/vector.hpp>
@@ -558,4 +558,4 @@ std::ostream& operator<<(std::ostream& strm, const folding_path<TrTr>& pp)
 
 } // namespace ttauto
 
-#endif // FOLDING_PATH_HPP
+#endif // TTAUTO_FOLDING_PATH_HPP

@@ -22,11 +22,11 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef PACLASS_HPP
-#define PACLASS_HPP
+#ifndef TTAUTO_PACLASS_HPP
+#define TTAUTO_PACLASS_HPP
 
 #include <iostream>
-#ifdef TTAUTO_OLD_HASH
+#ifdef TRAINTRACKS_OLD_HASH
 #include <ext/hash_map>
 #else
 #include <unordered_map>
@@ -64,7 +64,7 @@ private:
   //   be nice to use map since we could easily keep the list sorted
   //   by length, but when there are millions of pAs it's better to
   //   use folding_path's hash function to speed up checking.
-#ifdef TTAUTO_OLD_HASH
+#ifdef TRAINTRACKS_OLD_HASH
   typedef typename __gnu_cxx::hash_map<folding_path<TrTr>,Mat,path_hash>
 #else
   typedef typename std::unordered_map<folding_path<TrTr>,Mat,path_hash>
@@ -211,4 +211,4 @@ public:
 
 } // namespace ttauto
 
-#endif // PACLASS_HPP
+#endif // TTAUTO_PACLASS_HPP

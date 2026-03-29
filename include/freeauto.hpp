@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef FREEAUTO_HPP
-#define FREEAUTO_HPP
+#ifndef TRAINTRACKS_FREEAUTO_HPP
+#define TRAINTRACKS_FREEAUTO_HPP
 
 #include <cstdlib>
 #include <iostream>
@@ -149,4 +149,4 @@ std::ostream& operator<<(std::ostream& strm, const freeauto<T>& a)
 
 } // namespace traintracks
 
-#endif // FREEAUTO_HPP
+#endif // TRAINTRACKS_FREEAUTO_HPP

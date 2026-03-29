@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef EDGE_HPP
-#define EDGE_HPP
+#ifndef TRAINTRACKS_EDGE_HPP
+#define TRAINTRACKS_EDGE_HPP
 
 #include <iostream>
 #include <cstdlib>
@@ -287,7 +287,7 @@ inline bool edge::check() const
 	  std::cerr << "Unhooked edge in traintracks::edge::check.\n";
 	  std::exit(1);
 	}
-#ifdef TTAUTO_NO_SHARED_PTR
+#ifdef TRAINTRACKS_NO_SHARED_PTR
       if (mg[en]->egv[pr[en]][pre[en]] != this)
 #else
       if (mg[en]->egv[pr[en]][pre[en]].get() != this)
@@ -307,4 +307,4 @@ inline bool edge::check() const
 
 } // namespace traintracks
 
-#endif // EDGE_HPP
+#endif // TRAINTRACKS_EDGE_HPP

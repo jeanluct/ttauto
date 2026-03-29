@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef TTMAP_LABELS_HPP
-#define TTMAP_LABELS_HPP
+#ifndef TRAINTRACKS_TTMAP_LABELS_HPP
+#define TRAINTRACKS_TTMAP_LABELS_HPP
 
 #include <cstdlib>
 #include <iostream>
@@ -105,4 +105,4 @@ struct ttmap_labeler
 
 } // namespace traintracks
 
-#endif // TTMAP_LABELS_HPP
+#endif // TRAINTRACKS_TTMAP_LABELS_HPP

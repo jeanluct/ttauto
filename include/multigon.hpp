@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef MULTIGON_HPP
-#define MULTIGON_HPP
+#ifndef TRAINTRACKS_MULTIGON_HPP
+#define TRAINTRACKS_MULTIGON_HPP
 
 #include <iostream>
 #include <cstdlib>
@@ -31,7 +31,7 @@
 #include "edge.hpp"
 #include "traintracks_util.hpp"
 
-#ifndef TTAUTO_NO_SHARED_PTR
+#ifndef TRAINTRACKS_NO_SHARED_PTR
 #if __cplusplus > 199711L
 #include <memory>
 namespace traintracks
@@ -58,7 +58,7 @@ class multigon
   static const int debug = 0;
 
 public:
-#ifdef TTAUTO_NO_SHARED_PTR
+#ifdef TRAINTRACKS_NO_SHARED_PTR
   typedef edge*				edgep;
 #else
   typedef shared_ptr<edge>		edgep;
@@ -314,4 +314,4 @@ inline int multigon::edges() const
 
 } // namespace traintracks
 
-#endif // MULTIGON_HPP
+#endif // TRAINTRACKS_MULTIGON_HPP

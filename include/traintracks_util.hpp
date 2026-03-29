@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef TRAINTRACKS_UTIL_HPP
-#define TRAINTRACKS_UTIL_HPP
+#ifndef TRAINTRACKS_TRAINTRACKS_UTIL_HPP
+#define TRAINTRACKS_TRAINTRACKS_UTIL_HPP
 
 #include <jlt/vector.hpp>
 #include <jlt/mathmatrix.hpp>
@@ -195,4 +195,4 @@ inline double findroot(const jlt::polynomial<int>& p,
 
 } // namespace traintracks
 
-#endif // TRAINTRACKS_UTIL_HPP
+#endif // TRAINTRACKS_TRAINTRACKS_UTIL_HPP

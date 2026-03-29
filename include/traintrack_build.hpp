@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef TRAINTRACK_BUILD_HPP
-#define TRAINTRACK_BUILD_HPP
+#ifndef TRAINTRACKS_TRAINTRACK_BUILD_HPP
+#define TRAINTRACKS_TRAINTRACK_BUILD_HPP
 
 #include <jlt/vector.hpp>
 #include "traintrack.hpp"
@@ -40,4 +40,4 @@ jlt::vector<traintrack> build_traintrack_list_sweep_bigons(const int N);
 
 } // namespace traintracks
 
-#endif // TRAINTRACK_BUILD_HPP
+#endif // TRAINTRACKS_TRAINTRACK_BUILD_HPP

@@ -53,7 +53,7 @@ inline void require_ending_match(const edge& eg, const int en,
 void multigon::attach_edge(const int p, const int e)
 {
   // Make a new edge.
-#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 199711L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   edgep newep(std::make_shared<edge>());
 #else
   edgep newep(new edge());
@@ -106,7 +106,7 @@ void multigon::point_to_edge(edgep& eg, const int p, const int e)
 void multigon::insert_edge(const int p, const int e)
 {
   // Make a new edge.
-#if __cplusplus > 199711L && !defined(TTAUTO_NO_SHARED_PTR)
+#if __cplusplus > 199711L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   edgep newep(std::make_shared<edge>());
 #else
   edgep newep(new edge());
@@ -161,7 +161,7 @@ bool multigon::check() const
 	      std::cerr << " in traintracks::multigon::check.\n";
 	      std::exit(1);
 	    }
-#ifndef TTAUTO_NO_SHARED_PTR
+#ifndef TRAINTRACKS_NO_SHARED_PTR
 	  if (Edge(p,e).use_count() != 2)
 	    {
 	      std::cerr << "Bad edge reference counter";

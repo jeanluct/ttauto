@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef FREEWORD_HPP
-#define FREEWORD_HPP
+#ifndef TRAINTRACKS_FREEWORD_HPP
+#define TRAINTRACKS_FREEWORD_HPP
 
 #include <algorithm>
 #include <cmath>
@@ -171,4 +171,4 @@ inline freeword<T> operator*(const freeword<T>& w1, const freeword<T>& w2)
 
 } // namespace traintracks
 
-#endif // FREEWORD_HPP
+#endif // TRAINTRACKS_FREEWORD_HPP

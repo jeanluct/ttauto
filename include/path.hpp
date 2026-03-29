@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef PATH_HPP
-#define PATH_HPP
+#ifndef TRAINTRACKS_PATH_HPP
+#define TRAINTRACKS_PATH_HPP
 
 #include <iostream>
 #include <jlt/vector.hpp>
@@ -153,4 +153,4 @@ std::ostream& operator<<(std::ostream& strm, const path& pp)
 
 } // namespace traintracks
 
-#endif // PATH_HPP
+#endif // TRAINTRACKS_PATH_HPP
