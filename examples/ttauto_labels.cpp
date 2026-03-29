@@ -38,9 +38,8 @@ int main()
   using std::endl;
   using traintracks::traintrack;
 
-  typedef ttauto::ttfoldgraph<traintrack>		ttgraph;
-  typedef std::list<ttgraph>::const_iterator		cttgit;
-  typedef jlt::vector<traintrack>			ttVec;
+  using ttgraph = ttauto::ttfoldgraph<traintrack>;
+  using ttVec = jlt::vector<traintrack>;
 
   const int n = 5;		// Number of punctures.
   int trk = 3;			// Initial train track to search.
@@ -75,9 +74,9 @@ int main()
   cout << "\nFolding subgraphs from initial train track: \n";
   ttauto::print_subgraphs(ttg);
 
-  for (cttgit i = ttg.begin(); i != ttg.end(); ++i)
+  for (auto i = ttg.begin(); i != ttg.end(); ++i)
     {
-      int fg = std::distance(cttgit(ttg.begin()),i);
+      int fg = std::distance(ttg.begin(),i);
       cout << "\n\nFOLDING GRAPH " << fg;
       cout << " with " << i->vertices();
       cout << (i->vertices() == 1 ? " vertex\n\n" : " vertices\n\n");

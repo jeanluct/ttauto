@@ -866,8 +866,7 @@ std::ostream& traintrack::printMathematicaForm(std::ostream& strm) const
 	}
     }
   strm << "{";
-  for (std::set<std::pair<int,int> >::const_iterator i = ttg.begin();
-       i != ttg.end(); ++i)
+  for (auto i = ttg.begin(); i != ttg.end(); ++i)
     {
       strm << i->first+1 << "->" << i->second+1;
       if (std::distance(i,ttg.end()) > 1) strm << ",";

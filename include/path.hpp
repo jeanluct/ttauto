@@ -140,7 +140,7 @@ std::ostream& operator<<(std::ostream& strm, const path& pp)
 {
   if (pp.empty()) return strm;
 
-  for (path::const_iterator i = pp.begin(); i != pp.end(); ++i)
+  for (auto i = pp.begin(); i != pp.end(); ++i)
     {
       strm << *i;
       // Appropriate if 0 <= m0 < m1 < 10.

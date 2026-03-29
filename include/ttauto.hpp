@@ -379,8 +379,7 @@ std::ostream& ttauto<TrTr>::print_pA_list(std::ostream& strm) const
 
   strm << "     dilatation #  paths\n";
 
-  for (typename pAlist::const_iterator it = pAl.begin();
-       it != pAl.end(); ++it, ++npAs)
+  for (auto it = pAl.begin(); it != pAl.end(); ++it, ++npAs)
     {
       strm << setw(3) << npAs << "  ";
       strm << it->second.dilatation() << "  ";
@@ -401,7 +400,7 @@ ttauto<TrTr>::print_pA_list_MathematicaForm(std::ostream& strm) const
   using std::setw;
 
   strm << "{";
-  typename pAlist::const_iterator it = pAl.begin();
+  auto it = pAl.begin();
   do
     {
       it->second.print_pA_MathematicaForm(strm);
@@ -427,8 +426,7 @@ void ttauto<TrTr>::search(const int tt00)
       tt0 = (tt00 + i) % ttg.vertices();
       cout << "\n\nVERTEX " << tt0;
 
-      Vec::const_iterator it =
-	std::find(done.begin(),done.end(),tt0);
+      auto it =	std::find(done.begin(),done.end(),tt0);
       if (it != done.end())
 	{
 	  cout << "  Already done ...skipping";
@@ -566,7 +564,7 @@ void ttauto<TrTr>::eliminate_pairs()
       for (int tt0 = 0; tt0 < ttg.vertices(); ++tt0)
 	{
 	  const int symm_double = ttg.symmetric_double(tt0);
-	  Vec::const_iterator it =
+	  auto it =
 	    std::find(todo_list.begin(),todo_list.end(),symm_double);
 	  if (it == todo_list.end()) todo_list.push_back(tt0);
 	}
@@ -948,7 +946,7 @@ inline void ttauto<TrTr>::record_pA()
   // Check that we don't already have it.
 
   // Find the first polynomial not less than charpoly.
-  typename pAlist::iterator pAit = pAl.lower_bound(charpoly);
+  auto pAit = pAl.lower_bound(charpoly);
   if (pAit == pAl.end() || charpoly != pAit->first)
     {
       // A new dilatation: add it to the list.

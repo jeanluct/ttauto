@@ -386,7 +386,7 @@ folding_path<TrTr>::transition_matrix() const
   Mat TM(jlt::identity_matrix<int>(n));
   int v = initial_vertex();
 
-  for (path::const_iterator i = fp.begin(); i != fp.end(); ++i)
+  for (auto i = fp.begin(); i != fp.end(); ++i)
     {
       if (*i >= ttg->foldings(v))
 	{
@@ -410,7 +410,7 @@ folding_path<TrTr>::traintrack_map() const
   int v = initial_vertex();
   freeauto<int> AM(ngen);
 
-  for (path::const_iterator i = fp.begin(); i != fp.end(); ++i)
+  for (auto i = fp.begin(); i != fp.end(); ++i)
     {
       if (*i >= ttg->foldings(v))
 	{

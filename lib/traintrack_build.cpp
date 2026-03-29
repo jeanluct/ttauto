@@ -206,7 +206,7 @@ void traintrack::ttbuild_monogons_and_multigons(const int N,
   ttbuild_monogoncusps(N0,Kv0);
 
   // Now successively replace a monogon by a multigon in the list.
-  for (intVec::const_iterator i = Kv.begin()+2; i != Kv.end(); ++i)
+  for (auto i = Kv.begin()+2; i != Kv.end(); ++i)
     {
       // If we normalise, uncusped monogons are always first.
       int monog = 0;

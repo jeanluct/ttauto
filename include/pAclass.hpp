@@ -106,8 +106,7 @@ public:
   int shortest() const
   {
     int minlen = -1;
-    for (typename pathlist::const_iterator pit = pathl.begin();
-	 pit != pathl.end(); ++pit)
+    for (auto pit = pathl.begin(); pit != pathl.end(); ++pit)
       {
 	int len = pit->first.length();
 	if (minlen == -1 || len < minlen) minlen = len;
@@ -119,8 +118,7 @@ public:
   int longest() const
   {
     int maxlen = 0;
-    for (typename pathlist::const_iterator pit = pathl.begin();
-	 pit != pathl.end(); ++pit)
+    for (auto pit = pathl.begin(); pit != pathl.end(); ++pit)
       {
 	int len = pit->first.length();
 	if (maxlen == 0 || len > maxlen) maxlen = len;
@@ -140,8 +138,7 @@ public:
 
     // Do we have a representative with this length yet?
     bool got_that_length = false;
-    for (typename pathlist::const_iterator pit = pathl.begin();
-	 pit != pathl.end(); ++pit)
+    for (auto pit = pathl.begin(); pit != pathl.end(); ++pit)
       {
 	if (p.length() == pit->first.length())
 	  {
@@ -166,8 +163,7 @@ public:
 			    const int max_paths_to_print = 0) const
   {
     int printed = 0;
-    for (typename pathlist::const_iterator pit = pathl.begin();
-	 pit != pathl.end(); ++pit, ++printed)
+    for (auto pit = pathl.begin(); pit != pathl.end(); ++pit, ++printed)
       {
 	if (printed < max_paths_to_print || max_paths_to_print == 0)
 	  {
@@ -196,7 +192,7 @@ public:
     strm.unsetf(std::ios::showpoint);
     strm.precision(prec);
     int printed = 0;
-    typename pathlist::const_iterator pit = pathl.begin();
+    auto pit = pathl.begin();
     for (; pit != pathl.end(); ++pit, ++printed)
       {
 	if (printed < max_paths_to_print || max_paths_to_print == 0)

@@ -43,10 +43,8 @@ int main()
   using std::endl;
   using traintracks::traintrack;
 
-  typedef ttauto::ttfoldgraph<traintrack>		ttgraph;
-  typedef std::list<ttgraph>::const_iterator		cttgit;
-  typedef jlt::vector<traintrack>			ttVec;
-  typedef ttVec::const_iterator				ttVeccit;
+  using ttgraph = ttauto::ttfoldgraph<traintrack>;
+  using ttVec = jlt::vector<traintrack>;
 
   print_banner();
 
@@ -54,9 +52,9 @@ int main()
 
   ttVec ttv = traintracks::build_traintrack_list(n);
   cout << "\nList of strata:\n";
-  for (ttVeccit i = ttv.begin(); i != ttv.end(); ++i)
+  for (auto i = ttv.begin(); i != ttv.end(); ++i)
     {
-      cout << std::setw(2) << std::distance(ttVeccit(ttv.begin()),i)+1;
+      cout << std::setw(2) << std::distance(ttv.begin(),i)+1;
       cout << ")\t";
       i->print_singularity_data(cout) << endl;
     }
@@ -106,10 +104,10 @@ int main()
       cout << ttautofile << "...\n";
       std::ofstream ttastrm(ttautofile.c_str());
       ttastrm << "{\n";
-      for (cttgit i = ttg.begin(); i != ttg.end(); ++i)
+      for (auto i = ttg.begin(); i != ttg.end(); ++i)
 	{
 	  i->printMathematicaForm(ttastrm);
-	  if (std::distance(i,cttgit(ttg.end())) > 1) ttastrm << ",\n";
+          if (std::distance(i,ttg.end()) > 1) ttastrm << ",\n";
 	}
       ttastrm << "}\n";
       ttastrm.close();
@@ -119,7 +117,7 @@ int main()
   --fg;
   int len = jlt::read_number("\nMax path length in graph",0,100,5);
   if (len == 0) exit(0);
-  cttgit ifg = ttg.begin();
+  auto ifg = ttg.begin();
   std::advance(ifg,fg);		// Go to the correct position.
 
   // Make filename.
