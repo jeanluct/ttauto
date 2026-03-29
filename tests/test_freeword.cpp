@@ -125,6 +125,31 @@ int main()
   folding_path<traintrack> p(ttg,0);
   p.push_back(1); p.push_back(0);
 
+  // Diagnostic scaffold for issue #3:
+  // list one-step fold maps from the initial vertex, so a hand-worked
+  // example can be matched against exact fold indices and composition order.
+  cout << "\nOne-step fold maps from initial vertex:\n";
+  for (int f = 0; f < ttg.foldings(0); ++f)
+    {
+      cout << "f=" << f << " (" << (f % 2 ? "clockwise" : "counterclockwise")
+           << ")\n";
+      cout << ttg.traintrack_map(0,f) << endl;
+    }
+
+  // Hand-checked mapping example alignment (issue #3):
+  // a=1, b=2, peripheral generator at folded cusp is 5.
+  // Step 1: f=1 (clockwise): a->-a, b->a -5 b.
+  const free_auto<int>& AMf1 = ttg.traintrack_map(0,1);
+  assert((AMf1[1] == free_word<int>({-1})));
+  assert((AMf1[2] == free_word<int>({1,-5,2})));
+
+  // Step 2 candidate: f=0 from the target of step 1.
+  // Keep this as diagnostic until we fully lock geometric labeling/orientation.
+  const int v_after_f1 = ttg.target_vertex(0,1);
+  const free_auto<int>& AMf0_after_f1 = ttg.traintrack_map(v_after_f1,0);
+  assert((AMf0_after_f1[1] == free_word<int>({1,-5,2})));
+  assert((AMf0_after_f1[2] == free_word<int>({-2})));
+
   cout << "\nTransition matrix (transposed):\n";
   jlt::mathmatrix<int> TMp = p.transition_matrix().transpose();
   TMp.printMatrixForm(cout) << endl;
@@ -132,6 +157,17 @@ int main()
   cout << "\nTrain track map:\n";
   free_auto<int> AMp = p.traintrack_map();
   cout << AMp << endl;
+
+  // Composition order check:
+  // path [1,0] should compose as AM(1) * AM(0), matching folding_path.
+  free_auto<int> AMcheck(ttg.traintrack_map(0,1));
+  AMcheck *= ttg.traintrack_map(ttg.target_vertex(0,1),0);
+  assert(AMp[1] == AMcheck[1]);
+  assert(AMp[2] == AMcheck[2]);
+
+  // Hand-checked composed map for step sequence [1,0].
+  assert((AMp[1] == free_word<int>({-2,5,-1})));
+  assert((AMp[2] == free_word<int>({1,-5,2,-5,-2})));
 
   // Main-edge transition matrix should match map-derived one.
   jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map_transposed(ttv[trk],AMp);
