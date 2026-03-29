@@ -292,9 +292,14 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   int e21 = labels.main_gen(dec.perm[dec.row2]);
   int e22 = labels.main_gen(dec.col2);
 
+  // One main generator flips orientation under a non-permutation fold.
   AM[labels.main_gen(dec.perm_inv[dec.col2])] = {-e22};
+
+  // Infinitesimal edge chosen from fold cusp geometry.
   int infix = tt0.fold_infinitesimal_index(f);
   int infinitesimal = -labels.infinitesimal_gen(infix);
+
+  // Fold direction determines ordering around the inserted infinitesimal edge.
   if (f % 2 == 0)
     AM[e1] = {e21,infinitesimal,e22}; // fold counterclockwise
   else
