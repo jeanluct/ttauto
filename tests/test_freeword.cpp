@@ -60,6 +60,33 @@ int main()
     assert((aid[1] == a[1]));
     assert((aid[2] == a[2]));
     assert((aid[3] == a[3]));
+
+    // Decode helper sanity checks (transposed convention).
+    {
+      jlt::mathmatrix<int> I(jlt::identity_matrix<int>(3));
+      permplus1_decode d = decode_transposed_permplus1(I);
+      assert(d.is_perm);
+      assert(d.row2 == -1 && d.col2 == -1);
+      assert(d.perm[0] == 0 && d.perm[1] == 1 && d.perm[2] == 2);
+      assert(d.perm_inv[0] == 0 && d.perm_inv[1] == 1 && d.perm_inv[2] == 2);
+    }
+
+    {
+      // A transposed permutation+1 example:
+      // identity permutation with +1 at (row2,col2)=(0,1).
+      jlt::mathmatrix<int> M(3,3,0);
+      M(0,0) = 1;
+      M(1,1) = 1;
+      M(2,2) = 1;
+      M(0,1) = 1;
+
+      permplus1_decode d = decode_transposed_permplus1(M);
+      assert(!d.is_perm);
+      assert(d.row2 == 0);
+      assert(d.col2 == 1);
+      assert(d.perm[0] == 0 && d.perm[1] == 1 && d.perm[2] == 2);
+      assert(d.perm_inv[0] == 0 && d.perm_inv[1] == 1 && d.perm_inv[2] == 2);
+    }
   }
 
 #if 0
