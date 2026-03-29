@@ -181,6 +181,8 @@ int main()
           const ttmap_labeler labels(ttvf.edges(),ttvf.total_prongs());
           const free_auto<int>& AMstep = ttg.traintrack_map(v,f);
           const mathmatrix_permplus1& PM = ttg.transition_matrix(v,f);
+          permplus1_decode dec = decode_fold_map_structure(ttvf,f);
+          assert(dec.is_perm == PM.is_perm());
 
           jlt::mathmatrix<int> TMstep(ttg.transition_matrix(v,f).full());
           jlt::mathmatrix<int> TMfromMap =
@@ -294,6 +296,8 @@ int main()
           const ttmap_labeler labels(ttvf.edges(),ttvf.total_prongs());
           const free_auto<int>& AMstep = ttg2.traintrack_map(v,f);
           const mathmatrix_permplus1& PM = ttg2.transition_matrix(v,f);
+          permplus1_decode dec = decode_fold_map_structure(ttvf,f);
+          assert(dec.is_perm == PM.is_perm());
 
           jlt::mathmatrix<int> TMstep(ttg2.transition_matrix(v,f).full());
           jlt::mathmatrix<int> TMfromMap =

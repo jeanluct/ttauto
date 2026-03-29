@@ -127,6 +127,15 @@ inline permplus1_decode decode_transposed_permplus1(const jlt::mathmatrix<int>& 
   return d;
 }
 
+
+template<class TrTr>
+inline permplus1_decode decode_fold_map_structure(const TrTr& tt0, const int f)
+{
+  // Main-edge map (AM) is represented in transposed transition convention,
+  // so decode the transposed fold transition matrix.
+  return decode_transposed_permplus1(fold_transition_matrix(tt0,f).transpose());
+}
+
 // If two vectors are cyclically equivalent, return a vector p0v of
 // offsets between them such that v1[v] == v2[(v+p0v[i]) % size()].
 // Return empty p0v if they are not cyclically equivalent.
@@ -270,11 +279,7 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
   // The cusp should give us the in-between edge.
 
-  // Main-edge map (AM) is represented in transposed transition convention,
-  // so use the transposed fold transition matrix here.
-  jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f).transpose();
-
-  permplus1_decode dec = decode_transposed_permplus1(TM);
+  permplus1_decode dec = decode_fold_map_structure(tt0,f);
 
   // Copy permutation over to train track map (main generators only).
   for (int i = 0; i < n; ++i)
