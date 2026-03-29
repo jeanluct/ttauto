@@ -177,9 +177,9 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
   // The cusp should give us the in-between edge.
 
-  // Current implementation infers the folded main-edge relation from TM.
-  jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f);
-  TM.transpose(); // Transpose the transition matrix.
+  // Main-edge map (AM) is represented in transposed transition convention,
+  // so use the transposed fold transition matrix here.
+  jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f).transpose();
 
   // Check that the transition matrix is permutation+1 or identity.
   int col2 = -1, row2 = -1;
@@ -199,7 +199,13 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
     }
   //  std::cerr << "row with two ones is " << row2 << std::endl;
   //  std::cerr << "col with two ones is " << col2 << std::endl;
-  bool isperm = (col2 == -1 || row2 == -1);
+  bool isperm = (col2 == -1 && row2 == -1);
+
+  if ((col2 == -1) != (row2 == -1))
+    {
+      std::cerr << "Inconsistent fold matrix in traintracks::fold_traintrack_map.\n";
+      std::exit(1);
+    }
 
   // Turn back into a permutation matrix.
   if (!isperm) TM(row2,col2) = 0;
