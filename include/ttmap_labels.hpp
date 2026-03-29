@@ -55,6 +55,26 @@ struct ttmap_labeler
 
   int num_generators() const { return nmain + ninf; }
 
+  bool is_valid_generator(const int g) const
+  {
+    return (g != 0 && std::abs(g) <= num_generators());
+  }
+
+  bool is_main_generator(const int g) const
+  {
+    return (g != 0 && std::abs(g) <= nmain);
+  }
+
+  int main_generator_index(const int g) const
+  {
+    if (!is_main_generator(g))
+      {
+        std::cerr << "Not a main generator in ttmap_labeler.\n";
+        std::exit(1);
+      }
+    return std::abs(g) - 1;
+  }
+
   int main_gen(const int edge_index) const
   {
     if (edge_index < 0 || edge_index >= nmain)

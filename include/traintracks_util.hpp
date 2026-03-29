@@ -242,6 +242,7 @@ jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
   // Returns the main-edge transition matrix in non-transposed form.
   // Infinitesimal/peripheral generators are ignored for this projection.
   const int n = tt.edges();
+  const ttmap_labeler labels(n,tt.total_prongs());
   jlt::mathmatrix<int> TM(n,n,0);
 
   if ((int)AM.numgens() < n)
@@ -256,14 +257,14 @@ jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
       const int g = src + 1;
       for (auto img : AM.get_action(g))
 	{
-	  int col = std::abs(img) - 1;
-	  if (col < 0)
+	  if (!labels.is_valid_generator(img))
 	    {
 	      std::cerr << "Bad generator in ";
 	      std::cerr << "traintracks::transition_matrix_from_map.\n";
 	      std::exit(1);
 	    }
-	  if (col >= n) continue; // Infinitesimal generator: ignore for main-edge TM.
+	  if (!labels.is_main_generator(img)) continue;
+	  int col = labels.main_generator_index(img);
 	  ++TM(col,src);
 	}
     }
