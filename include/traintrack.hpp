@@ -32,7 +32,7 @@
 #include "multigon.hpp"
 #include "traintracks_util.hpp"
 #include "mathmatrix_permplus1.hpp"
-#include "freeword.hpp"
+#include "freeauto.hpp"
 
 
 namespace traintracks {
@@ -216,10 +216,10 @@ public:
 #endif
 
   // Fold and find transition matrix and train track map.
-  free_auto<int> fold_transition_matrix(const int f, jlt::mathmatrix<int>& M)
+  freeauto<int> fold_transition_matrix(const int f, jlt::mathmatrix<int>& M)
   {
     M = traintracks::fold_transition_matrix(*this,f);
-    free_auto<int> AM(traintracks::fold_traintrack_map(*this,f));
+    freeauto<int> AM(traintracks::fold_traintrack_map(*this,f));
     fold(f);
     return AM;
   }

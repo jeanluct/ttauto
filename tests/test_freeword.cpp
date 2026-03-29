@@ -29,7 +29,7 @@
 #include "traintrack.hpp"
 #include "ttfoldgraph.hpp"
 #include "folding_path.hpp"
-#include "freeword.hpp"
+#include "freeauto.hpp"
 #include "traintracks_util.hpp"
 #include "ttmap_labels.hpp"
 
@@ -41,23 +41,23 @@ int main()
   using jlt::operator<<;
   using namespace traintracks;
 
-  // Core free_word/free_auto sanity checks.
+  // Core freeword/freeauto sanity checks.
   {
-    free_word<int> w({1,2,-2,3,4,-4,-3});
+    freeword<int> w({1,2,-2,3,4,-4,-3});
     w.reduce();
-    assert((w == free_word<int>({1}))); // 2,-2 and 3,4,-4,-3 cancel
+    assert((w == freeword<int>({1}))); // 2,-2 and 3,4,-4,-3 cancel
 
-    free_word<int> wi = w.inverse();
-    assert((wi == free_word<int>({-1}))); // inverse of {1}
+    freeword<int> wi = w.inverse();
+    assert((wi == freeword<int>({-1}))); // inverse of {1}
 
-    free_auto<int> id(3);
-    free_auto<int> a(3);
+    freeauto<int> id(3);
+    freeauto<int> a(3);
     a[1] = {2};
     a[2] = {-1,3};
     a[3] = {3};
 
     // Right identity under composition as currently implemented.
-    free_auto<int> aid = a * id;
+    freeauto<int> aid = a * id;
     assert((aid[1] == a[1]));
     assert((aid[2] == a[2]));
     assert((aid[3] == a[3]));
@@ -91,7 +91,7 @@ int main()
   }
 
 #if 0
-  free_word<int> w({-5,-1,1,2,2,-2,1,1,2,1,-2,2,-1});
+  freeword<int> w({-5,-1,1,2,2,-2,1,1,2,1,-2,2,-1});
   cout << w << endl << endl;
   cout << w.inverse() << endl << endl;
   cout << w*w << endl << endl;
@@ -102,9 +102,9 @@ int main()
   // Define automorphism: 2 main edges, 3 infinitesimal edges.
   // {1,2,3,a,b} = {1,2,3,4,5}
   // Defaults to the identity automorphism.
-  cout << "\nIdentity automorphism:\n" << free_auto<int>(5);
+  cout << "\nIdentity automorphism:\n" << freeauto<int>(5);
 
-  free_auto<int> T1(5);
+  freeauto<int> T1(5);
   T1[1] = {2};
   T1[2] = {1};
   T1[3] = {3};
@@ -113,9 +113,9 @@ int main()
   cout << "\nT1:\n" << T1;
 
   // Compose the two automorphisms.
-  cout << endl << "T1*id\n" << T1*free_auto<int>(5) << endl;
+  cout << endl << "T1*id\n" << T1*freeauto<int>(5) << endl;
 
-  free_auto<int> T2(5);
+  freeauto<int> T2(5);
   T2[1] = {1};
   T2[2] = {3};
   T2[3] = {2};
@@ -179,7 +179,7 @@ int main()
         {
           const traintrack& ttvf = ttg.traintrack(v);
           const ttmap_labeler labels(ttvf.edges(),ttvf.total_prongs());
-          const free_auto<int>& AMstep = ttg.traintrack_map(v,f);
+          const freeauto<int>& AMstep = ttg.traintrack_map(v,f);
           const mathmatrix_permplus1& PM = ttg.transition_matrix(v,f);
           permplus1_decode dec = decode_fold_map_structure(ttvf,f);
           assert(dec.is_perm == PM.is_perm());
@@ -223,36 +223,36 @@ int main()
   // Hand-checked mapping example alignment (issue #3):
   // a=1, b=2, infinitesimal generator at folded cusp has index 5.
   // Step 1: f=1 (clockwise): a->-a, b->a 5 b.
-  const free_auto<int>& AMf1 = ttg.traintrack_map(0,1);
-  assert((AMf1[1] == free_word<int>({-1})));
-  assert((AMf1[2] == free_word<int>({1,5,2})));
+  const freeauto<int>& AMf1 = ttg.traintrack_map(0,1);
+  assert((AMf1[1] == freeword<int>({-1})));
+  assert((AMf1[2] == freeword<int>({1,5,2})));
 
   // Step 2 candidate: f=0 from the target of step 1.
   // Keep this as diagnostic until we fully lock geometric labeling/orientation.
   const int v_after_f1 = ttg.target_vertex(0,1);
-  const free_auto<int>& AMf0_after_f1 = ttg.traintrack_map(v_after_f1,0);
-  assert((AMf0_after_f1[1] == free_word<int>({1,5,2})));
-  assert((AMf0_after_f1[2] == free_word<int>({-2})));
+  const freeauto<int>& AMf0_after_f1 = ttg.traintrack_map(v_after_f1,0);
+  assert((AMf0_after_f1[1] == freeword<int>({1,5,2})));
+  assert((AMf0_after_f1[2] == freeword<int>({-2})));
 
   cout << "\nTransition matrix (transposed):\n";
   jlt::mathmatrix<int> TMp = p.transition_matrix().transpose();
   TMp.printMatrixForm(cout) << endl;
 
   cout << "\nTrain track map:\n";
-  free_auto<int> AMp = p.traintrack_map();
+  freeauto<int> AMp = p.traintrack_map();
   cout << AMp << endl;
 
   // Composition order check:
   // path [1,0] should compose as AM(1) * AM(0), matching folding_path.
-  free_auto<int> AMcheck(ttg.traintrack_map(0,1));
+  freeauto<int> AMcheck(ttg.traintrack_map(0,1));
   AMcheck *= ttg.traintrack_map(ttg.target_vertex(0,1),0);
   assert(AMp[1] == AMcheck[1]);
   assert(AMp[2] == AMcheck[2]);
 
   // Hand-checked composed map for step sequence [1,0]
   // under the current infinitesimal orientation convention.
-  assert((AMp[1] == free_word<int>({-2,-5,-1})));
-  assert((AMp[2] == free_word<int>({1,5,2,5,-2})));
+  assert((AMp[1] == freeword<int>({-2,-5,-1})));
+  assert((AMp[2] == freeword<int>({1,5,2,5,-2})));
 
   // Main-edge transition matrix should match map-derived one.
   jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map_transposed(ttv[trk],AMp);
@@ -293,7 +293,7 @@ int main()
         {
           const traintrack& ttvf = ttg2.traintrack(v);
           const ttmap_labeler labels(ttvf.edges(),ttvf.total_prongs());
-          const free_auto<int>& AMstep = ttg2.traintrack_map(v,f);
+          const freeauto<int>& AMstep = ttg2.traintrack_map(v,f);
           const mathmatrix_permplus1& PM = ttg2.transition_matrix(v,f);
           permplus1_decode dec = decode_fold_map_structure(ttvf,f);
           assert(dec.is_perm == PM.is_perm());
@@ -341,7 +341,7 @@ int main()
   TMp2.printMatrixForm(cout) << endl;
 
   cout << "\nTrain track map:\n";
-  free_auto<int> AMp2 = p2.traintrack_map();
+  freeauto<int> AMp2 = p2.traintrack_map();
   cout << AMp2 << endl;
 
   jlt::mathmatrix<int> TMfromAMp2 = transition_matrix_from_map_transposed(ttv2[trk],AMp2);

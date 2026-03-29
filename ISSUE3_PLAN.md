@@ -35,7 +35,7 @@ Produce a correct train-track map by accumulating per-fold maps during
 
 ### Phase 0a - freeword suitability review (design checkpoint)
 
-1. Review `freeword`/`free_auto` API and semantics before map work:
+1. Review `freeword`/`freeauto` API and semantics before map work:
    - composition order,
    - inverse/sign conventions,
    - generator indexing and bounds expectations,

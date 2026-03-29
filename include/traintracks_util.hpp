@@ -29,7 +29,7 @@
 #include <jlt/mathmatrix.hpp>
 #include <jlt/polynomial.hpp>
 #include <jlt/exceptions.hpp>
-#include "freeword.hpp"
+#include "freeauto.hpp"
 #include "ttmap_labels.hpp"
 
 namespace traintracks {
@@ -139,7 +139,7 @@ inline permplus1_decode decode_fold_map_structure(const TrTr& tt0, const int f)
 
 template<class TrTr>
 inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
-						   const free_auto<int>& AM)
+					   const freeauto<int>& AM)
 {
   const int n = tt0.edges();
   const ttmap_labeler labels(n,tt0.total_prongs());
@@ -294,18 +294,18 @@ jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f)
 
 
 template<class TrTr>
-free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
+freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 {
   // Conventions:
   // - We represent one fold by AM(f).
-  // - Applying f1 then f2 corresponds to right-composition in free_auto:
+  // - Applying f1 then f2 corresponds to right-composition in freeauto:
   //     AM(f2 followed by f1) = AM(f1) * AM(f2).
-  // This matches free_auto<T>::operator*= semantics.
+  // This matches freeauto<T>::operator*= semantics.
 
   const int ninf = tt0.total_prongs();
   const int n = tt0.edges();
   const ttmap_labeler labels(n,ninf);
-  free_auto<int> AM(labels.num_generators());
+  freeauto<int> AM(labels.num_generators());
 
   // Need to find two main edges and one infinitesimal edge.
   // main edge a: folding from
@@ -348,7 +348,7 @@ free_auto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
 template<class TrTr>
 jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
-						const free_auto<int>& AM)
+						const freeauto<int>& AM)
 {
   // Returns the main-edge transition matrix in non-transposed form.
   // Infinitesimal generators are ignored for this projection.
@@ -386,7 +386,7 @@ jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
 
 template<class TrTr>
 jlt::mathmatrix<int> transition_matrix_from_map_transposed(const TrTr& tt,
-							   const free_auto<int>& AM)
+						   const freeauto<int>& AM)
 {
   jlt::mathmatrix<int> TM = transition_matrix_from_map(tt,AM);
   TM.transpose();

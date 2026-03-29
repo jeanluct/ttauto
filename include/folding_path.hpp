@@ -30,7 +30,7 @@
 #include "path.hpp"
 #include "traintracks_util.hpp"
 #include "ttfoldgraph.hpp"
-#include "freeword.hpp"
+#include "freeauto.hpp"
 
 namespace traintracks {
 
@@ -104,7 +104,7 @@ public:
 
   Mat transition_matrix() const;
 
-  free_auto<int> traintrack_map() const;
+  freeauto<int> traintrack_map() const;
 
   // Return a subpath of length |nf|.
   // nf > 0 measure from initial vertex;
@@ -391,14 +391,14 @@ folding_path<TrTr>::transition_matrix() const
 }
 
 template<class TrTr>
-free_auto<int>
+freeauto<int>
 folding_path<TrTr>::traintrack_map() const
 {
   const int nmain = ttg->edges();
   const int ninf = ttg->traintrack(0).total_prongs();
   const int ngen = nmain + ninf;
   int v = initial_vertex();
-  free_auto<int> AM(ngen);
+  freeauto<int> AM(ngen);
 
   for (path::const_iterator i = fp.begin(); i != fp.end(); ++i)
     {
