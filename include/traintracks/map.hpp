@@ -35,8 +35,6 @@
 
 namespace traintracks {
 
-template<class TrTr>
-jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f);
 
 struct permplus1_decode
 {
@@ -132,6 +130,75 @@ inline permplus1_decode decode_permplus1(const jlt::mathmatrix<int>& TM)
       }
 
   return d;
+}
+
+
+template<class TrTr>
+jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f)
+{
+  // Conventions:
+  // - We represent one fold by TM(f).
+  // - Applying f1, then f2, composes by left-multiplication:
+  //     TM_total = TM(f2) * TM(f1).
+
+  TrTr tt(tt0);
+  const int n = tt0.edges();
+  jlt::mathmatrix<int> TM(n,n);
+
+  for (int i = 0; i < n; ++i)
+    {
+      tt = tt0;
+      // Set all weights but one to zero.
+      typename TrTr::dblVec wv(n);
+      wv[i] = 1;
+      tt.weights(wv.begin());
+
+      // Compute new weights.
+      tt.fold(f);
+      wv = tt.weights();
+
+      // Copy to ith row of matrix.
+      for (int j = 0; j < n; ++j) TM(j,i) = (int)wv[j];
+    }
+
+  // Check that the transition matrix is permutation+1 or identity.
+  if (TM != jlt::identity_matrix<int>(n))
+    {
+      bool notfoundcol2 = true, notfoundrow2 = true, bad = false;
+      for (int i = 0; i < n; ++i)
+	{
+	  int colsum = 0, rowsum = 0;
+	  for (int j = 0; j < n; ++j)
+	    {
+	      if (!(TM(i,j) == 0 || TM(i,j) == 1))
+		{
+		  std::cerr << "Matrix should contains only ones or zeros ";
+		  std::cerr << " in traintracks::fold_transition_matrix.\n";
+		  std::exit(1);
+		}
+	      colsum += TM(i,j);
+	      rowsum += TM(j,i);
+	    }
+	  if (colsum == 2)
+	    notfoundcol2 = false;
+	  else if (colsum != 1)
+	    bad = true;
+
+	  if (rowsum == 2)
+	    notfoundrow2 = false;
+	  else if (rowsum != 1)
+	    bad = true;
+	}
+      if (bad || notfoundrow2 || notfoundcol2)
+	{
+	  std::cerr << "Matrix should be permutation+1 or identity";
+	  std::cerr << " in traintracks::fold_transition_matrix:\n";
+	  TM.printMatrixForm(std::cerr);
+	  std::exit(1);
+	}
+    }
+
+  return TM;
 }
 
 
