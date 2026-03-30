@@ -216,8 +216,8 @@ jlt::mathmatrix<int> operator*(const mathmatrix_permplus1& pm,
 {
   const int n = pm.dim();
 
-  MATRIX_ASSERT(A.isSquare());
-  MATRIX_ASSERT(n == (int)A.dim());
+  JLT_MATRIX_ASSERT(A.isSquare());
+  JLT_MATRIX_ASSERT(n == (int)A.dim());
 
   jlt::mathmatrix<int> pmA(n,n);
 
@@ -239,8 +239,8 @@ jlt::mathmatrix<int> operator*(const jlt::mathmatrix<int>& A,
 {
   const int n = pm.dim();
 
-  MATRIX_ASSERT(A.isSquare());
-  MATRIX_ASSERT(n == (int)A.dim());
+  JLT_MATRIX_ASSERT(A.isSquare());
+  JLT_MATRIX_ASSERT(n == (int)A.dim());
 
   // Find column permutation.
   // This means that right-multiplication by pm is a little slower than left.
