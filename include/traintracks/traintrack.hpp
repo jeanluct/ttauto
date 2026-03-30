@@ -31,7 +31,6 @@
 #include <jlt/mathmatrix.hpp>
 #include "traintracks/edge.hpp"
 #include "traintracks/multigon.hpp"
-#include "traintracks/util.hpp"
 #include "traintracks/map.hpp"
 #include "traintracks/mathmatrix_permplus1.hpp"
 
