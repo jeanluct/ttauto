@@ -28,10 +28,10 @@
 #include <jlt/vector.hpp>
 #include <jlt/prompt.hpp>
 #include <jlt/vcs.hpp>
-#include "traintrack.hpp"
-#include "traintrack_build.hpp"
-#include "ttfoldgraph.hpp"
-#include "ttauto.hpp"
+#include "traintracks/traintrack.hpp"
+#include "traintracks/build.hpp"
+#include "ttauto/ttfoldgraph.hpp"
+#include "ttauto/ttauto.hpp"
 
 
 void print_banner();

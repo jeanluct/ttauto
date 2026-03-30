@@ -28,8 +28,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <jlt/vector.hpp>
-#include "edge.hpp"
-#include "traintracks_util.hpp"
+#include "traintracks/edge.hpp"
+#include "traintracks/util.hpp"
 
 #ifndef TRAINTRACKS_NO_SHARED_PTR
 #if __cplusplus > 199711L
@@ -87,7 +87,7 @@ public:
   {
     if (k <= 0)
       {
-	std::cerr << "Illegal number of prongs in traintracks::multigon::multigon.\n";
+	std::cerr << "Illegal number of prongs in traintrack::multigon::multigon.\n";
 	std::exit(1);
       }
 
@@ -218,13 +218,13 @@ private:
     if (debug && (p < 0 || p >= prongs()))
       {
 	std::cerr << "Prong out of range";
-	std::cerr << " in traintracks::multigon::check_range.\n";
+	std::cerr << " in traintrack::multigon::check_range.\n";
 	std::exit(1);
       }
     if (debug && (e < 0 || e >= edges(p)))
       {
 	std::cerr << "Edge out of range";
-	std::cerr << " in traintracks::multigon::check_range.\n";
+	std::cerr << " in traintrack::multigon::check_range.\n";
 	std::exit(1);
       }
     return true;
@@ -270,13 +270,13 @@ inline bool multigon::prong_edge_is_unattached(const int p, const int e) const
   if (debug && (p < 0 || p >= prongs()))
     {
       std::cerr << "Prong out of range";
-      std::cerr << " in traintracks::multigon::check_range.\n";
+      std::cerr << " in traintrack::multigon::check_range.\n";
       std::exit(1);
     }
   if (debug && (e < 0 || e >= edges(p)))
     {
       std::cerr << "Edge out of range";
-      std::cerr << " in traintracks::multigon::check_range.\n";
+      std::cerr << " in traintrack::multigon::check_range.\n";
       std::exit(1);
     }
 

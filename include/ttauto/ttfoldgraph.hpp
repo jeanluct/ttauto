@@ -31,7 +31,7 @@
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
 #include <jlt/csparse.hpp>
-#include "mathmatrix_permplus1.hpp"
+#include "traintracks/mathmatrix_permplus1.hpp"
 
 // Graph of train tracks linked by foldings.
 

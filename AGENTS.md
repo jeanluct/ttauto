@@ -8,7 +8,8 @@
 
 ## Repository Map
 
-- `include/` - public headers for the `ttauto` core.
+- `include/traintracks/` - public headers for train-track core primitives.
+- `include/ttauto/` - public headers for automaton/search layer.
 - `lib/` - `ttauto` implementation (`multigon`, `traintrack`, builders, etc.).
 - `examples/` - executable programs used for smoke/integration checks.
 - `tests/` - executable tests (plain `main()`, no unit-test framework).

@@ -34,17 +34,30 @@
 #endif
 #include <jlt/vector.hpp>
 #include <jlt/matrix.hpp>
-#include "ttfoldgraph.hpp"
-#include "traintracks_util.hpp"
-#include "folding_path.hpp"
+#include "ttauto/ttfoldgraph.hpp"
+#include "ttauto/folding_path.hpp"
 
 namespace ttauto {
-
-using traintracks::pattern_equal;
 
 // Find paths with matrices of equal patterns of zeros-and-nonzeros.
 //
 // See Ham&Song preprint (2006).
+
+
+// Compare two matrices by zero/nonzero pattern only.
+template<class Mat>
+inline bool pattern_equal(const Mat& A, const Mat& B)
+{
+  typename Mat::const_iterator i;
+  typename Mat::const_iterator j = B.begin();
+
+  for (i = A.begin(); i != A.end(); ++i, ++j)
+    {
+      if ((*i != 0 && *j == 0) || (*i == 0 && *j != 0)) return false;
+    }
+
+  return true;
+}
 
 #ifdef TTAUTO_HASH_BADWORDS
 template<class TrTr>

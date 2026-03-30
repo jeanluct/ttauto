@@ -26,9 +26,9 @@
 #include <string>
 #include <cstdlib>
 #include <cmath>
-#include "edge.hpp"
-#include "multigon.hpp"
-#include "traintracks_util.hpp"
+#include "traintracks/edge.hpp"
+#include "traintracks/multigon.hpp"
+#include "traintracks/util.hpp"
 
 namespace traintracks {
 
@@ -68,7 +68,7 @@ void multigon::attach_edge(edgep& eg, const int p, const int e)
   if (debug)
     {
       std::cerr << "Attaching to prong " << p;
-      std::cerr << " as edge " << e << " in traintracks::multigon::attach_edge.\n";
+      std::cerr << " as edge " << e << " in traintrack::multigon::attach_edge.\n";
     }
   /* Change default behaviour: if p and e unspecified, look for the
      first unattached prong/edge or create a new one. Don't use default
@@ -84,7 +84,7 @@ void multigon::point_to_edge(edgep& eg, const int p, const int e)
   if (debug && (p < 0 || p >= prongs()))
     {
       std::cerr << "Nonexistent prong " << p;
-      std::cerr << " in traintracks::multigon::point_to_edge.\n";
+      std::cerr << " in traintrack::multigon::point_to_edge.\n";
       std::exit(1);
     }
 
@@ -94,7 +94,7 @@ void multigon::point_to_edge(edgep& eg, const int p, const int e)
   if (!prong_edge_is_unattached(p,e))
     {
       std::cerr << "An edge is already attached to prong " << p;
-      std::cerr << " edge " << e << " in traintracks::multigon::point_to_edge.\n";
+      std::cerr << " edge " << e << " in traintrack::multigon::point_to_edge.\n";
       std::exit(1);
     }
 
@@ -145,27 +145,27 @@ bool multigon::check() const
 	{
 	  if (prong_edge_is_unattached(p,e))
 	    {
-	      std::cerr << "Unhooked prong edge in traintracks::multigon::check.\n";
+	      std::cerr << "Unhooked prong edge in traintrack::multigon::check.\n";
 	      std::exit(1);
 	    }
 	  int en = Edge(p,e)->which_ending(this);
 	  if (Edge(p,e)->ending_prong(en) != p)
 	    {
 	      std::cerr << "Inconsistent prong number";
-	      std::cerr << " in traintracks::multigon::check.\n";
+	      std::cerr << " in traintrack::multigon::check.\n";
 	      std::exit(1);
 	    }
 	  if (Edge(p,e)->ending_edge_index(en) != e)
 	    {
 	      std::cerr << "Inconsistent edge number";
-	      std::cerr << " in traintracks::multigon::check.\n";
+	      std::cerr << " in traintrack::multigon::check.\n";
 	      std::exit(1);
 	    }
 #ifndef TRAINTRACKS_NO_SHARED_PTR
 	  if (Edge(p,e).use_count() != 2)
 	    {
 	      std::cerr << "Bad edge reference counter";
-	      std::cerr << " in traintracks::multigon::check.\n";
+	      std::cerr << " in traintrack::multigon::check.\n";
 	      std::exit(1);
 	    }
 #endif

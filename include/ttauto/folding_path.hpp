@@ -28,15 +28,15 @@
 #include <iostream>
 #include <jlt/freeauto.hpp>
 #include <jlt/vector.hpp>
-#include "path.hpp"
-#include "traintracks_util.hpp"
-#include "traintrack_map.hpp"
-#include "ttfoldgraph.hpp"
+#include "ttauto/path.hpp"
+#include "ttauto/ttfoldgraph.hpp"
+#include "traintracks/util.hpp"
+#include "traintracks/map.hpp"
 
 namespace ttauto {
 
-using traintracks::path;
 using ttauto::ttfoldgraph;
+using traintracks::cyclic_shift;
 
 template<class TrTr> class folding_path;
 

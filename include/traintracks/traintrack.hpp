@@ -29,11 +29,11 @@
 #include <jlt/freeauto.hpp>
 #include <jlt/vector.hpp>
 #include <jlt/mathmatrix.hpp>
-#include "edge.hpp"
-#include "multigon.hpp"
-#include "traintracks_util.hpp"
-#include "traintrack_map.hpp"
-#include "mathmatrix_permplus1.hpp"
+#include "traintracks/edge.hpp"
+#include "traintracks/multigon.hpp"
+#include "traintracks/util.hpp"
+#include "traintracks/map.hpp"
+#include "traintracks/mathmatrix_permplus1.hpp"
 
 
 namespace traintracks {
@@ -418,7 +418,7 @@ inline multigon& traintrack::Multigon(const int m)
   if (debug && (m < 0 || m >= (int)mgv.size()))
     {
       std::cerr << "Nonexistent multigon " << m;
-      std::cerr << " in traintracks::traintrack::Multigon\n";
+      std::cerr << " in traintrack::traintrack::Multigon\n";
       std::exit(1);
     }
   return *mgv[m];
@@ -429,7 +429,7 @@ inline const multigon& traintrack::Multigon(const int m) const
   if (debug && (m < 0 || m >= (int)mgv.size()))
     {
       std::cerr << "Nonexistent multigon " << m;
-      std::cerr << " in traintracks::traintrack::Multigon\n";
+      std::cerr << " in traintrack::traintrack::Multigon\n";
       std::exit(1);
     }
   return *mgv[m];
@@ -520,7 +520,7 @@ inline void traintrack::swap(const int m1, const int m2)
 {
   if (debug && (m1 < 0 || m1 >= multigons() || m2 < 0 || m2 >= multigons()))
     {
-      std::cerr << "Nonexistent multigon in traintracks::traintrack::swap.\n";
+      std::cerr << "Nonexistent multigon in traintrack::traintrack::swap.\n";
       std::exit(1);
     }
   traintracks::swap(*mgv[m1],*mgv[m2]);

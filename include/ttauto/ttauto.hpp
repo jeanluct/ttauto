@@ -39,14 +39,39 @@
 #include <jlt/eigensystem.hpp>
 #endif
 #include <jlt/polynomial.hpp>
-#include "folding_path.hpp"
-#include "ttfoldgraph.hpp"
-#include "pAclass.hpp"
-#include "badwords.hpp"
+#include "ttauto/folding_path.hpp"
+#include "ttauto/ttfoldgraph.hpp"
+#include "ttauto/pAclass.hpp"
+#include "ttauto/badwords.hpp"
 
 namespace ttauto {
 
-using traintracks::findroot;
+// Find the largest real root of a polynomial via Newton iteration.
+//
+// The polynomial comes from a Perron-Frobenius matrix, so the largest
+// real root is guaranteed to be real and unique.
+inline double findroot(const jlt::polynomial<int>& p,
+		       const double x0, const double tol)
+{
+  double px(p(x0)), x(x0);
+
+  int i = 0;
+  const int itmax = 100;
+
+  while (std::abs(px) > tol && i++ < itmax)
+    {
+      x = x - px / p.derivative_at(x);
+      px = p(x);
+    }
+
+  if (i == itmax)
+    throw
+      jlt::failed_to_converge<double>
+      ("Failed to converge to specified accuracy.\n",std::abs(px));
+
+  return x;
+}
+
 
 template<class TrTr>
 class ttauto
@@ -165,7 +190,7 @@ public:
 
      There are basically two modes of operation: search up to a fixed
      length without checking norms, or search until the norms are
-     exceeded.  The default to be search by length with a max
+     exceeded.  The default is to search by length with a max
      pathlength of 15.  (Not a good idea to default to the other mode,
      check_norms, because when the object is first created it is
      unusable until a max dilatation is set.)

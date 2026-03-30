@@ -30,8 +30,8 @@
 #include <jlt/mathmatrix.hpp>
 #include <jlt/mathematica.hpp>
 #include <jlt/polynomial.hpp>
-#include "folding_path.hpp"
-#include "traintracks_util.hpp"
+#include "ttauto/folding_path.hpp"
+#include "traintracks/util.hpp"
 
 namespace ttauto {
 

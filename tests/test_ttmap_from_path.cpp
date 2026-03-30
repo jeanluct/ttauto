@@ -28,11 +28,11 @@
 #include <random>
 #include <string>
 
-#include "folding_path.hpp"
-#include "traintrack_build.hpp"
-#include "traintrack.hpp"
-#include "traintrack_map.hpp"
-#include "ttfoldgraph.hpp"
+#include "traintracks/traintrack.hpp"
+#include "traintracks/build.hpp"
+#include "traintracks/map.hpp"
+#include "ttauto/folding_path.hpp"
+#include "ttauto/ttfoldgraph.hpp"
 
 
 template<class TrTr>

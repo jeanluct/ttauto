@@ -22,13 +22,13 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef TRAINTRACKS_PATH_HPP
-#define TRAINTRACKS_PATH_HPP
+#ifndef TTAUTO_PATH_HPP
+#define TTAUTO_PATH_HPP
 
 #include <iostream>
 #include <jlt/vector.hpp>
 
-namespace traintracks {
+namespace ttauto {
 
 // A path is a vector of integers with values between m0 and m1.
 
@@ -63,7 +63,7 @@ public:
   {
     if (m0 != pp.m0 || m1 != pp.m1)
       {
-	std::cerr << "Cannot be equated in traintracks::path::operator=.\n";
+	std::cerr << "Cannot be equated in ttauto::path::operator=.\n";
 	std::exit(1);
       }
 
@@ -80,7 +80,7 @@ public:
   }
 
   // Cycle through all paths of fixed length, letting values at each
-  // slot tun from m0 to m1.
+  // slot run from m0 to m1.
   bool operator++()
   {
     // Increment the path.
@@ -116,7 +116,7 @@ public:
   {
     if (m0 != pp.m0 || m1 != pp.m1)
       {
-	std::cerr << "Cannot be compared in traintracks::path::operator<.\n";
+	std::cerr << "Cannot be compared in ttauto::path::operator<.\n";
 	std::exit(1);
       }
     if (this->size() != pp.size()) return (this->size() < pp.size());
@@ -151,6 +151,6 @@ std::ostream& operator<<(std::ostream& strm, const path& pp)
   return strm;
 }
 
-} // namespace traintracks
+} // namespace ttauto
 
-#endif // TRAINTRACKS_PATH_HPP
+#endif // TTAUTO_PATH_HPP

@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef TRAINTRACKS_TRAINTRACK_MAP_HPP
-#define TRAINTRACKS_TRAINTRACK_MAP_HPP
+#ifndef TRAINTRACKS_MAP_HPP
+#define TRAINTRACKS_MAP_HPP
 
 #include <cstdlib>
 #include <iostream>
@@ -31,7 +31,7 @@
 #include <jlt/freeword.hpp>
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
-#include "ttmap_labels.hpp"
+#include "traintracks/map_labels.hpp"
 
 namespace traintracks {
 
@@ -283,4 +283,4 @@ jlt::mathmatrix<int> transition_matrix_from_map(const TrTr& tt,
 
 } // namespace traintracks
 
-#endif // TRAINTRACKS_TRAINTRACK_MAP_HPP
+#endif // TRAINTRACKS_MAP_HPP

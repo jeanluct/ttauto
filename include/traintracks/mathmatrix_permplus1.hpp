@@ -98,7 +98,7 @@ public:
 	if (M(p1row,p1col) != 1)
 	  {
 	    std::cerr << "The matrix is not perm or perm+1";
-	    std::cerr << " in traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+	    std::cerr << " in traintrack::mathmatrix_permplus1::mathmatrix_permplus1\n";
 	    std::exit(1);
 	  }
       }
@@ -116,7 +116,7 @@ public:
     if (std::find(rperm.begin(),rperm.end(),-1) != rperm.end())
       {
 	std::cerr << "The matrix is not perm or perm+1";
-	std::cerr << " in traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+	std::cerr << " in traintrack::mathmatrix_permplus1::mathmatrix_permplus1\n";
 	std::exit(1);
       }
   }
@@ -171,7 +171,7 @@ public:
 	p = pnew;
       }
 
-    std::cerr << "Bad permutation in traintracks::mathmatrix_permplus1::order().\n";
+    std::cerr << "Bad permutation in traintrack::mathmatrix_permplus1::order().\n";
     exit(1);
   }
 

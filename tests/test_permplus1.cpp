@@ -24,7 +24,7 @@
 
 #include <iostream>
 #include <jlt/stlio.hpp>
-#include "mathmatrix_permplus1.hpp"
+#include "traintracks/mathmatrix_permplus1.hpp"
 
 
 void testM(const jlt::mathmatrix<int>& Mpm)

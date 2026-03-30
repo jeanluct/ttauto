@@ -19,7 +19,7 @@ This file tracks build/runtime feature macros used in the main `ttauto` codebase
 - `TTAUTO_HASH_BADWORDS`
   - Default: **not defined**
   - Note: currently forced off by `#undef TTAUTO_HASH_BADWORDS` in
-    `include/badwords.hpp`.
+    `include/ttauto/badwords.hpp`.
   - Effect (when enabled): use hashed container path for badword storage.
 
 - `TTAUTO_USE_FORTRAN`
@@ -67,13 +67,13 @@ Notes:
 
 These are not named macros, but they are compile-time toggles worth tracking.
 
-- `include/ttauto.hpp` — warning block near end of `search()` (`#if 0`)
+- `include/ttauto/ttauto.hpp` — warning block near end of `search()` (`#if 0`)
   - Current behavior: warning about badword skipping is compiled out.
   - Removal guidance: **probably safe to delete**.
   - Rationale: this is user-facing logging only; deleting it does not change
     search/pruning semantics, only whether a warning can be printed.
 
-- `include/ttauto.hpp` — `pseudoAnosov` stats line (`#if 0`)
+- `include/ttauto/ttauto.hpp` — `pseudoAnosov` stats line (`#if 0`)
   - Current behavior: line is disabled and already labeled redundant.
   - Removal guidance: **safe to delete**.
   - Rationale: dead output-only code with explicit in-code note that it is not
@@ -82,34 +82,34 @@ These are not named macros, but they are compile-time toggles worth tracking.
     now know that there are cases where the matrix is irreducible, but the map
     is not pseudo-Anosov.  Need further checks (issue #2).
 
-- `include/ttfoldgraph.hpp` — symmetry-sort strategy selector (`#if 1/#else`)
+- `include/ttauto/ttfoldgraph.hpp` — symmetry-sort strategy selector (`#if 1/#else`)
   - Current behavior: uses contiguous self/left/right block order; alternate
     pairwise ordering retained in `#else`.
   - Removal guidance: **keep unless intentionally retiring alternate ordering**.
   - Rationale: both branches encode valid policies; this is design/analysis
     behavior, not dead debug scaffolding.
 
-- `include/traintrack.hpp` + `lib/traintrack_build.cpp` —
+- `include/traintracks/traintrack.hpp` + `lib/traintrack/build.cpp` —
   disabled `traintrack(const intVec& Kv)` constructor/implementation (`#if 0`)
   - Current behavior: constructor is unavailable.
   - Removal guidance: **higher-risk, keep for now**.
   - Rationale: comments document historical ambiguity with coding-based
     construction. Deleting loses that provenance and easy reactivation point.
 
-- `include/traintrack.hpp` — convenience fold overload (`#if 0`)
+- `include/traintracks/traintrack.hpp` — convenience fold overload (`#if 0`)
   - Current behavior: one-argument `fold_transition_matrix` convenience wrapper
     is disabled; two-output API is used instead.
   - Removal guidance: **higher-risk, keep for now**.
   - Rationale: small API-shape choice; currently disabled but potentially useful
     for call-site simplification experiments.
 
-- `include/edge.hpp` — `attach_to_multigon` declaration/implementation (`#if 0`)
+- `include/traintracks/edge.hpp` — `attach_to_multigon` declaration/implementation (`#if 0`)
   - Current behavior: API is disabled with explanatory shared_ptr caveats.
   - Removal guidance: **higher-risk, keep for now**.
   - Rationale: block documents an ownership pitfall and why naive reintroduction
     would be unsafe (`shared_from_this` concerns).
 
-- `lib/traintrack_build.cpp` — strata debug print block (`#if 0`)
+- `lib/traintrack/build.cpp` — strata debug print block (`#if 0`)
   - Current behavior: optional debug dump is disabled.
   - Removal guidance: **safe to delete**.
   - Rationale: pure diagnostics with no behavioral effect.

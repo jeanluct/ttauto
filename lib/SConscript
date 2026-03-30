@@ -3,7 +3,7 @@
 #
 #   https://github.com/jeanluct/ttauto
 #
-#   Copyright (C) 2010-2014  Jean-Luc Thiffeault   <jeanluc@math.wisc.edu>
+#   Copyright (C) 2010-2026  Jean-Luc Thiffeault   <jeanluc@math.wisc.edu>
 #                            Erwan Lanneau <erwan.lanneau@ujf-grenoble.fr>
 #
 #   This file is part of ttauto.
@@ -26,7 +26,7 @@ Import('env')
 import glob
 
 # List of files to compile into library
-liblist = [f for f in glob.glob('*.cpp')]
+liblist = [f for f in glob.glob('traintracks/*.cpp')]
 
 lib = env.Library('ttauto', liblist)
 

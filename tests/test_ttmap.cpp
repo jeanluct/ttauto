@@ -27,12 +27,12 @@
 #include <list>
 #include <jlt/freeauto.hpp>
 #include <jlt/stlio.hpp>
-#include "traintrack.hpp"
-#include "ttfoldgraph.hpp"
-#include "folding_path.hpp"
-#include "traintrack_build.hpp"
-#include "traintrack_map.hpp"
-#include "ttmap_labels.hpp"
+#include "traintracks/traintrack.hpp"
+#include "traintracks/map.hpp"
+#include "traintracks/map_labels.hpp"
+#include "traintracks/build.hpp"
+#include "ttauto/ttfoldgraph.hpp"
+#include "ttauto/folding_path.hpp"
 
 
 int main()

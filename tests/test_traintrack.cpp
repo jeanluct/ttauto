@@ -23,10 +23,10 @@
 // LICENSE>
 
 #include <iostream>
-#include "edge.hpp"
-#include "multigon.hpp"
-#include "traintrack.hpp"
-#include "traintrack_build.hpp"
+#include "traintracks/edge.hpp"
+#include "traintracks/multigon.hpp"
+#include "traintracks/traintrack.hpp"
+#include "traintracks/build.hpp"
 
 
 int main()

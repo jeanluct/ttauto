@@ -22,8 +22,8 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#ifndef TRAINTRACKS_TRAINTRACKS_UTIL_HPP
-#define TRAINTRACKS_TRAINTRACKS_UTIL_HPP
+#ifndef TRAINTRACKS_UTIL_HPP
+#define TRAINTRACKS_UTIL_HPP
 
 #include <jlt/vector.hpp>
 #include <jlt/mathmatrix.hpp>
@@ -68,22 +68,6 @@ template<class Vec>
 inline bool cyclic_equal(const Vec& v1, const Vec& v2)
 {
   return !(cyclic_shift(v1,v2).empty());
-}
-
-
-// Compare two matrices by zero/nonzero pattern only.
-template<class Mat>
-inline bool pattern_equal(const Mat& A, const Mat& B)
-{
-  typename Mat::const_iterator i;
-  typename Mat::const_iterator j = B.begin();
-
-  for (i = A.begin(); i != A.end(); ++i, ++j)
-    {
-      if ((*i != 0 && *j == 0) || (*i == 0 && *j != 0)) return false;
-    }
-
-  return true;
 }
 
 
@@ -166,33 +150,6 @@ inline Int2 mod(const Int m, const Int2 n)
   return (Int2)(mm >= 0 ? mm : mm + n);
 }
 
-
-// Find the largest real root of a polynomial via Newton iteration.
-//
-// The polynomial comes from a Perron-Frobenius matrix, so the largest
-// real root is guaranteed to be real and unique.
-inline double findroot(const jlt::polynomial<int>& p,
-		       const double x0, const double tol)
-{
-  double px(p(x0)), x(x0);
-
-  int i = 0;
-  const int itmax = 100;
-
-  while (std::abs(px) > tol && i++ < itmax)
-    {
-      x = x - px / p.derivative_at(x);
-      px = p(x);
-    }
-
-  if (i == itmax)
-    throw
-      jlt::failed_to_converge<double>
-      ("Failed to converge to specified accuracy.\n",std::abs(px));
-
-  return x;
-}
-
 } // namespace traintracks
 
-#endif // TRAINTRACKS_TRAINTRACKS_UTIL_HPP
+#endif // TRAINTRACKS_UTIL_HPP

@@ -3,7 +3,7 @@
 #
 #   https://github.com/jeanluct/ttauto
 #
-#   Copyright (C) 2010-2014  Jean-Luc Thiffeault   <jeanluc@math.wisc.edu>
+#   Copyright (C) 2010-2026  Jean-Luc Thiffeault   <jeanluc@math.wisc.edu>
 #                            Erwan Lanneau <erwan.lanneau@ujf-grenoble.fr>
 #
 #   This file is part of ttauto.

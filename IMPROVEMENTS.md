@@ -11,9 +11,9 @@ candidate follow-ups.
   - Avoid mixing with behavior changes.
 
 - Clean up stale `#if 0` blocks where code is clearly obsolete.
-  - `include/edge.hpp`
-  - `include/traintrack.hpp`
-  - `include/ttauto.hpp`
+  - `include/traintracks/edge.hpp`
+  - `include/traintracks/traintrack.hpp`
+  - `include/ttauto/ttauto.hpp`
   - Remove only when comments indicate no intended future use.
 
 - Tighten message consistency in fail-fast diagnostics.

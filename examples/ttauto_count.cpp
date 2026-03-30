@@ -23,8 +23,8 @@
 // LICENSE>
 
 #include <iostream>
-#include "traintrack.hpp"
-#include "ttfoldgraph.hpp"
+#include "traintracks/traintrack.hpp"
+#include "ttauto/ttfoldgraph.hpp"
 
 
 int main()

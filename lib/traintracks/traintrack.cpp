@@ -25,9 +25,9 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
-#include "edge.hpp"
-#include "multigon.hpp"
-#include "traintrack.hpp"
+#include "traintracks/edge.hpp"
+#include "traintracks/multigon.hpp"
+#include "traintracks/traintrack.hpp"
 
 namespace traintracks {
 
@@ -210,7 +210,7 @@ void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
 	      if (t_m == (int)ttexist.multigons())
 		{
 		  std::cerr << "Couldn't find multigon";
-		  std::cerr << " in traintracks::traintrack::copy.\n";
+		  std::cerr << " in traintrack::traintrack::copy.\n";
 		  std::exit(1);
 		  break;
 		}
@@ -257,7 +257,7 @@ traintrack::intVec traintrack::coding_from_monogon(const int mono,
 {
   if (Multigon(mono).edges() > 1)
     {
-      std::cerr << "Not an uncusped monogon in traintracks::traintrack::coding_from_monogon.\n";
+      std::cerr << "Not an uncusped monogon in traintrack::traintrack::coding_from_monogon.\n";
       std::exit(1);
     }
 
@@ -408,7 +408,7 @@ mathmatrix_permplus1 traintrack::cyclic_symmetry()
       // order = nmatch+1.  But it should not be id for a smaller power.
       if (perm.order() != nmatch+1)
 	{
-      std::cerr << "Bad permutation in traintracks::traintrack::cyclic_symmetry().\n";
+      std::cerr << "Bad permutation in traintrack::traintrack::cyclic_symmetry().\n";
 	  exit(1);
 	}
     }
@@ -423,7 +423,7 @@ void traintrack::set_label(const int m, const int lb)
     mgv[m]->set_label(lb);
   else
     {
-      std::cerr << "Error in traintracks::traintrack::set_label(): ";
+      std::cerr << "Error in traintrack::traintrack::set_label(): ";
       std::cerr << "flag label_multiprongs must be set.\n";
       exit(1);
     }
@@ -436,7 +436,7 @@ void traintrack::pure_braid()
   // If this is called explicitly, then we are labeling multiprongs.
   if (!label_multiprongs)
     {
-      std::cerr << "Error in traintracks::traintrack::pure_braid(): ";
+      std::cerr << "Error in traintrack::traintrack::pure_braid(): ";
       std::cerr << "flag label_multiprongs must be set.\n";
       exit(1);
     }
@@ -482,7 +482,7 @@ bool traintrack::fold(const int f)
 
   if (f >= foldings())
     {
-      std::cerr << "Nonexistent cusp in traintracks::traintrack::fold.\n";
+      std::cerr << "Nonexistent cusp in traintrack::traintrack::fold.\n";
       std::exit(1);
     }
   // Loop over cusps from first uncusped monogon, assuming a
@@ -514,7 +514,7 @@ bool traintrack::fold(const int f)
   if (mmc == 0)
 #endif
     {
-      std::cerr << "Could not find cusp in traintracks::traintrack::fold.\n";
+      std::cerr << "Could not find cusp in traintrack::traintrack::fold.\n";
       std::exit(1);
     }
 
@@ -527,7 +527,7 @@ void traintrack::fold_cusp_location(const int f, multigon*& mmc, int& pc, int& e
 {
   if (f < 0 || f >= foldings())
     {
-      std::cerr << "Illegal folding index in traintracks::traintrack::fold_cusp_location.\n";
+      std::cerr << "Illegal folding index in traintrack::traintrack::fold_cusp_location.\n";
       std::exit(1);
     }
 
@@ -541,7 +541,7 @@ void traintrack::fold_cusp_location(const int f, multigon*& mmc, int& pc, int& e
     }
   if (mono == (int)mgv.size())
     {
-      std::cerr << "Could not find monogon in traintracks::traintrack::fold_cusp_location.\n";
+      std::cerr << "Could not find monogon in traintrack::traintrack::fold_cusp_location.\n";
       std::exit(1);
     }
 
@@ -558,7 +558,7 @@ void traintrack::fold_cusp_location(const int f, multigon*& mmc, int& pc, int& e
 
   if (mmc == 0 || pc < 0 || ec < 0)
     {
-      std::cerr << "Could not resolve cusp in traintracks::traintrack::fold_cusp_location.\n";
+      std::cerr << "Could not resolve cusp in traintrack::traintrack::fold_cusp_location.\n";
       std::exit(1);
     }
 }
@@ -643,13 +643,13 @@ bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
 
   if (abs(dir) != 1)
     {
-      std::cerr << "Bad folding direction in traintracks::traintrack::fold.\n";
+      std::cerr << "Bad folding direction in traintrack::traintrack::fold.\n";
       std::exit(1);
     }
 
   if (c > mm.edges(p)-2)
     {
-      std::cerr << "Not a cusp in traintracks::traintrack::fold.\n";
+      std::cerr << "Not a cusp in traintrack::traintrack::fold.\n";
       std::exit(1);
     }
 
@@ -702,7 +702,7 @@ bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
       if (debug)
 	{
 	  std::cerr << "Can't fold " << (dir == 1 ? "" : "anti");
-	  std::cerr << "clockwise in traintracks::traintrack::fold.\n";
+	  std::cerr << "clockwise in traintrack::traintrack::fold.\n";
 	}
       return false;
     }

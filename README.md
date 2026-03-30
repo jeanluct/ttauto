@@ -14,7 +14,9 @@
 
 There is currently no real documentation for *ttauto*.  See the [examples folder][8] for some basic examples.  The most complete program is [ttauto.cpp][9], an interactive program.  The programs are readily compiled with the [SCONS][10] build tool.
 
-For older compilers (GCC versions before 4.5) the `boost::shared_ptr` from the Boost library is required, but this is unnecessary in later versions since `std::shared_ptr` was introduced.  If you have an old compiler but don't want to install Boost, you can compile with `-DTTAUTO_NO_SHARED_PTR`, but be aware that this makes things unsafe.
+The project targets C++17 by default.  For compatibility builds that avoid
+shared-pointer ownership in core train-track structures, you can compile with
+`-DTRAINTRACKS_NO_SHARED_PTR` (for example via `scons win32=1`).
 
 To compile everything, invoke `scons` in the root folder.  To build only a subset, use `scons -u` in a subfolder (such as [examples][8]).
 

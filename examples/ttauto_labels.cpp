@@ -26,10 +26,10 @@
 
 #include <iostream>
 #include <jlt/vector.hpp>
-#include "traintrack.hpp"
-#include "traintrack_build.hpp"
-#include "ttfoldgraph.hpp"
-#include "ttauto.hpp"
+#include "traintracks/traintrack.hpp"
+#include "traintracks/build.hpp"
+#include "ttauto/ttfoldgraph.hpp"
+#include "ttauto/ttauto.hpp"
 
 
 int main()

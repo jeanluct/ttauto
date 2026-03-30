@@ -25,10 +25,10 @@
 #include <iostream>
 #include <unordered_map>
 #include <jlt/mathmatrix.hpp>
-#include "traintrack.hpp"
-#include "ttfoldgraph.hpp"
-#include "folding_path.hpp"
-#include "pAclass.hpp"
+#include "traintracks/traintrack.hpp"
+#include "ttauto/ttfoldgraph.hpp"
+#include "ttauto/folding_path.hpp"
+#include "ttauto/pAclass.hpp"
 
 
 int main()

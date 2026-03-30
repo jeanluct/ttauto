@@ -25,12 +25,12 @@
 #include <iostream>
 #include <list>
 #include <jlt/matrix.hpp>
-#include "traintrack.hpp"
-#include "ttfoldgraph.hpp"
-#include "ttauto.hpp"
-#include "traintracks_util.hpp"
-#include "folding_path.hpp"
-#include "badwords.hpp"
+#include "traintracks/traintrack.hpp"
+#include "traintracks/util.hpp"
+#include "ttauto/ttfoldgraph.hpp"
+#include "ttauto/ttauto.hpp"
+#include "ttauto/folding_path.hpp"
+#include "ttauto/badwords.hpp"
 
 
 int main()
