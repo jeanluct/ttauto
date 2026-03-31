@@ -829,7 +829,9 @@ std::ostream& traintrack::print_singularity_data(std::ostream& strm) const
   return strm;
 }
 
-std::ostream& traintrack::printMathematicaForm(std::ostream& strm) const
+// Print train track in Mathematica-friendly graph-edge format.
+std::ostream& printMathematicaForm(std::ostream& strm,
+				   const traintrack& tt)
 {
   std::set<std::pair<int,int> > ttg;
 
@@ -873,34 +875,6 @@ std::ostream& traintrack::printMathematicaForm(std::ostream& strm) const
     }
   strm << "}";
   return strm;
-}
-
-
-// Find index of multigon pointer within mgv.
-inline int traintrack::multigon_index(const multigon* mm) const
-{
-  int m = 0;
-  for (; m < (int)mgv.size(); ++m)
-    {
-      if (mm == &Multigon(m)) break;
-    }
-  if (m == (int)mgv.size())
-    {
-      std::cerr << "Error in multigon_index(): ";
-      std::cerr << "multigon not found.\n";
-      exit(1);
-    }
-  return m;
-}
-
-// Convert (multigon index, prong index) to global prong index.
-int traintrack::multigon_prong_index(const int mi, const int pi) const
-{
-  int ix = 0;
-  for (int m = 0; m < mi; ++m) ix += Multigon(m).prongs();
-  ix += pi;
-
-  return ix;
 }
 
 std::ostream& traintrack::print_coding(std::ostream& strm,
