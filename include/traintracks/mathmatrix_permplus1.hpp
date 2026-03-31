@@ -45,6 +45,9 @@ jlt::mathmatrix<int> operator*(const jlt::mathmatrix<int>& A,
 
 std::ostream& operator<<(std::ostream& strm, const mathmatrix_permplus1& pm);
 
+std::ostream& printMathematicaForm(std::ostream& strm,
+				   const mathmatrix_permplus1& pm);
+
 
 class mathmatrix_permplus1
 {
@@ -226,31 +229,6 @@ public:
     exit(1);
   }
 
-  std::ostream& printMathematicaForm(std::ostream& strm) const
-  {
-    const int n = dim();
-
-    // Add 1 to all the entries for MathematicaForm.
-
-    strm << "{{";
-    for (int i = 0; i < n-1; ++i)
-      {
-	strm << rperm[i]+1 << ",";
-      }
-    strm << rperm.back()+1 << "}";
-    if (p1row >= 0 && p1col >= 0)
-      {
-	strm << ",{";
-	// Print in the Ham&Song form:
-	// edge p1row -> rperm[p1row] + p1col
-	// Only print p1row and p1col.
-	strm << p1row+1 << "," << p1col+1 << "}";
-      }
-    strm << "}";
-
-    return strm;
-  }
-
   size_type dim() const { return rperm.size(); }// Always a square matrix.
   size_type rows() const { return dim(); }	// Number of rows.
   size_type columns() const { return dim(); }	// Number of columns.
@@ -333,6 +311,28 @@ std::ostream& operator<<(std::ostream& strm, const mathmatrix_permplus1& pm)
       strm << pm.p1row << "->" << pm.p1col;
     }
   strm << ")";
+
+  return strm;
+}
+
+inline
+std::ostream& printMathematicaForm(std::ostream& strm,
+				   const mathmatrix_permplus1& pm)
+{
+  const int n = pm.dim();
+
+  strm << "{{";
+  for (int i = 0; i < n-1; ++i)
+    {
+      strm << pm.row_perm()[i]+1 << ",";
+    }
+  strm << pm.row_perm().back()+1 << "}";
+  if (pm.plus1_row() >= 0 && pm.plus1_col() >= 0)
+    {
+      strm << ",{";
+      strm << pm.plus1_row()+1 << "," << pm.plus1_col()+1 << "}";
+    }
+  strm << "}";
 
   return strm;
 }

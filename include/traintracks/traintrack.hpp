@@ -91,7 +91,7 @@ public:
 
 
   //
-  // Constructors for specific train tracks (defined in traintrack_build.cpp)
+  // Constructors for specific train tracks (defined in lib/traintrack/build.cpp)
   //
 
   // Track with N monogons around punctures and a (N-2)-gon on the
@@ -239,16 +239,13 @@ public:
   // Print singularity data of the train track.
   std::ostream& print_singularity_data(std::ostream& strm) const;
 
-  // Print in a format that can be used by Mathematica.
-  std::ostream& printMathematicaForm(std::ostream& strm = std::cout) const;
-
   // Print coding.
   std::ostream& print_coding(std::ostream& strm = std::cout,
 			     const int dir = 1) const;
 
 private:
   //
-  // Helper methods for building tracks (defined in traintrack_build.cpp)
+  // Helper methods for building tracks (defined in lib/traintrack/build.cpp)
   //
 
   // Track with N monogons around punctures and a (N-2)-gon on the
@@ -348,11 +345,15 @@ private:
 
   // Print a coding block.
   friend std::ostream& operator<<(std::ostream& strm, const coding_block& b);
+
+  // Print in train track Mathematica-friendly format.
+  friend std::ostream& printMathematicaForm(std::ostream& strm,
+					    const traintrack& tt);
 };
 
 
 //
-// Helper function for building tracks (defined in traintrack_build.cpp)
+// Helper function for building tracks (defined in lib/traintrack/build.cpp)
 //
 
 // Comparison function for sorting strata.
@@ -509,10 +510,32 @@ inline void traintrack::normalise()
   minimise_coding();
 }
 
+// Find index of multigon pointer within mgv.
+inline int traintrack::multigon_index(const multigon* mm) const
+{
+  int m = 0;
+  for (; m < (int)mgv.size(); ++m)
+    {
+      if (mm == &Multigon(m)) break;
+    }
+  if (m == (int)mgv.size())
+    {
+      std::cerr << "Error in multigon_index(): ";
+      std::cerr << "multigon not found.\n";
+      std::exit(1);
+    }
+  return m;
+}
 
-//
-// Friend functions
-//
+// Convert (multigon index, prong index) to global prong index.
+inline int traintrack::multigon_prong_index(const int mi, const int pi) const
+{
+  int ix = 0;
+  for (int m = 0; m < mi; ++m) ix += Multigon(m).prongs();
+  ix += pi;
+
+  return ix;
+}
 
 // Swap the position of two multigons in the vector.
 inline void traintrack::swap(const int m1, const int m2)
@@ -525,6 +548,10 @@ inline void traintrack::swap(const int m1, const int m2)
   traintracks::swap(*mgv[m1],*mgv[m2]);
 }
 
+//
+// Friend functions
+//
+
 inline std::ostream&
 operator<<(std::ostream& strm, const traintrack::coding_block& b)
 {
@@ -535,6 +562,11 @@ operator<<(std::ostream& strm, const traintrack::coding_block& b)
     strm << b.prong+1 << b.nprongs << b.edge+1 << b.nedges;
   return strm;
 }
+
+// Print train track in Mathematica-friendly graph-edge format.
+// (defined in lib/traintrack/build.cpp)
+std::ostream& printMathematicaForm(std::ostream& strm,
+				   const traintrack& tt);
 
 } // namespace traintracks
 
