@@ -39,7 +39,7 @@ namespace ttauto {
 template <class TrTr>
 class pAclass
 {
-  static const int debug = 0;
+  static constexpr int debug = 0;
 
 public:
   typedef jlt::mathmatrix<int> Mat;

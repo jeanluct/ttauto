@@ -52,7 +52,7 @@ std::ostream& operator<<(std::ostream& strm, const folding_path<TrTr>& pp);
 template<class TrTr>
 class folding_path
 {
-  static const int debug = 0;
+  static constexpr int debug = 0;
 
   typedef typename ttfoldgraph<TrTr>::Mat	Mat;
 
@@ -383,6 +383,15 @@ folding_path<TrTr>::transition_matrix() const
 {
   const int n = ttg->edges();
   Mat TM(jlt::identity_matrix<int>(n));
+
+  // In map-only mode, compose maps and recover the matrix once.  This avoids
+  // storing both per-branch maps and matrices in the automaton graph.
+  if (ttg->storage_mode() == ttfoldgraph<TrTr>::map_only)
+    {
+      const TrTr& tt0 = ttg->traintrack(initial_vertex());
+      return traintracks::transition_matrix_from_map(tt0,traintrack_map());
+    }
+
   int v = initial_vertex();
 
   for (auto i = fp.begin(); i != fp.end(); ++i)

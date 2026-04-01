@@ -36,7 +36,7 @@ class multigon;
 
 class edge
 {
-  static const int debug = 0;
+  static constexpr int debug = 0;
   static const int nends = 2;	// An edge has two ends.
 
 public:
