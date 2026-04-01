@@ -171,6 +171,15 @@ int main()
   jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map(ttv[trk],AMp);
   assert(TMp == TMfromAMp);
 
+  // map_only mode: path matrix is recovered from composed map.
+  ttgraph ttg_map(ttv[trk],ttgraph::map_only);
+  folding_path<traintrack> p_map(ttg_map,0);
+  p_map.push_back(1); p_map.push_back(0);
+  jlt::mathmatrix<int> TMp_map = p_map.transition_matrix();
+  freeauto<int> AMp_map = p_map.traintrack_map();
+  jlt::mathmatrix<int> TMfromAMp_map = transition_matrix_from_map(ttv[trk],AMp_map);
+  assert(TMp_map == TMfromAMp_map);
+
   // Secondary scenario: broader consistency checks over a larger automaton.
   n = 4;
   ttVec ttv2 = build_traintrack_list(n);

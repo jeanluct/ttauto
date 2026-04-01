@@ -31,6 +31,7 @@
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
 #include <jlt/csparse.hpp>
+#include "traintracks/map.hpp"
 #include "traintracks/mathmatrix_permplus1.hpp"
 
 // Graph of train tracks linked by foldings.
@@ -46,7 +47,8 @@
 // int foldings()			max # of possible foldings
 // bool operator==(const TrTr&)		isotopy of train tracks
 // TrTr(const TrTr&)			copy constructor
-// fold_transition_matrix(const int f)	fold and return transition matrix
+  // fold_transition_matrix(const int f)	fold and return transition matrix
+  // fold_traintrack_map(const int f)	fold and return train-track map
 // coding
 // print_coding
 //
@@ -64,6 +66,10 @@ template<class TrTr>
 class ttfoldgraph
 {
 public:
+  // Matrix mode stores only transition matrices (default, faster for search).
+  // Map mode stores only train-track maps and derives matrices from maps.
+  enum data_mode { matrix_only, map_only };
+
   static const bool exploit_symmetries = TrTr::exploit_symmetries;
   typedef jlt::mathmatrix<int> Mat;
   typedef mathmatrix_permplus1 Matpp1;	// Sparse matrix type.
@@ -75,9 +81,9 @@ private:
   jlt::vector<TrTr> trtrv;
   // Target vertex of a branch.
   jlt::vector<jlt::vector<int> > tv;
-  // Transition matrix on a branch.
+  // Transition matrix on a branch (used in matrix_only mode).
   jlt::vector<jlt::vector<Matpp1> > TMv;
-  // Train track automorphism on a branch.
+  // Train track automorphism on a branch (used in map_only mode).
   jlt::vector<jlt::vector<jlt::freeauto<int> > > AMv;
   // Number of foldings (outgoing branches) at each vertex.
   jlt::vector<int> nfoldsv;
@@ -92,16 +98,16 @@ private:
   const int n;
   // Maximum number of foldings at each vertex.
   const int nfoldsmax;
+  // Controls whether this graph stores per-branch matrices or maps.
+  const data_mode mode;
 
-  Mat TM;		// Transition matrix.
-  const Mat id;		// Identity matrix.
+  Mat TM;		// Transition matrix workspace.
 
 public:
 
   // Make a folding graph from an initial train track.
-  ttfoldgraph(const TrTr& trtr)
-    : n(trtr.edges()), nfoldsmax(trtr.foldings()), TM(n,n),
-      id(jlt::identity_matrix<int>(n))
+  ttfoldgraph(const TrTr& trtr, const data_mode mode_ = matrix_only)
+    : n(trtr.edges()), nfoldsmax(trtr.foldings()), mode(mode_), TM(n,n)
   {
     // Build the graph.
     add_vertex(trtr);
@@ -115,10 +121,11 @@ public:
 	      const jlt::vector<jlt::vector<int> >& tv_,
 	      const jlt::vector<jlt::vector<Matpp1> >& TMv_,
 	      const jlt::vector<jlt::vector<jlt::freeauto<int> > >& AMv_,
-	      const jlt::vector<int>& nfoldsv_)
+	      const jlt::vector<int>& nfoldsv_,
+	      const data_mode mode_)
     : trtrv(trtrv_), tv(tv_), TMv(TMv_), AMv(AMv_), nfoldsv(nfoldsv_),
-      n(trtrv.front().edges()), nfoldsmax(trtrv.front().foldings()), TM(n,n),
-      id(jlt::identity_matrix<int>(n))
+      n(trtrv.front().edges()), nfoldsmax(trtrv.front().foldings()), mode(mode_),
+      TM(n,n)
   {
     if (exploit_symmetries) find_symmetries();
   }
@@ -161,17 +168,23 @@ private:
     // Try all nfolds foldings from this vertex.
     for (int f = 0; f < nfoldsmax; ++f)
       {
-	// Fold and find the transition matrix.
+	// Fold and compute either matrix or map depending on mode.
 	TrTr trtr0(trtr);
 	jlt::freeauto<int> AM = trtr0.fold_traintrack_map(f);
 	TM = traintracks::transition_matrix_from_map(trtr,AM);
 	if (TM != id)
 	  {
 	    ++nfoldsv[idx];
-	    // Convert matrix to sparse type and add to list.
-	    TMv[idx].push_back(Matpp1(TM));
-	    // Add automorphism to list.
-	    AMv[idx].push_back(AM);
+	    if (mode == matrix_only)
+	      {
+		// Add sparse transition matrix to list.
+		TMv[idx].push_back(PM);
+	      }
+	    else
+	      {
+		// Add automorphism to list.
+		AMv[idx].push_back(AM);
+	      }
 	    // Add the target vertex, if it's not already in there, and
 	    // point to it.
 	    int tidx = add_vertex(trtr0);
@@ -233,7 +246,7 @@ private:
 
 	// Loop over branches.
 	jlt::vector<int>::iterator it = tv[v].begin();
-	jlt::vector<Matpp1>::iterator iTM = TMv[v].begin();
+	auto iTM = TMv[v].begin();
 	auto iAM = AMv[v].begin();
 	while (it != tv[v].end())
 	  {
@@ -248,8 +261,10 @@ private:
 		// it and iTM will be pointing to the next item, so
 		// don't incremement them.
 		it = tv[v].erase(it);
-		iTM = TMv[v].erase(iTM);
-		iAM = AMv[v].erase(iAM);
+		if (mode == matrix_only)
+		  iTM = TMv[v].erase(iTM);
+		else
+		  iAM = AMv[v].erase(iAM);
 		--nfoldsv[v];
 		continue;
 	      }
@@ -258,7 +273,9 @@ private:
 	    // have removed the vertex vv.
 	    if (*it > vv) (*it)--;
 
-	    ++it; ++iTM;
+	    ++it;
+	    if (mode == matrix_only) ++iTM;
+	    else ++iAM;
 	  }
 	// Possible that another vertex had only branches pointing to
 	// vv?  Then delete the vertex.  But wait until after we're
@@ -292,8 +309,8 @@ private:
     // Swap the data for each vertex.
     std::swap(trtrv[v1],trtrv[v2]);
     std::swap(tv[v1],tv[v2]);
-    std::swap(TMv[v1],TMv[v2]);
-    std::swap(AMv[v1],AMv[v2]);
+    if (mode == matrix_only) std::swap(TMv[v1],TMv[v2]);
+    else std::swap(AMv[v1],AMv[v2]);
     std::swap(nfoldsv[v1],nfoldsv[v2]);
     if (exploit_symmetries)
       {
@@ -484,16 +501,55 @@ public:
   int edges() const { return n; }
 
   // Transition matrix for branch br out of vertex idx.
-  const Matpp1& transition_matrix(const int idx, const int br) const
+  Matpp1 transition_matrix(const int idx, const int br) const
   {
-    return TMv[idx][br];
+    if (mode == matrix_only) return TMv[idx][br];
+    return Matpp1(traintracks::transition_matrix_from_map(trtrv[idx],AMv[idx][br]));
   }
 
   // Train-track map for branch br out of vertex idx.
-  const jlt::freeauto<int>& traintrack_map(const int idx, const int br) const
+  jlt::freeauto<int> traintrack_map(const int idx, const int br) const
   {
+    if (mode == matrix_only)
+      {
+	int f = fold_index_from_branch(trtrv[idx],br);
+	return traintracks::fold_traintrack_map(trtrv[idx],f);
+	}
     return AMv[idx][br];
   }
+
+  data_mode storage_mode() const { return mode; }
+
+private:
+  // Map stored branch index to original fold index in [0,nfoldsmax).
+  int fold_index_from_branch(const TrTr& trtr, const int br) const
+  {
+    int kept = -1;
+    for (int f = 0; f < nfoldsmax; ++f)
+      {
+	TrTr trtr0(trtr);
+	Matpp1 PMstep;
+	if (mode == matrix_only)
+	  PMstep = trtr0.fold_transition_matrix(f);
+	else
+	  {
+	    jlt::freeauto<int> AMstep = trtr0.fold_traintrack_map(f);
+	    PMstep = Matpp1(traintracks::transition_matrix_from_map(trtr,AMstep));
+	  }
+
+	if (!PMstep.is_identity())
+	  {
+	    ++kept;
+	    if (kept == br) return f;
+	  }
+      }
+
+    std::cerr << "Could not resolve branch index to fold index in ";
+    std::cerr << "ttauto::ttfoldgraph::fold_index_from_branch.\n";
+    std::exit(1);
+  }
+
+public:
 
   // Target vertex reached by branch br out of vertex idx.
   int target_vertex(const int idx, const int br) const
@@ -558,8 +614,16 @@ public:
 	for (int j = 0; j < nfoldsv[i]; ++j)
 	  {
 	    strm << "Branch " << j << " has target vertex " << tv[i][j];
-	    strm << " with matrix ";
-	    strm << TMv[i][j] << endl;
+	    if (mode == matrix_only)
+	      {
+		strm << " with matrix ";
+		strm << TMv[i][j] << endl;
+	      }
+	    else
+	      {
+		strm << " with train-track map\n";
+		strm << AMv[i][j] << endl;
+	      }
 	  }
 	strm << "=======================================================\n";
       }
@@ -589,7 +653,7 @@ public:
       }
     strm << " },\n {\n";
 
-    // Print connections and transition matrices.
+    // Print connections and payload (matrix or map by mode).
     for (int i = 0; i < (int)vertices(); ++i)
       {
 	for (int j = 0; j < nfoldsv[i]; ++j)
@@ -782,8 +846,16 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
 
 	  trtrv_sub.push_back(ttg.trtrv[tr]);
 	  tv_sub.push_back(ttg.tv[tr]);
-	  TMv_sub.push_back(ttg.TMv[tr]);
-	  AMv_sub.push_back(ttg.AMv[tr]);
+	  if (ttg.mode == ttfoldgraph<TrTr>::matrix_only)
+	    {
+	      TMv_sub.push_back(ttg.TMv[tr]);
+	      AMv_sub.push_back(jlt::vector<jlt::freeauto<int> >());
+	    }
+	  else
+	    {
+	      TMv_sub.push_back(jlt::vector<mathmatrix_permplus1>());
+	      AMv_sub.push_back(ttg.AMv[tr]);
+	    }
 	  nfoldsv_sub.push_back(ttg.nfoldsv[tr]);
 
 	  // Remove outgoing arrows with target outside subgraph.
@@ -794,10 +866,12 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
 	      if (tvit == i->end())
 		{
 		  // The arrow is outside the graph: remove it and the
-		  // associated transition matrix.
+		  // associated matrix/map payload for current mode.
 		  tv_sub[j].erase(tv_sub[j].begin() + b);
-		  TMv_sub[j].erase(TMv_sub[j].begin() + b);
-		  AMv_sub[j].erase(AMv_sub[j].begin() + b);
+		  if (ttg.mode == ttfoldgraph<TrTr>::matrix_only)
+		    TMv_sub[j].erase(TMv_sub[j].begin() + b);
+		  else
+		    AMv_sub[j].erase(AMv_sub[j].begin() + b);
 		  --nfoldsv_sub[j];
 		}
 	      else
@@ -811,7 +885,8 @@ std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
 	    }
 	}
       // Add this subgraph to the list.
-      ttgl.push_back(ttfoldgraph<TrTr>(trtrv_sub,tv_sub,TMv_sub,AMv_sub,nfoldsv_sub));
+      ttgl.push_back(ttfoldgraph<TrTr>(trtrv_sub,tv_sub,TMv_sub,AMv_sub,
+					      nfoldsv_sub,ttg.mode));
     }
 
   return ttgl;
