@@ -197,6 +197,15 @@ public:
   // Return true if permutation matrix (no "+1").
   bool is_perm() const { return (p1row < 0 || p1col < 0); }
 
+  // Return true for the identity matrix.
+  bool is_identity() const
+  {
+    if (!is_perm()) return false;
+    for (int i = 0; i < (int)rperm.size(); ++i)
+      if (rperm[i] != i) return false;
+    return true;
+  }
+
   const Vec& row_perm() const { return rperm; }
 
   int plus1_row() const { return p1row; }
