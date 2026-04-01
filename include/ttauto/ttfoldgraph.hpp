@@ -69,7 +69,7 @@ public:
   typedef mathmatrix_permplus1 Matpp1;	// Sparse matrix type.
 
 private:
-  static const int debug = 0;
+  static constexpr int debug = 0;
 
   // The train track associated with the vertex.
   jlt::vector<TrTr> trtrv;
@@ -615,7 +615,7 @@ public:
 template<class TrTr>
 std::list<ttfoldgraph<TrTr> > subgraphs(const ttfoldgraph<TrTr>& ttg)
 {
-  static const int debug = 0;
+  static constexpr int debug = 0;
   typedef jlt::vector<int>			Vec;
   typedef jlt::vector<Vec>::const_iterator	cit;
   typedef Vec::const_iterator			vcit;

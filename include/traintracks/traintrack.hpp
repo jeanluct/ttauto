@@ -55,7 +55,7 @@ public:
   using cmit = mgpVec::const_iterator;
   using mit = mgpVec::iterator;
 
-  static const int debug = 0;
+  static constexpr int debug = 0;
   static const bool exploit_symmetries = true;
 
 private:
@@ -207,21 +207,17 @@ public:
   // - ec:  cusp index on that prong (first edge encountered clockwise)
   void fold_cusp_location(const int f, multigon*& mmc, int& pc, int& ec) const;
 
-#if 0
-  // Fold and find transition matrix.
-  jlt::mathmatrix<int> fold_transition_matrix(const int f)
+  // Apply fold f and return its transition matrix.
+  mathmatrix_permplus1 fold_transition_matrix(const int f)
   {
-    jlt::mathmatrix<int> M(traintracks::fold_transition_matrix(*this,f));
+    mathmatrix_permplus1 M(traintracks::fold_transition_matrix(*this,f));
     fold(f);
     return M;
   }
-#endif
 
-  // Fold and find transition matrix and train track map.
-  // Apply fold f, return corresponding map, and output transition matrix M.
-  jlt::freeauto<int> fold_transition_matrix(const int f, jlt::mathmatrix<int>& M)
+  // Apply fold f and return its train-track map.
+  jlt::freeauto<int> fold_traintrack_map(const int f)
   {
-    M = traintracks::fold_transition_matrix(*this,f);
     jlt::freeauto<int> AM(traintracks::fold_traintrack_map(*this,f));
     fold(f);
     return AM;
