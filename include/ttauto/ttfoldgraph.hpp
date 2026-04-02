@@ -170,9 +170,16 @@ private:
       {
 	// Fold and compute either matrix or map depending on mode.
 	TrTr trtr0(trtr);
-	jlt::freeauto<int> AM = trtr0.fold_traintrack_map(f);
-	TM = traintracks::transition_matrix_from_map(trtr,AM);
-	if (TM != id)
+	jlt::freeauto<int> AM(1);
+	Matpp1 PM;
+	if (mode == matrix_only)
+	  PM = trtr0.fold_transition_matrix(f);
+	else
+	  {
+	    AM = trtr0.fold_traintrack_map(f);
+	    PM = Matpp1(traintracks::transition_matrix_from_map(trtr,AM));
+	  }
+	if (!PM.is_identity())
 	  {
 	    ++nfoldsv[idx];
 	    if (mode == matrix_only)
@@ -659,7 +666,10 @@ public:
 	for (int j = 0; j < nfoldsv[i]; ++j)
 	  {
 	    strm << "  {" << i+1 << "->" << tv[i][j]+1 << ",";
-	    traintracks::printMathematicaForm(strm,TMv[i][j]) << "}";
+	    if (mode == matrix_only)
+	      traintracks::printMathematicaForm(strm,TMv[i][j]) << "}";
+	    else
+	      jlt::printMathematicaForm(strm,AMv[i][j]) << "}";
 	    if (j != nfoldsv[i]-1) strm << ",\n";
 	  }
 	if (i != (int)vertices()-1) strm << ",";
