@@ -152,8 +152,8 @@ jlt::freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   else
     AM[e1] = {e22,infinitesimal,e21}; // fold clockwise
 
-  // Main-edge transition consistency check.
-  check_fold_map_main_transition(tt0,f,AM);
+  // Main-edge transition consistency check (debug mode only).
+  if (TrTr::debug) check_fold_map_main_transition(tt0,f,AM);
 
   return AM;
 }

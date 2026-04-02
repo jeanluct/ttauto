@@ -99,10 +99,9 @@ int main()
         {
           const traintrack& ttvf = ttg.traintrack(v);
           const ttmap_labeler labels(ttvf.edges(),ttvf.total_prongs());
-          const freeauto<int>& AMstep = ttg.traintrack_map(v,f);
-          const mathmatrix_permplus1& PM = ttg.transition_matrix(v,f);
-          permplus1_decode dec = decode_fold_map_structure(ttvf,f);
-          assert(dec.is_perm == PM.is_perm());
+          freeauto<int> AMstep = ttg.traintrack_map(v,f);
+          mathmatrix_permplus1 PM = ttg.transition_matrix(v,f);
+          assert(transition_matrix_from_map(ttvf,AMstep) == PM.full());
 
           jlt::mathmatrix<int> TMstep(ttg.transition_matrix(v,f).full());
           jlt::mathmatrix<int> TMfromMap =
@@ -137,14 +136,14 @@ int main()
   // Hand-checked mapping example alignment (issue #3):
   // a=1, b=2, infinitesimal generator at folded cusp has index 5.
   // Step 1: f=1 (clockwise): a->-a, b->a 5 b.
-  const freeauto<int>& AMf1 = ttg.traintrack_map(0,1);
+  freeauto<int> AMf1 = ttg.traintrack_map(0,1);
   assert((AMf1[1] == freeword<int>({-1})));
   assert((AMf1[2] == freeword<int>({1,5,2})));
 
   // Step 2 candidate: f=0 from the target of step 1.
   // Keep this as diagnostic until we fully lock geometric labeling/orientation.
   const int v_after_f1 = ttg.target_vertex(0,1);
-  const freeauto<int>& AMf0_after_f1 = ttg.traintrack_map(v_after_f1,0);
+  freeauto<int> AMf0_after_f1 = ttg.traintrack_map(v_after_f1,0);
   assert((AMf0_after_f1[1] == freeword<int>({1,5,2})));
   assert((AMf0_after_f1[2] == freeword<int>({-2})));
 
@@ -205,10 +204,9 @@ int main()
         {
           const traintrack& ttvf = ttg2.traintrack(v);
           const ttmap_labeler labels(ttvf.edges(),ttvf.total_prongs());
-          const freeauto<int>& AMstep = ttg2.traintrack_map(v,f);
-          const mathmatrix_permplus1& PM = ttg2.transition_matrix(v,f);
-          permplus1_decode dec = decode_fold_map_structure(ttvf,f);
-          assert(dec.is_perm == PM.is_perm());
+          freeauto<int> AMstep = ttg2.traintrack_map(v,f);
+          mathmatrix_permplus1 PM = ttg2.transition_matrix(v,f);
+          assert(transition_matrix_from_map(ttvf,AMstep) == PM.full());
 
           jlt::mathmatrix<int> TMstep(ttg2.transition_matrix(v,f).full());
           jlt::mathmatrix<int> TMfromMap =

@@ -163,7 +163,8 @@ private:
       {
 	// Fold and find the transition matrix.
 	TrTr trtr0(trtr);
-	jlt::freeauto<int> AM = trtr0.fold_transition_matrix(f,TM);
+	jlt::freeauto<int> AM = trtr0.fold_traintrack_map(f);
+	TM = traintracks::transition_matrix_from_map(trtr,AM);
 	if (TM != id)
 	  {
 	    ++nfoldsv[idx];
@@ -582,7 +583,7 @@ public:
       {
 	strm << "  {\"";
 	trtrv[i].print_coding(strm) << "\",";
-	trtrv[i].printMathematicaForm(strm) << "}";
+	traintracks::printMathematicaForm(strm,trtrv[i]) << "}";
 	if (i != (int)vertices()-1) strm << ",";
 	strm << endl;
       }
@@ -594,7 +595,7 @@ public:
 	for (int j = 0; j < nfoldsv[i]; ++j)
 	  {
 	    strm << "  {" << i+1 << "->" << tv[i][j]+1 << ",";
-	    TMv[i][j].printMathematicaForm(strm) << "}";
+	    traintracks::printMathematicaForm(strm,TMv[i][j]) << "}";
 	    if (j != nfoldsv[i]-1) strm << ",\n";
 	  }
 	if (i != (int)vertices()-1) strm << ",";
