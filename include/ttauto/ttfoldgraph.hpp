@@ -669,7 +669,7 @@ public:
 	    if (mode == matrix_only)
 	      traintracks::printMathematicaForm(strm,TMv[i][j]) << "}";
 	    else
-	      strm << "\"map-only\"}";
+	      jlt::printMathematicaForm(strm,AMv[i][j]) << "}";
 	    if (j != nfoldsv[i]-1) strm << ",\n";
 	  }
 	if (i != (int)vertices()-1) strm << ",";

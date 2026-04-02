@@ -69,7 +69,10 @@ int main()
 
   cout << "\nConstructing automaton...\n";
 
-  ttgraph ttg0(ttv[trk]);
+  bool map_mode =
+    jlt::yesno("\nStore train-track maps instead of transition matrices",false);
+  ttgraph::data_mode mode = map_mode ? ttgraph::map_only : ttgraph::matrix_only;
+  ttgraph ttg0(ttv[trk],mode);
   cout << "\nFolding automaton has " << ttg0.vertices() << " vertices\n";
 
   std::list<ttgraph> ttg;
