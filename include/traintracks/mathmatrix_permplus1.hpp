@@ -45,6 +45,9 @@ jlt::mathmatrix<int> operator*(const jlt::mathmatrix<int>& A,
 
 std::ostream& operator<<(std::ostream& strm, const mathmatrix_permplus1& pm);
 
+std::ostream& printMathematicaForm(std::ostream& strm,
+				   const mathmatrix_permplus1& pm);
+
 
 class mathmatrix_permplus1
 {
@@ -60,15 +63,26 @@ private:
   typedef jlt::vector<int>	Vec;
   typedef jlt::mathmatrix<int>	Mat;
 
-  Vec rperm;			// Row permutations.
+  Vec rperm;			// Row permutation.
+  Vec cperm;			// Inverse (column) permutation.
   int p1row, p1col;		// The 'plus 1' entry's coordinates.
   				// If both -1, then permutation matrix.
 
 public:
   mathmatrix_permplus1(const Vec& rperm_ = Vec(),
 			 const int p1row_ = -1, const int p1col_ = -1)
-    : rperm(rperm_), p1row(p1row_), p1col(p1col_)
+    : rperm(rperm_), cperm(rperm_.size(),-1), p1row(p1row_), p1col(p1col_)
   {
+    for (int i = 0; i < (int)rperm.size(); ++i)
+      {
+	if (rperm[i] < 0 || rperm[i] >= (int)rperm.size() || cperm[rperm[i]] != -1)
+	  {
+	    std::cerr << "Bad row permutation in ";
+	    std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+	    std::exit(1);
+	  }
+	cperm[rperm[i]] = i;
+      }
   }
 
   // Construct from a mathmatrix.
@@ -76,48 +90,95 @@ public:
   // p1row and p1col are set by the entry where both the column sum
   // and row sum are 2.
   mathmatrix_permplus1(const Mat& M)
-    : rperm(M.dim(),-1), p1row(-1), p1col(-1)
+    : rperm(M.dim(),-1), cperm(M.dim(),-1), p1row(-1), p1col(-1)
   {
     const int n = M.dim();
 
-    // Find the row/col that correspond to the "plus 1".
     for (int i = 0; i < n; ++i)
       {
-	int rowsum = 0, colsum = 0;
+	int colsum = 0, rowsum = 0;
 	for (int j = 0; j < n; ++j)
 	  {
-	    colsum += M(j,i);
-	    rowsum += M(i,j);
+	    if (!(M(i,j) == 0 || M(i,j) == 1))
+	      {
+		std::cerr << "Matrix should contain only ones or zeros in ";
+		std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+		std::exit(1);
+	      }
+	    colsum += M(i,j);
+	    rowsum += M(j,i);
 	  }
-	if (rowsum > 1) p1row = i;
-	if (colsum > 1) p1col = i;
-      }
 
-    if (p1row != -1 && p1col != -1)
-      {
-	if (M(p1row,p1col) != 1)
+	if (colsum == 2)
 	  {
-	    std::cerr << "The matrix is not perm or perm+1";
-	    std::cerr << " in traintrack::mathmatrix_permplus1::mathmatrix_permplus1\n";
+	    if (p1row != -1)
+	      {
+		std::cerr << "More than one +1 row in ";
+		std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+		std::exit(1);
+	      }
+	    p1row = i;
+	  }
+	else if (colsum != 1)
+	  {
+	    std::cerr << "Bad row sum in ";
+	    std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+	    std::exit(1);
+	  }
+
+	if (rowsum == 2)
+	  {
+	    if (p1col != -1)
+	      {
+		std::cerr << "More than one +1 col in ";
+		std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+		std::exit(1);
+	      }
+	    p1col = i;
+	  }
+	else if (rowsum != 1)
+	  {
+	    std::cerr << "Bad col sum in ";
+	    std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
 	    std::exit(1);
 	  }
       }
 
-    // Now assign the permutation matrix, skipping the "plus 1" entry.
+    if ((p1row == -1) != (p1col == -1))
+      {
+	std::cerr << "Inconsistent +1 row/col in ";
+	std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+	std::exit(1);
+      }
+
     for (int i = 0; i < n; ++i)
       {
 	for (int j = 0; j < n; ++j)
 	  {
-	    if (M(i,j) == 1 && !(i == p1row && j == p1col)) rperm[i] = j;
+	    if (M(i,j) == 1 && !(i == p1row && j == p1col))
+	      {
+		if (rperm[i] != -1)
+		  {
+		    std::cerr << "Non-permutation row in ";
+		    std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+		    std::exit(1);
+		  }
+		rperm[i] = j;
+	      }
 	  }
-      }
-
-    // Sanity check.
-    if (std::find(rperm.begin(),rperm.end(),-1) != rperm.end())
-      {
-	std::cerr << "The matrix is not perm or perm+1";
-	std::cerr << " in traintrack::mathmatrix_permplus1::mathmatrix_permplus1\n";
-	std::exit(1);
+	if (rperm[i] == -1)
+	  {
+	    std::cerr << "Missing permutation row in ";
+	    std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+	    std::exit(1);
+	  }
+	if (cperm[rperm[i]] != -1)
+	  {
+	    std::cerr << "Duplicate permutation column in ";
+	    std::cerr << "traintracks::mathmatrix_permplus1::mathmatrix_permplus1\n";
+	    std::exit(1);
+	  }
+	cperm[rperm[i]] = i;
       }
   }
 
@@ -136,20 +197,22 @@ public:
   // Return true if permutation matrix (no "+1").
   bool is_perm() const { return (p1row < 0 || p1col < 0); }
 
+  // Return true for the identity matrix.
+  bool is_identity() const
+  {
+    if (!is_perm()) return false;
+    for (int i = 0; i < (int)rperm.size(); ++i)
+      if (rperm[i] != i) return false;
+    return true;
+  }
+
   const Vec& row_perm() const { return rperm; }
 
+  int plus1_row() const { return p1row; }
+  int plus1_col() const { return p1col; }
+
   // Return inverse permutation as column permutation indices.
-  Vec column_perm() const
-  {
-    const int n = this->dim();
-
-    // Find column permutation.
-    jlt::vector<int> cperm(n);
-
-    for (int i = 0; i < n; ++i) cperm[rperm[i]] = i;
-
-    return cperm;
-  }
+  const Vec& column_perm() const { return cperm; }
 
   // Find the order of the permutation part.
   // i.e., smallest integer j such that rperm^j == id.
@@ -175,31 +238,6 @@ public:
     exit(1);
   }
 
-  std::ostream& printMathematicaForm(std::ostream& strm) const
-  {
-    const int n = dim();
-
-    // Add 1 to all the entries for MathematicaForm.
-
-    strm << "{{";
-    for (int i = 0; i < n-1; ++i)
-      {
-	strm << rperm[i]+1 << ",";
-      }
-    strm << rperm.back()+1 << "}";
-    if (p1row >= 0 && p1col >= 0)
-      {
-	strm << ",{";
-	// Print in the Ham&Song form:
-	// edge p1row -> rperm[p1row] + p1col
-	// Only print p1row and p1col.
-	strm << p1row+1 << "," << p1col+1 << "}";
-      }
-    strm << "}";
-
-    return strm;
-  }
-
   size_type dim() const { return rperm.size(); }// Always a square matrix.
   size_type rows() const { return dim(); }	// Number of rows.
   size_type columns() const { return dim(); }	// Number of columns.
@@ -216,8 +254,8 @@ jlt::mathmatrix<int> operator*(const mathmatrix_permplus1& pm,
 {
   const int n = pm.dim();
 
-  MATRIX_ASSERT(A.isSquare());
-  MATRIX_ASSERT(n == (int)A.dim());
+  JLT_MATRIX_ASSERT(A.isSquare());
+  JLT_MATRIX_ASSERT(n == (int)A.dim());
 
   jlt::mathmatrix<int> pmA(n,n);
 
@@ -239,8 +277,8 @@ jlt::mathmatrix<int> operator*(const jlt::mathmatrix<int>& A,
 {
   const int n = pm.dim();
 
-  MATRIX_ASSERT(A.isSquare());
-  MATRIX_ASSERT(n == (int)A.dim());
+  JLT_MATRIX_ASSERT(A.isSquare());
+  JLT_MATRIX_ASSERT(n == (int)A.dim());
 
   // Find column permutation.
   // This means that right-multiplication by pm is a little slower than left.
@@ -282,6 +320,28 @@ std::ostream& operator<<(std::ostream& strm, const mathmatrix_permplus1& pm)
       strm << pm.p1row << "->" << pm.p1col;
     }
   strm << ")";
+
+  return strm;
+}
+
+inline
+std::ostream& printMathematicaForm(std::ostream& strm,
+				   const mathmatrix_permplus1& pm)
+{
+  const int n = pm.dim();
+
+  strm << "{{";
+  for (int i = 0; i < n-1; ++i)
+    {
+      strm << pm.row_perm()[i]+1 << ",";
+    }
+  strm << pm.row_perm().back()+1 << "}";
+  if (pm.plus1_row() >= 0 && pm.plus1_col() >= 0)
+    {
+      strm << ",{";
+      strm << pm.plus1_row()+1 << "," << pm.plus1_col()+1 << "}";
+    }
+  strm << "}";
 
   return strm;
 }

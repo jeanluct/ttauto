@@ -100,7 +100,7 @@ public:
 #endif
 
 private:
-  static const int debug = 0;
+  static constexpr int debug = 0;
   static const bool exploit_symmetries = TrTr::exploit_symmetries;
 
   ttfoldgraph<TrTr> ttg;	// Train track graph.

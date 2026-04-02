@@ -52,7 +52,7 @@ std::ostream& operator<<(std::ostream& strm, const folding_path<TrTr>& pp);
 template<class TrTr>
 class folding_path
 {
-  static const int debug = 0;
+  static constexpr int debug = 0;
 
   typedef typename ttfoldgraph<TrTr>::Mat	Mat;
 
@@ -383,6 +383,7 @@ folding_path<TrTr>::transition_matrix() const
 {
   const int n = ttg->edges();
   Mat TM(jlt::identity_matrix<int>(n));
+
   int v = initial_vertex();
 
   for (auto i = fp.begin(); i != fp.end(); ++i)

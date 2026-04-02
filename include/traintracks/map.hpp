@@ -31,127 +31,43 @@
 #include <jlt/freeword.hpp>
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
+#include "traintracks/mathmatrix_permplus1.hpp"
 #include "traintracks/map_labels.hpp"
 
 namespace traintracks {
 
 template<class TrTr>
-jlt::mathmatrix<int> fold_transition_matrix(const TrTr& tt0, const int f);
-
-struct permplus1_decode
+mathmatrix_permplus1 fold_transition_matrix(const TrTr& tt0, const int f)
 {
-  // True when the matrix is a pure permutation (no extra +1 entry).
-  bool is_perm;
-  // Row/column indices of the extra +1 when is_perm is false.
-  int row2;
-  int col2;
-  // Row permutation and its inverse, with optional +1 entry removed.
-  jlt::mathvector<int> perm;
-  jlt::mathvector<int> perm_inv;
-};
+  // Conventions:
+  // - We represent one fold by TM(f).
+  // - Applying f1, then f2, composes by left-multiplication:
+  //     TM_total = TM(f2) * TM(f1).
 
-
-inline permplus1_decode decode_permplus1(const jlt::mathmatrix<int>& TM)
-{
-  const int n = TM.dim();
-  permplus1_decode d{true,-1,-1,jlt::mathvector<int>(n,-1),jlt::mathvector<int>(n,-1)};
+  TrTr tt(tt0);
+  const int n = tt0.edges();
+  jlt::mathmatrix<int> TM(n,n);
 
   for (int i = 0; i < n; ++i)
     {
-      int colsum = 0, rowsum = 0;
-      for (int j = 0; j < n; ++j)
-        {
-          if (!(TM(i,j) == 0 || TM(i,j) == 1))
-            {
-              std::cerr << "Matrix should contain only ones or zeros in ";
-              std::cerr << "traintracks::decode_permplus1.\n";
-              std::exit(1);
-            }
-          colsum += TM(i,j);
-          rowsum += TM(j,i);
-        }
+      tt = tt0;
+      // Set all weights but one to zero.
+      typename TrTr::dblVec wv(n);
+      wv[i] = 1;
+      tt.weights(wv.begin());
 
-      if (colsum == 2)
-        {
-          if (d.row2 != -1)
-            {
-              std::cerr << "More than one +1 row in ";
-              std::cerr << "traintracks::decode_permplus1.\n";
-              std::exit(1);
-            }
-          d.row2 = i;
-        }
-      else if (colsum != 1)
-        {
-          std::cerr << "Bad row sum in traintracks::decode_permplus1.\n";
-          std::exit(1);
-        }
+      // Compute new weights.
+      tt.fold(f);
+      wv = tt.weights();
 
-      if (rowsum == 2)
-        {
-          if (d.col2 != -1)
-            {
-              std::cerr << "More than one +1 col in ";
-              std::cerr << "traintracks::decode_permplus1.\n";
-              std::exit(1);
-            }
-          d.col2 = i;
-        }
-      else if (rowsum != 1)
-        {
-          std::cerr << "Bad col sum in traintracks::decode_permplus1.\n";
-          std::exit(1);
-        }
+      // Copy to ith row of matrix.
+      for (int j = 0; j < n; ++j) TM(j,i) = (int)wv[j];
     }
 
-  d.is_perm = (d.row2 == -1 && d.col2 == -1);
-  if ((d.row2 == -1) != (d.col2 == -1))
-    {
-      std::cerr << "Inconsistent +1 row/col in ";
-      std::cerr << "traintracks::decode_permplus1.\n";
-      std::exit(1);
-    }
-
-  jlt::mathmatrix<int> P(TM);
-  if (!d.is_perm) P(d.row2,d.col2) = 0;
-
-  for (int i = 0; i < n; ++i)
-    for (int j = 0; j < n; ++j)
-      if (P(i,j) == 1)
-        {
-          d.perm[i] = j;
-          d.perm_inv[j] = i;
-        }
-
-  for (int i = 0; i < n; ++i)
-    if (d.perm[i] < 0 || d.perm_inv[i] < 0)
-      {
-        std::cerr << "Not a permutation(+1) matrix in ";
-        std::cerr << "traintracks::decode_permplus1.\n";
-        std::exit(1);
-      }
-
-  return d;
-}
-
-
-// Decode fold structure once and convert to map-indexing conventions.
-template<class TrTr>
-inline permplus1_decode decode_fold_map_structure(const TrTr& tt0, const int f)
-{
-  // fold_traintrack_map uses generator-action composition conventions where
-  // permutation data is read in the dual (column-action) indexing. Decode the
-  // non-transposed transition matrix, then convert indices/permutations once.
-  permplus1_decode d0 = decode_permplus1(fold_transition_matrix(tt0,f));
-  const int n = d0.perm.size();
-  permplus1_decode d{d0.is_perm,d0.col2,d0.row2,
-                     jlt::mathvector<int>(n,-1),jlt::mathvector<int>(n,-1)};
-  for (int i = 0; i < n; ++i)
-    {
-      d.perm[i] = d0.perm_inv[i];
-      d.perm_inv[i] = d0.perm[i];
-    }
-  return d;
+  // Validate fold matrix shape once through the canonical sparse decoder.
+  // This enforces the same permutation/permutation+1 constraints used
+  // everywhere else in the map pipeline.
+  return mathmatrix_permplus1(TM);
 }
 
 
@@ -179,7 +95,7 @@ inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
 	  ++TMfromAM(col,src);
 	}
     }
-  jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f);
+  jlt::mathmatrix<int> TM = fold_transition_matrix(tt0,f).full();
 
   if (TMfromAM != TM)
     {
@@ -211,21 +127,21 @@ jlt::freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
   // The cusp should give us the in-between edge.
 
-  permplus1_decode dec = decode_fold_map_structure(tt0,f);
+  mathmatrix_permplus1 dec = fold_transition_matrix(tt0,f);
 
   // Copy permutation over to train track map (main generators only).
   for (int i = 0; i < n; ++i)
-    AM[labels.main_gen(i)] = {labels.main_gen(dec.perm[i])};
+    AM[labels.main_gen(i)] = jlt::freeword<int>({labels.main_gen(dec.column_perm()[i])});
 
-  if (dec.is_perm) return AM;
+  if (dec.is_perm()) return AM;
 
   // Now deal with the folded edges.
-  int e1 = labels.main_gen(dec.row2);
-  int e21 = labels.main_gen(dec.perm[dec.row2]);
-  int e22 = labels.main_gen(dec.col2);
+  int e1 = labels.main_gen(dec.plus1_col());
+  int e21 = labels.main_gen(dec.column_perm()[dec.plus1_col()]);
+  int e22 = labels.main_gen(dec.plus1_row());
 
   // One main generator flips orientation under a non-permutation fold.
-  AM[labels.main_gen(dec.perm_inv[dec.col2])] = {-e22};
+  AM[labels.main_gen(dec.row_perm()[dec.plus1_row()])] = {-e22};
 
   // Infinitesimal edge chosen from fold cusp geometry.
   int infinitesimal = tt0.fold_infinitesimal_generator(f,n);
@@ -236,8 +152,8 @@ jlt::freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
   else
     AM[e1] = {e22,infinitesimal,e21}; // fold clockwise
 
-  // Main-edge transition consistency check.
-  check_fold_map_main_transition(tt0,f,AM);
+  // Main-edge transition consistency check (debug mode only).
+  if (TrTr::debug) check_fold_map_main_transition(tt0,f,AM);
 
   return AM;
 }

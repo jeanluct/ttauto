@@ -55,7 +55,7 @@ class traintrack;
 
 class multigon
 {
-  static const int debug = 0;
+  static constexpr int debug = 0;
 
 public:
 #ifdef TRAINTRACKS_NO_SHARED_PTR

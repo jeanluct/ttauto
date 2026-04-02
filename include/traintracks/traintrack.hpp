@@ -31,7 +31,6 @@
 #include <jlt/mathmatrix.hpp>
 #include "traintracks/edge.hpp"
 #include "traintracks/multigon.hpp"
-#include "traintracks/util.hpp"
 #include "traintracks/map.hpp"
 #include "traintracks/mathmatrix_permplus1.hpp"
 
@@ -56,7 +55,7 @@ public:
   using cmit = mgpVec::const_iterator;
   using mit = mgpVec::iterator;
 
-  static const int debug = 0;
+  static constexpr int debug = 0;
   static const bool exploit_symmetries = true;
 
 private:
@@ -92,7 +91,7 @@ public:
 
 
   //
-  // Constructors for specific train tracks (defined in traintrack_build.cpp)
+  // Constructors for specific train tracks (defined in lib/traintrack/build.cpp)
   //
 
   // Track with N monogons around punctures and a (N-2)-gon on the
@@ -208,21 +207,17 @@ public:
   // - ec:  cusp index on that prong (first edge encountered clockwise)
   void fold_cusp_location(const int f, multigon*& mmc, int& pc, int& ec) const;
 
-#if 0
-  // Fold and find transition matrix.
-  jlt::mathmatrix<int> fold_transition_matrix(const int f)
+  // Apply fold f and return its transition matrix.
+  mathmatrix_permplus1 fold_transition_matrix(const int f)
   {
-    jlt::mathmatrix<int> M(traintracks::fold_transition_matrix(*this,f));
+    mathmatrix_permplus1 M(traintracks::fold_transition_matrix(*this,f));
     fold(f);
     return M;
   }
-#endif
 
-  // Fold and find transition matrix and train track map.
-  // Apply fold f, return corresponding map, and output transition matrix M.
-  jlt::freeauto<int> fold_transition_matrix(const int f, jlt::mathmatrix<int>& M)
+  // Apply fold f and return its train-track map.
+  jlt::freeauto<int> fold_traintrack_map(const int f)
   {
-    M = traintracks::fold_transition_matrix(*this,f);
     jlt::freeauto<int> AM(traintracks::fold_traintrack_map(*this,f));
     fold(f);
     return AM;
@@ -240,16 +235,13 @@ public:
   // Print singularity data of the train track.
   std::ostream& print_singularity_data(std::ostream& strm) const;
 
-  // Print in a format that can be used by Mathematica.
-  std::ostream& printMathematicaForm(std::ostream& strm = std::cout) const;
-
   // Print coding.
   std::ostream& print_coding(std::ostream& strm = std::cout,
 			     const int dir = 1) const;
 
 private:
   //
-  // Helper methods for building tracks (defined in traintrack_build.cpp)
+  // Helper methods for building tracks (defined in lib/traintrack/build.cpp)
   //
 
   // Track with N monogons around punctures and a (N-2)-gon on the
@@ -349,11 +341,15 @@ private:
 
   // Print a coding block.
   friend std::ostream& operator<<(std::ostream& strm, const coding_block& b);
+
+  // Print in train track Mathematica-friendly format.
+  friend std::ostream& printMathematicaForm(std::ostream& strm,
+					    const traintrack& tt);
 };
 
 
 //
-// Helper function for building tracks (defined in traintrack_build.cpp)
+// Helper function for building tracks (defined in lib/traintrack/build.cpp)
 //
 
 // Comparison function for sorting strata.
@@ -510,10 +506,32 @@ inline void traintrack::normalise()
   minimise_coding();
 }
 
+// Find index of multigon pointer within mgv.
+inline int traintrack::multigon_index(const multigon* mm) const
+{
+  int m = 0;
+  for (; m < (int)mgv.size(); ++m)
+    {
+      if (mm == &Multigon(m)) break;
+    }
+  if (m == (int)mgv.size())
+    {
+      std::cerr << "Error in multigon_index(): ";
+      std::cerr << "multigon not found.\n";
+      std::exit(1);
+    }
+  return m;
+}
 
-//
-// Friend functions
-//
+// Convert (multigon index, prong index) to global prong index.
+inline int traintrack::multigon_prong_index(const int mi, const int pi) const
+{
+  int ix = 0;
+  for (int m = 0; m < mi; ++m) ix += Multigon(m).prongs();
+  ix += pi;
+
+  return ix;
+}
 
 // Swap the position of two multigons in the vector.
 inline void traintrack::swap(const int m1, const int m2)
@@ -526,6 +544,10 @@ inline void traintrack::swap(const int m1, const int m2)
   traintracks::swap(*mgv[m1],*mgv[m2]);
 }
 
+//
+// Friend functions
+//
+
 inline std::ostream&
 operator<<(std::ostream& strm, const traintrack::coding_block& b)
 {
@@ -536,6 +558,11 @@ operator<<(std::ostream& strm, const traintrack::coding_block& b)
     strm << b.prong+1 << b.nprongs << b.edge+1 << b.nedges;
   return strm;
 }
+
+// Print train track in Mathematica-friendly graph-edge format.
+// (defined in lib/traintrack/build.cpp)
+std::ostream& printMathematicaForm(std::ostream& strm,
+				   const traintrack& tt);
 
 } // namespace traintracks
 
