@@ -19,6 +19,7 @@ tests/test_permplus1
 tests/test_traintrack
 tests/test_ttmap
 tests/test_ttmap_from_path
+tests/test_issue2_bad_path
 
 # Windows
 devel/crossmingw.pyc
