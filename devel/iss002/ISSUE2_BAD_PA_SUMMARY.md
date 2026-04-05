@@ -131,3 +131,17 @@ Current status summary:
 - Gate pipeline is partially in place but not yet aligned with `.train`
   semantics, so connectivity results are provisional and should not yet be used
   as classification criteria.
+
+## Known-good run snapshot
+
+- Branch: `iss002-spurious-pAs`
+- Commit anchor: `ab300f2`
+- Command:
+  - `scons tests/test_issue2_bad_path && ./tests/test_issue2_bad_path`
+- Key output checks:
+  - `Primitive transition matrix: yes`
+  - `D(1) = -4, D(-1) = -2`
+  - `Directed generators by vertex (multigon,prong):`
+  - `vertex (6,1): -13 -1 2 5 13`
+  - `Gates by vertex (multigon,prong) on all generators (main+infinitesimal):`
+  - `vertex (6,1): {-13}, {-1 2}, {5}, {13}`
