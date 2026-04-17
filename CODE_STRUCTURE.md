@@ -28,8 +28,8 @@ In concrete terms, it does three main things:
 - **Multigon**: a single pronged singularity piece in a train track; has a number of prongs and edge slots at each prong.
 - **Prong**: local vertex on a multigon boundary where one or more edge slots attach.
 - **Cusp**: local foldable location between adjacent edge slots on a prong.
-- **Fold**: local transformation that folds one edge onto anotherer at a cusp and changes the train track.
-- **Transition matrix**: matrix counting how branches map under a fold or sequence of a sequence of folds.
+- **Fold**: local transformation that folds one edge onto another at a cusp and changes the train track.
+- **Transition matrix**: matrix counting how branches map under a fold or sequence of folds.
 - **Train-track map**: free-group automorphism representation of branch images under folds.
 - **Folding automaton**: directed graph of train tracks connected by valid folds.
 - **Folding path**: a sequence of folds in a train track graph.
@@ -45,6 +45,99 @@ Most programs follow this pipeline:
 4. Optionally decompose with `subgraphs(...)`.
 5. Configure and run `ttauto<traintrack>::search(...)`.
 6. Inspect results through `pA_list()` and print/export utilities.
+
+## Worked Example: One Fold Through the Stack
+
+This section gives a concrete mental model of how one fold is represented across geometry, graph structure, and algebraic data.
+
+### Step A: Start at a Train-Track Vertex
+
+- You have one normalized `traintrack` object `tt` (for example, `ttg.traintrack(v)` inside the automaton).
+- At this point, cusp indices are meaningful because normalization fixes the traversal convention used by cusp-ordering helpers.
+
+### Step B: Choose a Fold Index `f`
+
+- A fold index identifies one directed fold at one cusp.
+- Internally, `fold_cusp_location(f, mmc, pc, ec)` resolves `f` into:
+  - `mmc`: the multigon containing the cusp,
+  - `pc`: prong index on that multigon,
+  - `ec`: edge-slot index of the cusp start.
+- `fold(f)` then applies the local mutation and re-normalizes the track.
+
+### Step C: Build Algebraic Descriptions of the Same Fold
+
+For the same `tt` and `f`, the code builds two algebraic objects:
+
+- `fold_transition_matrix(tt, f)`:
+  - gives the main-edge transition matrix for that one fold,
+  - represented compactly as `mathmatrix_permplus1`.
+- `fold_traintrack_map(tt, f)`:
+  - gives the train-track map on generators (main + infinitesimal),
+  - inserts the selected infinitesimal generator in the folded edge image, with ordering determined by fold direction.
+
+Consistency rule: main-edge counts extracted from the map must agree with the transition matrix (`check_fold_map_main_transition` and test coverage in `tests/test_ttmap.cpp`).
+
+### Step D: Store as One Automaton Branch
+
+In `ttfoldgraph`:
+
+- source vertex = original track state,
+- branch label = fold index `f`,
+- target vertex = folded/normalized track,
+- branch data includes:
+  - target vertex id,
+  - one-step transition matrix,
+  - one-step train-track map.
+
+So each graph edge is not just connectivity; it carries all one-step algebraic data needed for path composition.
+
+### Step E: Compose Along a Folding Path
+
+`folding_path` stores a sequence of branch choices. From that sequence it computes:
+
+- path transition matrix (product of one-step matrices),
+- path train-track map (composition of one-step maps),
+- induced vertex path (start/end vertices, closure test).
+
+This is why `folding_path` is the core DFS state in `ttauto`: it is both combinatorial (which edges were taken) and algebraic (what map/matrix they compose to).
+
+### Step F: Search Accept/Reject in `ttauto`
+
+During DFS in `ttauto`:
+
+- pruning checks reject many partial paths early (norm bounds, badwords, depth limits, etc.),
+- closed paths that pass checks are converted into candidate records,
+- candidates are grouped into `pAclass` objects keyed by polynomial/dilatation.
+
+In short: one fold becomes one graph edge with matrix+map payload; many edges compose into one candidate dynamical class.
+
+## Common Reading Paths (How to Onboard Quickly)
+
+If you are new to this code, these reading orders are effective.
+
+### Path 1: "I want the big picture first"
+
+1. `examples/ttauto_min_example.cpp`
+2. `include/ttauto/ttfoldgraph.hpp`
+3. `include/ttauto/folding_path.hpp`
+4. `include/ttauto/ttauto.hpp`
+5. `tests/test_ttmap.cpp`
+
+### Path 2: "I need to modify fold mechanics"
+
+1. `include/traintracks/traintrack.hpp`
+2. `lib/traintracks/traintrack.cpp` (`fold`, cusp resolution helpers)
+3. `include/traintracks/map.hpp`
+4. `tests/test_traintrack.cpp`
+5. `tests/test_ttmap.cpp`
+
+### Path 3: "I need to change search behavior"
+
+1. `include/ttauto/ttauto.hpp`
+2. `include/ttauto/badwords.hpp`
+3. `include/ttauto/folding_path.hpp`
+4. `tests/test_badwords.cpp`
+5. `examples/ttauto.cpp`
 
 ## Train Track Classes (`traintracks` namespace)
 
