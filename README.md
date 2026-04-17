@@ -24,16 +24,16 @@ To compile everything, invoke `scons` in the root folder.  To build only a subse
 
 The development of *ttauto* was supported by the [US National Science Foundation][11], under grants [DMS-0806821][12] and [CMMI-1233935][13].
 
-[1]: http://www.math.wisc.edu/~jeanluc/
-[2]: http://www-fourier.ujf-grenoble.fr/~lanneau/
-[3]: http://www.suitesparse.com
+[1]: https://www.math.wisc.edu/~jeanluc/
+[2]: https://www-fourier.ujf-grenoble.fr/~lanneau/
+[3]: https://www.suitesparse.com
 [4]: https://github.com/jeanluct/jlt
-[5]: http://www.gnu.org/licenses/gpl-3.0.html
-[6]: http://github.com/jeanluct/ttauto/raw/master/COPYING
-[7]: http://github.com/jeanluct/ttauto/raw/master/LICENSE
-[8]: http://github.com/jeanluct/ttauto/raw/master/examples
-[9]: http://github.com/jeanluct/ttauto/raw/master/examples/ttauto.cpp
-[10]: http://www.scons.org
-[11]: http://www.nsf.gov
-[12]: http://www.nsf.gov/awardsearch/showAward?AWD_ID=0806821
-[13]: http://www.nsf.gov/awardsearch/showAward?AWD_ID=1233935
+[5]: https://www.gnu.org/licenses/gpl-3.0.html
+[6]: https://github.com/jeanluct/ttauto/raw/master/COPYING
+[7]: https://github.com/jeanluct/ttauto/raw/master/LICENSE
+[8]: https://github.com/jeanluct/ttauto/raw/master/examples
+[9]: https://github.com/jeanluct/ttauto/raw/master/examples/ttauto.cpp
+[10]: https://www.scons.org
+[11]: https://www.nsf.gov
+[12]: https://www.nsf.gov/awardsearch/showAward?AWD_ID=0806821
+[13]: https://www.nsf.gov/awardsearch/showAward?AWD_ID=1233935
