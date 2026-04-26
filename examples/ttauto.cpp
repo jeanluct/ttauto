@@ -52,9 +52,9 @@ int main()
 
   ttVec ttv = traintracks::build_traintrack_list(n);
   cout << "\nList of strata:\n";
-  for (auto i = ttv.begin(); i != ttv.end(); ++i)
+  for (auto i = ttv.cbegin(); i != ttv.cend(); ++i)
     {
-      cout << std::setw(2) << std::distance(ttv.begin(),i)+1;
+      cout << std::setw(2) << std::distance(ttv.cbegin(),i)+1;
       cout << ")\t";
       i->print_singularity_data(cout) << endl;
     }
@@ -104,10 +104,10 @@ int main()
       cout << ttautofile << "...\n";
       std::ofstream ttastrm(ttautofile.c_str());
       ttastrm << "{\n";
-      for (auto i = ttg.begin(); i != ttg.end(); ++i)
+      for (auto i = ttg.cbegin(); i != ttg.cend(); ++i)
 	{
 	  i->printMathematicaForm(ttastrm);
-          if (std::distance(i,ttg.end()) > 1) ttastrm << ",\n";
+	  if (std::distance(i,ttg.cend()) > 1) ttastrm << ",\n";
 	}
       ttastrm << "}\n";
       ttastrm.close();
@@ -117,7 +117,7 @@ int main()
   --fg;
   int len = jlt::read_number("\nMax path length in graph",0,100,5);
   if (len == 0) exit(0);
-  auto ifg = ttg.begin();
+  auto ifg = ttg.cbegin();
   std::advance(ifg,fg);		// Go to the correct position.
 
   // Make filename.
