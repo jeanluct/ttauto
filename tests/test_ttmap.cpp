@@ -63,7 +63,7 @@ int main()
   // The fold->infinitesimal index map should stay within range.
   for (int f = 0; f < ttv[trk].foldings(); ++f)
     {
-      int infix = ttv[trk].fold_infinitesimal_index(f);
+      [[maybe_unused]] const int infix = ttv[trk].fold_infinitesimal_index(f);
       assert(infix >= 0);
       assert(infix < ttv[trk].total_prongs());
 
@@ -186,7 +186,7 @@ int main()
 
   for (int f = 0; f < ttv2[trk].foldings(); ++f)
     {
-      int infix = ttv2[trk].fold_infinitesimal_index(f);
+      [[maybe_unused]] const int infix = ttv2[trk].fold_infinitesimal_index(f);
       assert(infix >= 0);
       assert(infix < ttv2[trk].total_prongs());
 

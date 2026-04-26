@@ -1,5 +1,21 @@
 # How to test the ttauto code
 
+## Build first (CMake)
+
+From the repository root:
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+```
+
+This compiles:
+
+- all `examples/*.cpp` into `examples/`
+- all `tests/*.cpp` into `tests/`
+
+No CTest harness is required in the current workflow; test programs are run directly.
+
 ## Programs that can be used as tests but take a long time to run
 
 `examples/ttauto_count`   (2 minutes)
