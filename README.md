@@ -33,6 +33,25 @@ Default output behavior is in-place:
 
 Both `examples/*.cpp` and `tests/*.cpp` are auto-discovered by CMake.  Adding a new `.cpp` file in either folder is enough for it to compile on the next build, with no CMake file edits required.
 
+### tests (ctest)
+
+A testsuite is provided under `testsuite/` and wired to CTest.
+
+From the repository root:
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+ctest --test-dir build --output-on-failure
+```
+
+Only `testsuite/**/*.cpp` programs are registered with `ctest`.
+Current organization aligns tests with headers/components (`testsuite/traintracks/`
+and `testsuite/ttauto/`).  The `tests/` folder remains available for ad-hoc
+feature programs and exploratory checks.
+
+See `testsuite/COVERAGE.md` for a header-to-test mapping.
+
 ### build (legacy scons)
 
 SCons files are still present temporarily during migration:

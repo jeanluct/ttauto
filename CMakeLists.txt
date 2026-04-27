@@ -26,6 +26,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(ttauto LANGUAGES C CXX)
 
+include(CTest)
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
@@ -104,6 +106,21 @@ function(ttauto_add_program source_file output_dir target_prefix)
   ttauto_set_inplace_output(${target_name} "${output_dir}")
 endfunction()
 
+function(ttauto_add_testsuite source_file)
+  get_filename_component(program_name "${source_file}" NAME_WE)
+  set(target_name "testsuite_${program_name}")
+
+  add_executable(${target_name} "${source_file}")
+  target_link_libraries(${target_name} PRIVATE ttauto)
+  ttauto_add_compile_flags(${target_name})
+
+  set_target_properties(${target_name} PROPERTIES OUTPUT_NAME "${program_name}")
+  ttauto_set_inplace_output(${target_name} "${CMAKE_BINARY_DIR}/testsuite")
+
+  add_test(NAME ${target_name} COMMAND $<TARGET_FILE:${target_name}>)
+  set_tests_properties(${target_name} PROPERTIES LABELS "deterministic;fast")
+endfunction()
+
 file(GLOB TTAUTO_EXAMPLE_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_SOURCE_DIR}/examples/*.cpp")
 
@@ -116,4 +133,11 @@ file(GLOB TTAUTO_TEST_SOURCES CONFIGURE_DEPENDS
 
 foreach(test_source ${TTAUTO_TEST_SOURCES})
   ttauto_add_program("${test_source}" "${CMAKE_SOURCE_DIR}/tests" "test")
+endforeach()
+
+file(GLOB TTAUTO_TESTSUITE_SOURCES CONFIGURE_DEPENDS
+  "${CMAKE_SOURCE_DIR}/testsuite/**/*.cpp")
+
+foreach(testsuite_source ${TTAUTO_TESTSUITE_SOURCES})
+  ttauto_add_testsuite("${testsuite_source}")
 endforeach()

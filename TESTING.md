@@ -13,8 +13,18 @@ This compiles:
 
 - all `examples/*.cpp` into `examples/`
 - all `tests/*.cpp` into `tests/`
+- all `testsuite/**/*.cpp` into `build/testsuite/`
 
-No CTest harness is required in the current workflow; test programs are run directly.
+`ctest` runs only the deterministic tests in `testsuite/`.
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+The `tests/` folder remains available for direct-run feature and exploratory
+programs.
+
+For header/component coverage mapping, see `testsuite/COVERAGE.md`.
 
 ## Programs that can be used as tests but take a long time to run
 
