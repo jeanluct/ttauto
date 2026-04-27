@@ -1,4 +1,4 @@
-(* Content-type: application/mathematica *)
+(* Content-type: application/vnd.wolfram.mathematica *)
 
 (* Beginning of Notebook Content *)
 Notebook[{
@@ -10,12 +10,7 @@ Cell[BoxData[
  RowBox[{
   RowBox[{"AppendTo", "[",
    RowBox[{"$Path", ",",
-    RowBox[{"ToFileName", "[",
-     RowBox[{"{",
-      RowBox[{
-      "$HomeDirectory",
-       ",", "\"\<Projects/articles/topo/ttauto/pubs/ttauto paper\>\""}],
-      "}"}], "]"}]}], "]"}], ";"}]], "Input"],
+    RowBox[{"NotebookDirectory", "[", "]"}]}], "]"}], ";"}]], "Input"],
 
 Cell[BoxData[
  RowBox[{
@@ -23,9 +18,8 @@ Cell[BoxData[
    RowBox[{"ToFileName", "[",
     RowBox[{"{",
      RowBox[{
-     "$HomeDirectory",
-      ",", "\"\<Projects/articles/topo/ttauto/pubs/ttauto paper/data/ttauto\>\
-\""}], "}"}], "]"}], "]"}], ";"}]], "Input"],
+      RowBox[{"NotebookDirectory", "[", "]"}], ",", "\"\<ttauto_output\>\""}],
+      "}"}], "]"}], "]"}], ";"}]], "Input"],
 
 Cell[BoxData[
  RowBox[{"<<", "TrainTracks.m"}]], "Input"]
