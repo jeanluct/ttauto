@@ -1,0 +1,437 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Initialization", "Subsection"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"AppendTo", "[",
+   RowBox[{"$Path", ",",
+    RowBox[{"NotebookDirectory", "[", "]"}]}], "]"}], ";"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"SetDirectory", "[",
+   RowBox[{"ToFileName", "[",
+    RowBox[{"{",
+     RowBox[{
+      RowBox[{"NotebookDirectory", "[", "]"}], ",", "\"\<ttauto_output\>\""}],
+      "}"}], "]"}], "]"}], ";"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"<<", "TrainTracks.m"}]], "Input"]
+}]],
+
+Cell[CellGroupData[{
+
+Cell["n = 3", "Subsection"],
+
+Cell[BoxData[
+ RowBox[{"ttauto3", "=",
+  RowBox[{"{",
+   RowBox[{"<<", "\"\<ttauto_n=3_1.m\>\""}], "}"}]}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"ttauto3", "\[LeftDoubleBracket]",
+   RowBox[{"1", ",", "1"}], "\[RightDoubleBracket]"}], "\[LeftDoubleBracket]",
+  RowBox[{"1", ",", "1"}], "\[RightDoubleBracket]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"PlotAutomaton", "[",
+  RowBox[{
+   RowBox[{"ttauto3", "\[LeftDoubleBracket]",
+    RowBox[{"1", ",", "1"}], "\[RightDoubleBracket]"}], ",",
+   RowBox[{"PlotTrainTracks", "\[Rule]", "True"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"(*",
+  RowBox[{"Export", "[",
+   RowBox[{"\"\<ttauto_n=3_1.png\>\"", ",", "%"}], "]"}], "*)"}]], "Input"]
+}]],
+
+Cell[CellGroupData[{
+
+Cell["n = 4", "Subsection"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"ttauto4", "=",
+   RowBox[{"{",
+    RowBox[{
+     RowBox[{"<<", "\"\<ttauto_n=4_1.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=4_2.m\>\""}]}], "}"}]}], ";"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"PlotAutomatonTrainTracks", "/@",
+  RowBox[{"Flatten", "[",
+   RowBox[{"ttauto4", ",", "1"}], "]"}]}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomaton", "[",
+    RowBox[{
+     RowBox[{"ttauto4", "\[LeftDoubleBracket]",
+      RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], ",",
+     RowBox[{"ImageSize", "\[Rule]", "Large"}]}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"Length", "[", "ttauto4", "]"}]}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomaton", "[",
+    RowBox[{
+     RowBox[{"ttauto4", "\[LeftDoubleBracket]",
+      RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], ",",
+     RowBox[{"ImageSize", "\[Rule]", "Large"}], ",",
+     RowBox[{"PlotTrainTracks", "\[Rule]", "True"}], ",",
+     RowBox[{"TrainTrackOffset", "\[Rule]",
+      RowBox[{"{",
+       RowBox[{"0", ",",
+        RowBox[{"-", ".35"}]}], "}"}]}]}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"Length", "[", "ttauto4", "]"}]}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"(*",
+  RowBox[{
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=4_1.png\>\"", ",",
+     RowBox[{"%", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=4_2.png\>\"", ",",
+     RowBox[{"%%", "\[LeftDoubleBracket]", "2", "\[RightDoubleBracket]"}]}],
+    "]"}]}], "*)"}]], "Input"]
+}]],
+
+Cell[CellGroupData[{
+
+Cell["n = 5", "Subsection"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"ttauto5", "=",
+   RowBox[{"{",
+    RowBox[{
+     RowBox[{"<<", "\"\<ttauto_n=5_1.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=5_2.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=5_3.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=5_4.m\>\""}]}], "}"}]}], ";"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"PlotAutomatonTrainTracks", "/@",
+  RowBox[{"Flatten", "[",
+   RowBox[{"ttauto5", ",", "1"}], "]"}]}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomaton", "[",
+    RowBox[{
+     RowBox[{"ttauto5", "\[LeftDoubleBracket]",
+      RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], ",",
+     RowBox[{"ImageSize", "\[Rule]", "Large"}], ",",
+     RowBox[{"PlotTrainTracks", "\[Rule]", "True"}], ",",
+     RowBox[{"TrainTrackSize", "\[Rule]", ".35"}], ",",
+     RowBox[{"SelfLoopStyle", "\[Rule]", ".35"}]}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"Length", "[", "ttauto5", "]"}]}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"(*",
+  RowBox[{
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=5_1.png\>\"", ",",
+     RowBox[{"%", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=5_2.png\>\"", ",",
+     RowBox[{"%%", "\[LeftDoubleBracket]", "2", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=5_3.png\>\"", ",",
+     RowBox[{"%%%", "\[LeftDoubleBracket]", "3", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=5_4.png\>\"", ",",
+     RowBox[{"%%%%", "\[LeftDoubleBracket]", "4", "\[RightDoubleBracket]"}]}],
+     "]"}]}], "*)"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomaton", "[",
+    RowBox[{
+     RowBox[{"DropSelfLoops", "[",
+      RowBox[{"ttauto5", "\[LeftDoubleBracket]",
+       RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], "]"}], ",",
+     RowBox[{"ImageSize", "\[Rule]", "Large"}]}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"Length", "[", "ttauto5", "]"}]}], "}"}]}], "]"}]], "Input"]
+}]],
+
+Cell[CellGroupData[{
+
+Cell["n = 6", "Subsection"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"ttauto6", "=",
+   RowBox[{"{",
+    RowBox[{
+     RowBox[{"<<", "\"\<ttauto_n=6_1.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=6_2.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=6_3.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=6_4.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=6_5.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=6_6.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=6_7.m\>\""}]}], "}"}]}], ";"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomatonTrainTracks", "[",
+    RowBox[{"ttauto6", "\[LeftDoubleBracket]",
+     RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"{",
+      RowBox[{"3", ",", "4", ",", "6", ",", "7"}], "}"}]}], "}"}]}],
+  "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomaton", "[",
+    RowBox[{
+     RowBox[{"ttauto6", "\[LeftDoubleBracket]",
+      RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], ",",
+     RowBox[{"ImageSize", "\[Rule]", "Large"}]}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"Length", "[", "ttauto6", "]"}]}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"(*",
+  RowBox[{
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=6_1.png\>\"", ",",
+     RowBox[{"%", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=6_2.png\>\"", ",",
+     RowBox[{"%%", "\[LeftDoubleBracket]", "2", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=6_3.png\>\"", ",",
+     RowBox[{"%%%", "\[LeftDoubleBracket]", "3", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=6_4.png\>\"", ",",
+     RowBox[{"%%%%", "\[LeftDoubleBracket]", "4", "\[RightDoubleBracket]"}]}],
+     "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=6_5.png\>\"", ",",
+     RowBox[{
+     "%%%%%", "\[LeftDoubleBracket]", "5", "\[RightDoubleBracket]"}]}], "]"}],
+    "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=6_6.png\>\"", ",",
+     RowBox[{
+     "%%%%%%", "\[LeftDoubleBracket]", "6", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=6_7.png\>\"", ",",
+     RowBox[{
+     "%%%%%%%", "\[LeftDoubleBracket]", "7", "\[RightDoubleBracket]"}]}],
+    "]"}]}], "*)"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"PlotAutomaton", "[",
+  RowBox[{
+   RowBox[{"ttauto6", "\[LeftDoubleBracket]",
+    RowBox[{"1", ",", "1"}], "\[RightDoubleBracket]"}], ",",
+   RowBox[{"ImageSize", "\[Rule]", "2000"}], ",",
+   RowBox[{"PlotStyle", "\[Rule]", "Thick"}], ",",
+   RowBox[{"PlotTrainTracks", "\[Rule]", "True"}], ",",
+   RowBox[{"SelfLoopStyle", "\[Rule]", ".25"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"(*",
+  RowBox[{"Export", "[",
+   RowBox[{"\"\<ttauto_n=6_1_big.png\>\"", ",", "%"}], "]"}], "*)"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomaton", "[",
+    RowBox[{
+     RowBox[{"DropSelfLoops", "[",
+      RowBox[{"ttauto6", "\[LeftDoubleBracket]",
+       RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], "]"}], ",",
+     RowBox[{"ImageSize", "\[Rule]", "Large"}]}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"Length", "[", "ttauto6", "]"}]}], "}"}]}], "]"}]], "Input"]
+}]],
+
+Cell[CellGroupData[{
+
+Cell["n = 7", "Subsection"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"ttauto7", "=",
+   RowBox[{"{",
+    RowBox[{
+     RowBox[{"<<", "\"\<ttauto_n=7_1.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_2.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_3.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_4.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_5.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_6.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_7.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_8.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_9.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_10.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_11.m\>\""}], ",",
+     RowBox[{"<<", "\"\<ttauto_n=7_12.m\>\""}]}], "}"}]}], ";"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"Length", "[",
+    RowBox[{"#", "\[LeftDoubleBracket]",
+     RowBox[{"1", ",", "1"}], "\[RightDoubleBracket]"}], "]"}], "&"}], "/@",
+  "ttauto7"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomatonTrainTracks", "[",
+    RowBox[{"ttauto7", "\[LeftDoubleBracket]",
+     RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"{",
+      RowBox[{"4", ",", "5", ",", "8", ",", "9", ",", "12"}], "}"}]}],
+    "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"Length", "[",
+    RowBox[{"#", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}],
+    "]"}], "&"}], "/@",
+  RowBox[{
+  "ttauto7", "\[LeftDoubleBracket]", "1",
+   "\[RightDoubleBracket]"}]}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomatonTrainTracks", "[",
+    RowBox[{"ttauto7", "\[LeftDoubleBracket]",
+     RowBox[{"1", ",", "i"}], "\[RightDoubleBracket]"}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"{",
+      RowBox[{"2", ",", "3", ",", "4"}], "}"}]}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomaton", "[",
+    RowBox[{
+     RowBox[{"ttauto7", "\[LeftDoubleBracket]",
+      RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], ",",
+     RowBox[{"ImageSize", "\[Rule]", "Large"}]}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"Length", "[", "ttauto7", "]"}]}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"(*",
+  RowBox[{
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_1.png\>\"", ",",
+     RowBox[{"%", "\[LeftDoubleBracket]", "1", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_2.png\>\"", ",",
+     RowBox[{"%%", "\[LeftDoubleBracket]", "2", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_3.png\>\"", ",",
+     RowBox[{"%%%", "\[LeftDoubleBracket]", "3", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_4.png\>\"", ",",
+     RowBox[{"%%%%", "\[LeftDoubleBracket]", "4", "\[RightDoubleBracket]"}]}],
+     "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_5.png\>\"", ",",
+     RowBox[{
+     "%%%%%", "\[LeftDoubleBracket]", "5", "\[RightDoubleBracket]"}]}], "]"}],
+    "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_6.png\>\"", ",",
+     RowBox[{
+     "%%%%%%", "\[LeftDoubleBracket]", "6", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_7.png\>\"", ",",
+     RowBox[{
+     "%%%%%%%", "\[LeftDoubleBracket]", "7", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_8.png\>\"", ",",
+     RowBox[{
+     "%%%%%%%%", "\[LeftDoubleBracket]", "8", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_9.png\>\"", ",",
+     RowBox[{
+     "%%%%%%%%%", "\[LeftDoubleBracket]", "9", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_10.png\>\"", ",",
+     RowBox[{
+     "%%%%%%%%%%", "\[LeftDoubleBracket]", "10", "\[RightDoubleBracket]"}]}],
+    "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_11.png\>\"", ",",
+     RowBox[{
+     "%%%%%%%%%%%", "\[LeftDoubleBracket]", "11", "\[RightDoubleBracket]"}]}],
+     "]"}], "\[IndentingNewLine]",
+   RowBox[{"Export", "[",
+    RowBox[{"\"\<ttauto_n=7_12.png\>\"", ",",
+     RowBox[{
+     "%%%%%%%%%%%%", "\[LeftDoubleBracket]", "12",
+      "\[RightDoubleBracket]"}]}], "]"}]}], "*)"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"Table", "[",
+  RowBox[{
+   RowBox[{"PlotAutomaton", "[",
+    RowBox[{
+     RowBox[{"DropSelfLoops", "[",
+      RowBox[{"ttauto7", "\[LeftDoubleBracket]",
+       RowBox[{"i", ",", "1"}], "\[RightDoubleBracket]"}], "]"}], ",",
+     RowBox[{"ImageSize", "\[Rule]", "Large"}]}], "]"}], ",",
+   RowBox[{"{",
+    RowBox[{"i", ",",
+     RowBox[{"Length", "[", "ttauto7", "]"}]}], "}"}]}], "]"}]], "Input"]
+}]]
+}]
+(* End of Notebook Content *)

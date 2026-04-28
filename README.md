@@ -12,13 +12,55 @@
 
 ### documentation
 
-There is currently no real documentation for *ttauto*.  See the [examples folder][8] for some basic examples.  The most complete program is [ttauto.cpp][9], an interactive program.  The programs are readily compiled with the [SCONS][10] build tool.
+There is currently no real documentation for *ttauto*.  See the [examples folder][8] for some basic examples.  The most complete program is [ttauto.cpp][9], an interactive program.
 
-The project targets C++17 by default.  For compatibility builds that avoid
-shared-pointer ownership in core train-track structures, you can compile with
-`-DTRAINTRACKS_NO_SHARED_PTR` (for example via `scons win32=1`).
+### build (cmake)
 
-To compile everything, invoke `scons` in the root folder.  To build only a subset, use `scons -u` in a subfolder (such as [examples][8]).
+The project targets C++17 by default and now builds with CMake.
+
+From the repository root:
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+```
+
+Default output behavior is in-place:
+
+- examples are written to `examples/`
+- test programs are written to `tests/`
+- the static library is written to `lib/`
+
+Both `examples/*.cpp` and `tests/*.cpp` are auto-discovered by CMake.  Adding a new `.cpp` file in either folder is enough for it to compile on the next build, with no CMake file edits required.
+
+### tests (ctest)
+
+A testsuite is provided under `testsuite/` and wired to CTest.
+
+From the repository root:
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+ctest --test-dir build --output-on-failure
+```
+
+Only `testsuite/**/*.cpp` programs are registered with `ctest`.
+Current organization aligns tests with headers/components (`testsuite/traintracks/`
+and `testsuite/ttauto/`).  The `tests/` folder remains available for ad-hoc
+feature programs and exploratory checks.
+
+See `testsuite/COVERAGE.md` for a header-to-test mapping.
+
+### build (legacy scons)
+
+SCons files are still present temporarily during migration:
+
+```bash
+scons
+```
+
+The CMake workflow above is the primary path.
 
 ### support
 

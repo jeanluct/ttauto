@@ -16,19 +16,23 @@
 - `extern/jlt/` - bundled dependency with its own build/tests and AGENTS file.
 - `extern/jlt/extern/CSparse/` - bundled CSparse source/build directory.
 
-## Build Commands (SCons)
+## Build Commands (CMake)
 
 - Build all:
-  - `scons`
+  - `cmake -S . -B build`
+  - `cmake --build build -j`
 - Clean:
-  - `scons -c`
+  - `rm -rf build`
 - Build one target quickly:
-  - `scons tests/test_traintrack`
-  - `scons examples/ttauto_min_example`
-- Optional modes:
-  - `scons profile=1`
-  - `scons static=1`
-  - `scons win32=1`
+  - `cmake --build build --target test_test_traintrack`
+  - `cmake --build build --target example_ttauto_min_example`
+
+Notes:
+
+- Example and test sources are auto-discovered from `examples/*.cpp` and
+  `tests/*.cpp`.
+- Built binaries are written in-place to `examples/` and `tests/`; the library
+  is written to `lib/`.
 
 ## Test Commands (Main Repo)
 
@@ -54,14 +58,14 @@ See `TESTING.md` for the project-maintained recommended matrix and timing notes.
 - If CSparse archive is missing, build it with CMake:
   - `cmake -S extern/jlt/extern/CSparse -B extern/jlt/extern/CSparse/build`
   - `cmake --build extern/jlt/extern/CSparse/build`
-- Current SCons links CSparse statically from:
-  - `extern/jlt/extern/CSparse/build/libcsparse.a`
+- Main repo CMake build links a static `csparse` target from:
+  - `extern/jlt/extern/CSparse/Source/*.c`
 - Runtime note: examples/tests should not require `libcsparse.so` at runtime.
 
 ## Build/Toolchain Facts
 
 - Default compiler flags include `-Wall -O3 -ffast-math`.
-- Current default language level in `SConstruct` is `-std=c++17` (for modern GCC branch).
+- Current default language level in `CMakeLists.txt` is C++17.
 - Keep changes portable with existing compatibility macros:
   - `TRAINTRACKS_NO_SHARED_PTR`
 
@@ -121,7 +125,7 @@ Avoid: large one-shot pointer-model conversions across `edge`/`multigon`/`traint
 
 - Header/lib logic change (`include/`, `lib/`): run at least one relevant test binary.
 - Mutation or graph-topology change: run all four core tests plus one example smoke test.
-- Build-system change: run full `scons` and at least one example executable.
+- Build-system change: run full `cmake --build build -j` and at least one example executable.
 - `extern/jlt` change: run its local CMake/CTest targets.
 
 ## Git and Workflow Expectations

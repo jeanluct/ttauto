@@ -1,5 +1,31 @@
 # How to test the ttauto code
 
+## Build first (CMake)
+
+From the repository root:
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+```
+
+This compiles:
+
+- all `examples/*.cpp` into `examples/`
+- all `tests/*.cpp` into `tests/`
+- all `testsuite/**/*.cpp` into `build/testsuite/`
+
+`ctest` runs only the deterministic tests in `testsuite/`.
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+The `tests/` folder remains available for direct-run feature and exploratory
+programs.
+
+For header/component coverage mapping, see `testsuite/COVERAGE.md`.
+
 ## Programs that can be used as tests but take a long time to run
 
 `examples/ttauto_count`   (2 minutes)

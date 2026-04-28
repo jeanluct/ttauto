@@ -39,7 +39,7 @@ candidate follow-ups.
 
 ## Build and toolchain
 
-- Keep SCons C++ baseline at C++17 unless a compatibility target requires less.
+- Keep CMake C++ baseline at C++17 unless a compatibility target requires less.
 
 - If cross-platform support is active, verify static CSparse linking behavior on
   non-Linux toolchains and document any differences.

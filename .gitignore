@@ -5,6 +5,9 @@ lib/libttauto.a
 # SCons build database
 .sconsign.dblite
 
+# CMake build directories and metadata
+build/
+
 # Example executables
 examples/ttauto
 examples/ttauto_count

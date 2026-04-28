@@ -7,7 +7,7 @@ This file tracks build/runtime feature macros used in the main `ttauto` codebase
 
 - `TRAINTRACKS_NO_SHARED_PTR`
   - Default: **not defined**
-  - Enabled when: `scons win32=1` (set in `SConstruct`)
+  - Enabled when: compile with `-DTRAINTRACKS_NO_SHARED_PTR`
   - Effect: switches core pointer aliases from shared pointers to raw pointers in
     compatibility paths.
   - Status: **supported compatibility mode** (kept intentionally for portability).
@@ -38,30 +38,31 @@ This file tracks build/runtime feature macros used in the main `ttauto` codebase
 
 ## How to test non-default macro builds
 
-Yes - this is easy to test with `scons` by passing `CPPFLAGS`.
+Yes - this is easy to test with CMake by configuring a dedicated build directory
+with `CMAKE_CXX_FLAGS` defines.
 
 Examples:
 
 ```bash
 # raw-pointer compatibility path
-scons -c tests/test_traintrack
-scons CPPFLAGS='-DTRAINTRACKS_NO_SHARED_PTR' tests/test_traintrack
+cmake -S . -B build-macro-nosptr -DCMAKE_CXX_FLAGS='-DTRAINTRACKS_NO_SHARED_PTR'
+cmake --build build-macro-nosptr --target test_test_traintrack -j
 
 # optional symmetric norm checks in automaton layer
-scons -c tests/test_badwords
-scons CPPFLAGS='-DTTAUTO_CHECK_SYMMETRIC_NORM' tests/test_badwords
+cmake -S . -B build-macro-symnorm -DCMAKE_CXX_FLAGS='-DTTAUTO_CHECK_SYMMETRIC_NORM'
+cmake --build build-macro-symnorm --target test_test_badwords -j
 
 # optional Fortran-enabled path (compile-time check)
-scons -c tests/test_badwords
-scons CPPFLAGS='-DTTAUTO_USE_FORTRAN' tests/test_badwords
+cmake -S . -B build-macro-fortran -DCMAKE_CXX_FLAGS='-DTTAUTO_USE_FORTRAN'
+cmake --build build-macro-fortran --target test_test_badwords -j
 ```
 
 Notes:
 
-- Prefer `CPPFLAGS` for preprocessor defines; overriding `CXXFLAGS` can accidentally
-  replace required default flags.
+- Prefer dedicated build directories per macro mode to avoid stale-object reuse
+  across incompatible macro settings.
 - Build one or a few representative targets per macro mode for quick checks,
-  then scale to full `scons` if needed.
+  then scale to full `cmake --build <dir> -j` if needed.
 
 ## Fixed preprocessor toggles (`#if 0` / `#if 1`) and removal rationale
 
