@@ -1,4 +1,4 @@
-(* Content-type: application/mathematica *)
+(* Content-type: application/vnd.wolfram.mathematica *)
 
 (* Beginning of Notebook Content *)
 Notebook[{
@@ -23,23 +23,60 @@ Cell[CellGroupData[{
 
 Cell["Bad pA", "Subsection"],
 
+Cell["Load first invariant component of traintrack automaton:", "Text"],
+
 Cell[BoxData[
  RowBox[{
   RowBox[{"tt", "=",
    RowBox[{"First", "[",
     RowBox[{"<<", "\"\<n=6_5_bad_tt_data.m\>\""}], "]"}]}], ";"}]], "Input"],
 
-Cell[CellGroupData[{
+Cell["\<\
+Load the ten pA candidates up to length 7 found in the automaton:\
+\>", "Text"],
 
 Cell[BoxData[
- RowBox[{"path", "=",
-  RowBox[{"{",
-   RowBox[{
-   "29", ",", "46", ",", "43", ",", "71", ",", "88", ",", "85", ",", "29"}],
-   "}"}]}]], "Input"]
-}]],
+ RowBox[{
+  RowBox[{"pAcands", "=",
+   RowBox[{"<<", "\"\<pA_n=6_5_1_inv.m\>\""}]}], ";"}]], "Input"],
 
-Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{"Length", "[", "pAcands", "]"}]], "Input"],
+
+Cell["Check dilatations:", "Text"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"FindRoot", "[",
+    RowBox[{"#", ",",
+     RowBox[{"{",
+      RowBox[{"x", ",", "5"}], "}"}]}], "]"}], "&"}], "/@",
+  RowBox[{"(",
+   RowBox[{"polynomial", "/.", "pAcands"}], ")"}]}]], "Input"],
+
+Cell["The \"bad pA\" is the second one:", "Text"],
+
+Cell[BoxData[
+ RowBox[{"pAcands", "\[LeftDoubleBracket]", "2",
+  "\[RightDoubleBracket]"}]], "Input"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"path", "=",
+   RowBox[{
+    RowBox[{"(",
+     RowBox[{"pathlist", "/.",
+      RowBox[{
+      "pAcands", "\[LeftDoubleBracket]", "2", "\[RightDoubleBracket]"}]}],
+     ")"}], "\[LeftDoubleBracket]",
+    RowBox[{"1", ",", "1"}], "\[RightDoubleBracket]"}]}], ";"}], "\[IndentingNewLine]",
+ RowBox[{"path", " ", "=",
+  RowBox[{"path", "+", "1", " ",
+   RowBox[{"(*",
+    RowBox[{"1", "-",
+     RowBox[{"indexed", " ", "for", " ", "Mathematica"}]}],
+    "*)"}]}]}]}], "Input"],
 
 Cell[BoxData[
  RowBox[{
@@ -47,8 +84,7 @@ Cell[BoxData[
    RowBox[{"PlotTrainTrack", "[",
     RowBox[{"tt", "\[LeftDoubleBracket]",
      RowBox[{"1", ",", "#", ",", "2"}], "\[RightDoubleBracket]"}], "]"}],
-   "&"}], "/@", "path"}]], "Input"]
-}]],
+   "&"}], "/@", "path"}]], "Input"],
 
 Cell[BoxData[
  RowBox[{"Grid", "[",
