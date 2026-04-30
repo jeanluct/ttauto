@@ -14,6 +14,7 @@ examples/ttauto_count
 examples/ttauto_labels
 examples/ttauto_min_example
 examples/ttauto_torus
+examples/ttplot
 
 # Test executables
 tests/test_badwords
