@@ -340,6 +340,11 @@ traintrack::intVec traintrack::coding(const int dir) const
 
 traintrack::intVec traintrack::canonical_coding(const int dir) const
 {
+  return canonical_coding_min_over_monogons(dir);
+}
+
+traintrack::intVec traintrack::canonical_coding_min_over_monogons(const int dir) const
+{
   int mono = 0;
   intVec codemin = canonical_coding_from_monogon(mono,dir);
 

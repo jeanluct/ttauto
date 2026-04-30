@@ -304,9 +304,6 @@ private:
   // Compute an index of for a multigon prong.
   int multigon_prong_index(const int mi, const int pi) const;
 
-  // Do two normalised tracks have the same multigons?
-  bool same_multigons(const traintrack& tt) const;
-
   // Recursively reconstruct a track from coding blocks.
   void recursive_build(edgep& ee, intVec::const_iterator& cd);
 
@@ -336,6 +333,9 @@ private:
 
   // Canonical coding traversal with first-visit prong anchoring.
   intVec canonical_coding_from_monogon(const int mono, const int dir = 1) const;
+
+  // Minimise canonical coding over all uncusped starting monogons.
+  intVec canonical_coding_min_over_monogons(const int dir = 1) const;
 
   // Recursively emit canonical coding blocks while fixing each multigon's
   // prong-0 anchor at its first traversal entry.
@@ -489,25 +489,7 @@ inline int traintrack::cusps() const
 // Use coding to decide equality.
 inline bool traintrack::operator==(const traintrack& tt) const
 {
-  // A minimum requirement is to have the same multigon structure,
-  // with the same number of edges hooked to each prongs.
-  if (!same_multigons(tt)) return false;
-
   return (canonical_coding() == tt.canonical_coding());
-}
-
-// Compare two train tracks on the basis of multigons only.
-// Both tracks must be normalised.
-inline bool traintrack::same_multigons(const traintrack& tt) const
-{
-  if (edges() != tt.edges() || multigons() != tt.multigons()) return false;
-
-  for (int m = 0; m < multigons(); ++m)
-    {
-      if (*mgv[m] != *tt.mgv[m]) return false;
-    }
-
-  return true;
 }
 
 // Put into normal form.

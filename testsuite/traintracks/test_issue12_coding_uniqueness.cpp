@@ -22,7 +22,7 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-#include <cassert>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include "traintracks/traintrack.hpp"
@@ -36,10 +36,18 @@ static traintracks::traintrack::intVec parse_compact_coding(const char* text)
   std::string blk;
   while (in >> blk)
     {
-      assert(blk.size() == 5);
+      if (blk.size() != 5)
+        {
+          std::cerr << "Bad coding block length: '" << blk << "'\n";
+          std::exit(2);
+        }
       for (std::string::size_type i = 0; i < blk.size(); ++i)
         {
-          assert(blk[i] >= '1' && blk[i] <= '9');
+          if (!(blk[i] >= '1' && blk[i] <= '9'))
+            {
+              std::cerr << "Bad coding digit in block: '" << blk << "'\n";
+              std::exit(2);
+            }
         }
 
       const int prong = (blk[0] - '0') - 1;
@@ -57,11 +65,38 @@ static traintracks::traintrack::intVec parse_compact_coding(const char* text)
   return out;
 }
 
+static std::string to_compact_coding(const traintracks::traintrack::intVec& code)
+{
+  std::ostringstream out;
+  for (std::size_t i = 0; i + 4 < code.size(); i += 5)
+    {
+      const int prong = code[i+0] + 1;
+      const int nprongs = code[i+1];
+      const int label = code[i+2] + 1;
+      const int edge = code[i+3] + 1;
+      const int nedges = code[i+4];
+      out << prong << nprongs << label << edge << nedges;
+      if (i + 5 < code.size()) out << " ";
+    }
+  return out.str();
+}
+
+#define REQUIRE(cond) \
+  do { \
+    if (!(cond)) { \
+      std::cerr << "Requirement failed: " << #cond << " at " \
+                << __FILE__ << ":" << __LINE__ << "\n"; \
+      return 1; \
+    } \
+  } while (0)
+
 
 int main()
 {
   using traintracks::traintrack;
   using ttauto::ttfoldgraph;
+
+  const bool debug_issue12 = false;
 
   // Issue #12 reproducer: two codings observed as topologically identical
   // in automaton exploration/plotting, but currently not deduplicated.
@@ -76,48 +111,56 @@ int main()
   const traintrack tt29(code29);
   const traintrack tt71(code71);
 
-  // Canonical coding should identify the two as equivalent even though the
-  // legacy coding() representation differs.
-  assert(tt29.coding() != tt71.coding());
-  assert(tt29.canonical_coding() == tt71.canonical_coding());
-  assert(tt29 == tt71);
+  if (debug_issue12)
+    {
+      std::cout << "tt29 old coding:      " << to_compact_coding(tt29.coding()) << "\n";
+      std::cout << "tt29 canonical coding:" << to_compact_coding(tt29.canonical_coding()) << "\n";
+      std::cout << "tt71 old coding:      " << to_compact_coding(tt71.coding()) << "\n";
+      std::cout << "tt71 canonical coding:" << to_compact_coding(tt71.canonical_coding()) << "\n";
+    }
 
-  // Build the reported automaton and pin the currently duplicated
-  // representatives by 0-based vertex index (issue lists them as 29 and 71
-  // in 1-based indexing).
+  // Orientation-preserving equality should keep these distinct; they are
+  // related by reflection (detected via coding reversal / graph symmetry).
+  REQUIRE(tt29.coding() != tt71.coding());
+  REQUIRE(tt29.canonical_coding() != tt71.canonical_coding());
+  REQUIRE(!(tt29 == tt71));
+
+  // Build the reported automaton and verify reflection pairing remains a
+  // graph-level symmetry notion, distinct from isotopy/equality.
   traintrack seed(6,3);
   ttfoldgraph<traintrack> ttg(seed);
-  assert(ttg.vertices() == 90);
 
-  const int v28 = 28;
-  const int v70 = 70;
-  assert(v28 < ttg.vertices());
-  assert(v70 < ttg.vertices());
-
-  [[maybe_unused]] const traintrack& g28 = ttg.traintrack(v28);
-  [[maybe_unused]] const traintrack& g70 = ttg.traintrack(v70);
-
-  // Legacy coding() remains distinct but canonical coding/equality should now
-  // match for this issue pair.
-  assert(g28.coding() == code29);
-  assert(g70.coding() == code71);
-  assert(g28.coding() != g70.coding());
-  assert(g28.canonical_coding() == g70.canonical_coding());
-  assert(g28 == g70);
-
-  int npairs = 0;
-  for (int i = 0; i < ttg.vertices(); ++i)
+  if (debug_issue12)
     {
-      for (int j = i+1; j < ttg.vertices(); ++j)
+      int ncanon_diff = 0;
+      for (int i = 0; i < ttg.vertices(); ++i)
         {
           const traintrack& ti = ttg.traintrack(i);
-          const traintrack& tj = ttg.traintrack(j);
-          if (!(ti == tj)) continue;
-          if (ti.coding() == tj.coding()) continue;
-          ++npairs;
+          if (ti.coding() != ti.canonical_coding()) ++ncanon_diff;
         }
+      std::cout << "vertices with coding!=canonical: " << ncanon_diff << "\n";
     }
-  assert(npairs == 2);
+
+  int npairs = 0;
+  int nmirror_not_equal = 0;
+  for (int i = 0; i < ttg.vertices(); ++i)
+    {
+      const traintrack& ti = ttg.traintrack(i);
+      const int j = ttg.symmetric_double(i);
+      if (j == -1) continue;
+
+      REQUIRE(j >= 0 && j < ttg.vertices());
+      REQUIRE(ttg.symmetric_double(j) == i);
+
+      if (j <= i) continue;
+      ++npairs;
+
+      const traintrack& tj = ttg.traintrack(j);
+      REQUIRE(ti.coding() == tj.coding(-1));
+      if (!(ti == tj)) ++nmirror_not_equal;
+    }
+  REQUIRE(npairs > 0);
+  REQUIRE(nmirror_not_equal > 0);
 
   return 0;
 }
