@@ -26,7 +26,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
-#include <limits>
 #include <vector>
 #include "traintracks/graph_iso.hpp"
 #include "traintracks/traintrack.hpp"
@@ -290,7 +289,28 @@ struct iso_search
 
 struct witness_search
 {
+  struct mg_sig
+  {
+    int prongs;
+    int punct;
+    int label;
+
+    bool operator==(const mg_sig& o) const
+    {
+      return (prongs == o.prongs && punct == o.punct && label == o.label);
+    }
+
+    bool operator<(const mg_sig& o) const
+    {
+      if (prongs != o.prongs) return prongs < o.prongs;
+      if (punct != o.punct) return punct < o.punct;
+      return label < o.label;
+    }
+  };
+
   const traintrack& t;
+  std::vector<mg_sig> sig_by_m;
+  std::vector<mg_sig> sorted_sigs;
   std::vector<int> order;
   std::vector<int> used;
   std::vector<int> shift;
@@ -301,19 +321,20 @@ struct witness_search
   bool have_best;
 
   witness_search(const traintrack& tt)
-    : t(tt), order(tt.multigons(),-1), used(tt.multigons(),0),
+    : t(tt), sig_by_m(tt.multigons()), sorted_sigs(tt.multigons()),
+      order(tt.multigons(),-1), used(tt.multigons(),0),
       shift(tt.multigons(),0), have_best(false) {}
 
-  int choose_next_slot() const
+  void init_signatures()
   {
-    int best = -1;
     for (int m = 0; m < t.multigons(); ++m)
       {
-        if (order[m] >= 0) continue;
-        if (best < 0) { best = m; continue; }
-        if (t.Multigon(m).prongs() > t.Multigon(best).prongs()) best = m;
+        sig_by_m[m] = mg_sig{t.Multigon(m).prongs(),
+                             t.Multigon(m).punctured() ? 1 : 0,
+                             t.Multigon(m).label()};
+        sorted_sigs[m] = sig_by_m[m];
       }
-    return best;
+    std::sort(sorted_sigs.begin(),sorted_sigs.end());
   }
 
   std::vector<int> build_certificate() const
@@ -321,11 +342,17 @@ struct witness_search
     std::vector<int> cert;
     cert.reserve(4*t.multigons() + 8*t.edges());
 
+    std::vector<mg_sig> sig_at_slot(t.multigons());
     for (int m = 0; m < t.multigons(); ++m)
       {
-        cert.push_back(t.Multigon(m).prongs());
-        cert.push_back(t.Multigon(m).punctured() ? 1 : 0);
-        cert.push_back(t.Multigon(m).label());
+        sig_at_slot[order[m]] = sig_by_m[m];
+      }
+
+    for (int s = 0; s < t.multigons(); ++s)
+      {
+        cert.push_back(sig_at_slot[s].prongs);
+        cert.push_back(sig_at_slot[s].punct);
+        cert.push_back(sig_at_slot[s].label);
       }
 
     endpoint_count_map cnt = collect_branch_endpoints(t);
@@ -369,26 +396,29 @@ struct witness_search
       }
   }
 
-  void rec()
+  void rec(const int slot)
   {
-    int m = choose_next_slot();
-    if (m < 0)
+    if (slot >= t.multigons())
       {
         maybe_record_best();
         return;
       }
 
-    const multigon& mm = t.Multigon(m);
-    for (int slot = 0; slot < t.multigons(); ++slot)
+    const mg_sig& req = sorted_sigs[slot];
+
+    for (int m = 0; m < t.multigons(); ++m)
       {
-        if (used[slot]) continue;
-        used[slot] = 1;
+        if (used[m]) continue;
+        if (!(sig_by_m[m] == req)) continue;
+
+        used[m] = 1;
         order[m] = slot;
 
+        const multigon& mm = t.Multigon(m);
         const int k = mm.prongs();
         if (k <= 0)
           {
-            used[slot] = 0;
+            used[m] = 0;
             order[m] = -1;
             continue;
           }
@@ -396,10 +426,10 @@ struct witness_search
         for (int s = 0; s < k; ++s)
           {
             shift[m] = s;
-            rec();
+            rec(slot+1);
           }
 
-        used[slot] = 0;
+        used[m] = 0;
         order[m] = -1;
       }
   }
@@ -420,7 +450,8 @@ bool is_isotopic_oriented(const traintrack& lhs, const traintrack& rhs)
 graph_iso::canonical_witness canonical_witness_oriented(const traintrack& tt)
 {
   witness_search ws(tt);
-  ws.rec();
+  ws.init_signatures();
+  ws.rec(0);
 
   graph_iso::canonical_witness w;
   w.valid = ws.have_best;
