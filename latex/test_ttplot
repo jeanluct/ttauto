@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OUTDIR="ttplot_path"
+MASTER="test_ttplot_all.tex"
+MANIFEST="$OUTDIR/manifest.txt"
+FIG_SCALE="0.7"
+
+mkdir -p "$OUTDIR"
+: > "$MANIFEST"
+
+render_case() {
+  local label="$1"
+  local coding="$2"
+  local idx="$3"
+  local snip="$OUTDIR/traintrack_${idx}.tex"
+
+  ../examples/ttplot \
+    --snippet \
+    --no-punctures \
+    --coding "$coding" \
+    --output "$snip" \
+    --relax-iters 300 \
+    --labels folds,multigons,edges
+
+  printf '%s|%s\n' "$label" "$snip" >> "$MANIFEST"
+}
+
+idx=0
+labels=(29 46 43 71 88 85)
+codings=(
+  "11111 11113 11123 13111 23111 11111 33111 11111 11133 13111 23111 11111 33111 11111"
+  "11111 13111 23111 11111 33111 11122 11112 11112 11122 13111 23111 11111 33111 11111"
+  "11111 13111 23111 11111 33111 11122 11112 13112 13122 11111 23111 11111 33111 11111"
+  "11111 11133 11113 13111 23111 11111 33111 11111 11123 13111 23111 11111 33111 11111"
+  "11111 13111 23111 11111 33111 11112 11122 11122 11112 13111 23111 11111 33111 11111"
+  "11111 13111 23111 11111 33111 11112 11122 13122 23111 11111 33111 11111 13112 11111"
+)
+
+if [[ "${#labels[@]}" -ne "${#codings[@]}" ]]; then
+  echo "labels/codings length mismatch" >&2
+  exit 1
+fi
+
+for i in "${!codings[@]}"; do
+  idx=$((idx+1))
+  render_case "${labels[$i]}" "${codings[$i]}" "$idx"
+done
+
+if [[ "$idx" -eq 0 ]]; then
+  echo "No CODING entries were parsed; check test_ttplot formatting." >&2
+  exit 1
+fi
+
+{
+  cat <<'EOF'
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\begin{document}
+%\section*{Train-track path}
+EOF
+
+  n=0
+  while IFS='|' read -r label snip; do
+    if (( n % 6 == 0 )); then
+      cat <<'EOF'
+\begin{figure}[p]
+\centering
+EOF
+    fi
+
+    cat <<EOF
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\scalebox{$FIG_SCALE}{\input{$snip}}
+\caption*{Train track $label}
+\end{subfigure}
+EOF
+
+    if (( n % 2 == 0 )); then
+      cat <<'EOF'
+\hfill
+EOF
+    else
+      cat <<'EOF'
+\\[0.8em]
+EOF
+    fi
+
+    n=$((n+1))
+    if (( n % 6 == 0 )); then
+      cat <<'EOF'
+\end{figure}
+EOF
+    fi
+  done < "$MANIFEST"
+
+  if (( n % 6 != 0 )); then
+    cat <<'EOF'
+\end{figure}
+EOF
+  fi
+
+  cat <<'EOF'
+\end{document}
+EOF
+} > "$MASTER"
+
+pdflatex -interaction=nonstopmode -halt-on-error "$MASTER"
+
+echo "Wrote $MASTER"
+echo "Compiled ${MASTER%.tex}.pdf"

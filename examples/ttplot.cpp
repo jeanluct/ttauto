@@ -59,6 +59,16 @@ struct edge_record
   int id;
 };
 
+struct cusp_record
+{
+  int m;
+  int p;
+  int e;
+  int cusp_index;
+  int fold_cw;
+  int fold_ccw;
+};
+
 struct options
 {
   std::string coding;
@@ -66,10 +76,16 @@ struct options
   std::string output_file = "ttplot.tex";
   std::string labels = "none";
   bool snippet = false;
+  bool plot_punctures = true;
+  std::string first_monogon_fill = "gray!12";
   double scale = 1.0;
   double curvature = 1.3;
   double slot_spacing = 0.18;
   double label_offset = 0.22;
+  std::string label_font = "tiny";
+  double fold_label_sep = 0.60;
+  double fold_tangent_scale = 3.00;
+  double multigon_label_inset = 0.24;
   double edge_waviness = 0.30;
   int relax_iters = 180;
   double relax_step = 0.07;
@@ -136,6 +152,11 @@ vec2 unit_or_default(const vec2& v, const vec2& dv)
   const double n = norm(v);
   if (n <= 1e-12) return dv;
   return mul(v,1.0/n);
+}
+
+double branch_tangent_length(const options& opt, const double slot_offset)
+{
+  return opt.curvature + opt.edge_waviness*std::fabs(slot_offset);
 }
 
 double local_theta_from_pref(const prong_pref_data& pd, const int sign)
@@ -271,6 +292,202 @@ void relax_centers(std::vector<vec2>& ctr,
     }
 }
 
+std::vector<prong_pref_data>
+compute_prong_preferences(const traintrack& tt,
+                         const std::vector<edge_record>& edges,
+                         const std::vector<vec2>& ctr)
+{
+  std::vector<prong_pref_data> pref_data(tt.multigons());
+  for (int m = 0; m < tt.multigons(); ++m)
+    {
+      const multigon& mm = tt.Multigon(m);
+      const int k = mm.prongs();
+      pref_data[m].k = k;
+      pref_data[m].pref.assign(k,0.0);
+      pref_data[m].has_pref.assign(k,false);
+      for (int p = 0; p < k; ++p)
+        {
+          vec2 accum = {0.0,0.0};
+          for (const edge_record& er : edges)
+            {
+              if (er.a.m == m && er.a.p == p)
+                {
+                  vec2 v = sub(ctr[er.b.m],ctr[m]);
+                  accum = add(accum,normalize_or_zero(v));
+                }
+              if (er.b.m == m && er.b.p == p)
+                {
+                  vec2 v = sub(ctr[er.a.m],ctr[m]);
+                  accum = add(accum,normalize_or_zero(v));
+                }
+            }
+
+          if (norm(accum) > 1e-12)
+            {
+              pref_data[m].pref[p] = std::atan2(accum.y,accum.x);
+              pref_data[m].has_pref[p] = true;
+            }
+        }
+    }
+  return pref_data;
+}
+
+std::vector<std::vector<double> >
+compute_prong_angles(const std::vector<prong_pref_data>& pref_data,
+                     const std::vector<edge_record>& edges,
+                     const std::vector<vec2>& ctr,
+                     const double prong_radius)
+{
+  const int M = pref_data.size();
+  std::vector<int> prong_sign(M,1);
+  std::vector<double> prong_theta(M,0.0);
+  std::vector<std::vector<double> > prong_angle(M);
+
+  for (int m = 0; m < M; ++m)
+    {
+      const prong_pref_data& pd = pref_data[m];
+      const double tpos = local_theta_from_pref(pd, 1);
+      const double tneg = local_theta_from_pref(pd,-1);
+      const double epos = local_fit_error(pd, 1, tpos);
+      const double eneg = local_fit_error(pd,-1, tneg);
+      if (eneg < epos)
+        {
+          prong_sign[m] = -1;
+          prong_theta[m] = tneg;
+        }
+      else
+        {
+          prong_sign[m] = 1;
+          prong_theta[m] = tpos;
+        }
+
+      prong_angle[m].assign(pd.k,0.0);
+      for (int p = 0; p < pd.k; ++p)
+        {
+          prong_angle[m][p] = prong_theta[m] + prong_sign[m]*2.0*pi()*p/pd.k;
+        }
+    }
+
+  int best_score = crossing_score(edges,ctr,prong_angle,prong_radius);
+  for (int pass = 0; pass < 3; ++pass)
+    {
+      bool improved = false;
+      for (int m = 0; m < M; ++m)
+        {
+          if (pref_data[m].k <= 1) continue;
+
+          const int old_sign = prong_sign[m];
+          const double old_theta = prong_theta[m];
+          const std::vector<double> old_angles = prong_angle[m];
+
+          prong_sign[m] = -old_sign;
+          prong_theta[m] = local_theta_from_pref(pref_data[m],prong_sign[m]);
+          for (int p = 0; p < pref_data[m].k; ++p)
+            {
+              prong_angle[m][p] = prong_theta[m] + prong_sign[m]*2.0*pi()*p/pref_data[m].k;
+            }
+
+          const int trial_score = crossing_score(edges,ctr,prong_angle,prong_radius);
+          if (trial_score < best_score)
+            {
+              best_score = trial_score;
+              improved = true;
+            }
+          else
+            {
+              prong_sign[m] = old_sign;
+              prong_theta[m] = old_theta;
+              prong_angle[m] = old_angles;
+            }
+        }
+      if (!improved) break;
+    }
+
+  return prong_angle;
+}
+
+bool all_multigon_labels_equal(const traintrack& tt)
+{
+  if (tt.multigons() <= 1) return true;
+  const int l0 = tt.Multigon(0).label();
+  for (int m = 1; m < tt.multigons(); ++m)
+    {
+      if (tt.Multigon(m).label() != l0) return false;
+    }
+  return true;
+}
+
+std::vector<std::vector<double> >
+compute_prong_side_tangents(const traintrack& tt,
+                            const std::vector<edge_record>& edges,
+                            const options& opt)
+{
+  std::vector<std::vector<double> > prong_side_tangent(tt.multigons());
+  std::vector<std::vector<double> > tangent_sum(tt.multigons());
+  std::vector<std::vector<int> > tangent_count(tt.multigons());
+
+  for (int m = 0; m < tt.multigons(); ++m)
+    {
+      const int k = tt.Multigon(m).prongs();
+      prong_side_tangent[m].assign(k,opt.curvature);
+      tangent_sum[m].assign(k,0.0);
+      tangent_count[m].assign(k,0);
+    }
+
+  for (const edge_record& er : edges)
+    {
+      const multigon& ma = tt.Multigon(er.a.m);
+      const multigon& mb = tt.Multigon(er.b.m);
+      const double sa = (er.a.e - 0.5*(ma.edges(er.a.p)-1))*opt.slot_spacing;
+      const double sb = (er.b.e - 0.5*(mb.edges(er.b.p)-1))*opt.slot_spacing;
+      const double ka = branch_tangent_length(opt,sa);
+      const double kb = branch_tangent_length(opt,sb);
+
+      tangent_sum[er.a.m][er.a.p] += ka;
+      tangent_count[er.a.m][er.a.p] += 1;
+      tangent_sum[er.b.m][er.b.p] += kb;
+      tangent_count[er.b.m][er.b.p] += 1;
+    }
+
+  for (int m = 0; m < tt.multigons(); ++m)
+    {
+      for (int p = 0; p < (int)prong_side_tangent[m].size(); ++p)
+        {
+          if (tangent_count[m][p] == 0) continue;
+          const double avgk = tangent_sum[m][p]/tangent_count[m][p];
+          prong_side_tangent[m][p] = std::min(0.42,std::max(0.16,0.08 + 0.18*avgk));
+        }
+    }
+
+  return prong_side_tangent;
+}
+
+std::vector<cusp_record> enumerate_cusps(const traintrack& tt)
+{
+  std::vector<cusp_record> out;
+  int cusp = 0;
+  for (int m = 0; m < tt.multigons(); ++m)
+    {
+      const multigon& mm = tt.Multigon(m);
+      for (int p = 0; p < mm.prongs(); ++p)
+        {
+          for (int e = 0; e < mm.edges(p)-1; ++e)
+            {
+              cusp_record c;
+              c.m = m;
+              c.p = p;
+              c.e = e;
+              c.cusp_index = cusp;
+              c.fold_cw = 2*cusp;
+              c.fold_ccw = 2*cusp + 1;
+              out.push_back(c);
+              ++cusp;
+            }
+        }
+    }
+  return out;
+}
+
 std::string fmt(const vec2& p)
 {
   std::ostringstream s;
@@ -286,15 +503,21 @@ void usage(std::ostream& out)
     << "Plot a train track from coding and write TikZ output.\n"
     << "\n"
     << "Options:\n"
-    << "  --coding \"...\"       Coding string (compact or integer-list form)\n"
+    << "  --coding \"...\"        Coding string (compact or integer-list form)\n"
     << "  --coding-file FILE    Read coding string from file\n"
     << "  --output FILE         Output file (default: ttplot.tex)\n"
     << "  --snippet             Emit TikZ picture only (no standalone preamble)\n"
-    << "  --labels MODE         Label mode: none|multigons|prongs|edges|all\n"
+    << "  --no-punctures        Do not draw puncture dots\n"
+    << "  --first-monogon-fill COLOR  Fill first monogon with TikZ color (default: gray!12, use none to disable)\n"
+    << "  --labels MODE         Label mode: none|multigons|prongs|edges|folds|all or comma list\n"
     << "  --scale X             Global scale (default: 1.0)\n"
     << "  --curvature X         Bezier control strength (default: 1.3)\n"
     << "  --slot-spacing X      Tangential fanout spacing (default: 0.18)\n"
     << "  --label-offset X      Label offset from geometry (default: 0.22)\n"
+    << "  --label-font NAME     Label font: tiny|scriptsize|footnotesize|small|normalsize (default: tiny)\n"
+    << "  --fold-label-sep X    Fold-label distance from cusp (default: 0.60)\n"
+    << "  --fold-tangent-scale X  Tangential spread between fold labels (default: 3.00)\n"
+    << "  --multigon-label-inset X  Inset of multigon labels from boundary (default: 0.24)\n"
     << "  --edge-waviness X     Extra bend from multi-edge fanout (default: 0.30)\n"
     << "  --relax-iters N       Layout relaxation iterations (default: 180)\n"
     << "  --relax-step X        Layout relaxation step (default: 0.07)\n"
@@ -338,6 +561,15 @@ bool parse_args(const int argc, char** argv, options& opt)
         {
           opt.snippet = true;
         }
+      else if (a == "--no-punctures")
+        {
+          opt.plot_punctures = false;
+        }
+      else if (a == "--first-monogon-fill" && i+1 < argc)
+        {
+          opt.first_monogon_fill = argv[++i];
+          if (opt.first_monogon_fill == "none") opt.first_monogon_fill.clear();
+        }
       else if (a == "--scale" && i+1 < argc)
         {
           opt.scale = std::atof(argv[++i]);
@@ -353,6 +585,22 @@ bool parse_args(const int argc, char** argv, options& opt)
       else if (a == "--label-offset" && i+1 < argc)
         {
           opt.label_offset = std::atof(argv[++i]);
+        }
+      else if (a == "--label-font" && i+1 < argc)
+        {
+          opt.label_font = argv[++i];
+        }
+      else if (a == "--fold-label-sep" && i+1 < argc)
+        {
+          opt.fold_label_sep = std::atof(argv[++i]);
+        }
+      else if (a == "--fold-tangent-scale" && i+1 < argc)
+        {
+          opt.fold_tangent_scale = std::atof(argv[++i]);
+        }
+      else if (a == "--multigon-label-inset" && i+1 < argc)
+        {
+          opt.multigon_label_inset = std::atof(argv[++i]);
         }
       else if (a == "--edge-waviness" && i+1 < argc)
         {
@@ -616,7 +864,62 @@ std::vector<edge_record> enumerate_edges(const traintrack& tt)
 
 bool want_label(const std::string& mode, const std::string& which)
 {
-  return mode == "all" || mode == which;
+  if (mode == "all") return true;
+
+  std::string tokens = mode;
+  for (size_t i = 0; i < tokens.size(); ++i)
+    {
+      if (tokens[i] == ',' || tokens[i] == ';' || tokens[i] == '|') tokens[i] = ' ';
+    }
+
+  std::istringstream in(tokens);
+  std::string tok;
+  while (in >> tok)
+    {
+      if (tok == which) return true;
+    }
+  return false;
+}
+
+bool want_fold_labels(const std::string& mode)
+{
+  if (want_label(mode,"folds") || want_label(mode,"cusps")) return true;
+  return false;
+}
+
+std::string tikz_font_command(const std::string& font)
+{
+  if (font.empty()) return "\\tiny";
+  std::string f = font;
+  if (f[0] == '\\') f = f.substr(1);
+
+  if (f == "tiny") return "\\tiny";
+  if (f == "scriptsize") return "\\scriptsize";
+  if (f == "footnotesize") return "\\footnotesize";
+  if (f == "small") return "\\small";
+  if (f == "normalsize") return "\\normalsize";
+  return "\\tiny";
+}
+
+vec2 multigon_label_position(const std::vector<vec2>& ctr,
+                             const std::vector<std::vector<double> >& prong_angle,
+                             const int m,
+                             const double prong_radius,
+                             const double monogon_depth,
+                             const double multigon_label_inset,
+                             const double label_offset,
+                             const int k)
+{
+  (void)prong_radius;
+  (void)multigon_label_inset;
+  (void)label_offset;
+  if (k <= 1)
+    {
+      const vec2 d = dir_from_angle(prong_angle[m][0]);
+      const vec2 punct = add(ctr[m],mul(d,-0.62*monogon_depth));
+      return add(punct,mul(d,-0.06*monogon_depth));
+    }
+  return ctr[m];
 }
 
 } // namespace
@@ -628,10 +931,13 @@ int main(int argc, char** argv)
 
   if (opt.scale <= 0 || opt.curvature <= 0 || opt.slot_spacing <= 0 ||
       opt.label_offset < 0 || opt.edge_waviness < 0 ||
+      opt.fold_label_sep < 0 || opt.fold_tangent_scale <= 0 ||
+      opt.multigon_label_inset < 0 ||
       opt.relax_iters < 0 || opt.relax_step <= 0)
     {
       std::cerr << "Scale/curvature/slot-spacing/relax-step must be positive;"
-                << " label offset, edge-waviness, and relax-iters must be nonnegative.\n";
+                << " label offset, edge-waviness, fold-label-sep, multigon-label-inset,"
+                << " and relax-iters must be nonnegative; fold-tangent-scale must be positive.\n";
       return 1;
     }
 
@@ -651,11 +957,22 @@ int main(int argc, char** argv)
 
   const traintrack& ctt = tt;
   const int M = ctt.multigons();
+  int first_monogon = -1;
+  for (int m = 0; m < M; ++m)
+    {
+      if (ctt.Multigon(m).prongs() == 1)
+        {
+          first_monogon = m;
+          break;
+        }
+    }
   const double center_radius = std::max(2.5, 1.0 + 0.9*M);
   const double prong_radius = 0.45;
   const double monogon_depth = 0.90;
   const double monogon_tail_tangent = 0.55;
   const double trigon_side_tangent_scale = 0.78;
+  const double puncture_radius = 0.040;
+  const double prong_label_base_offset = 0.04;
 
   std::vector<vec2> ctr(M);
   for (int m = 0; m < M; ++m)
@@ -666,153 +983,13 @@ int main(int argc, char** argv)
 
   relax_centers(ctr,edges,opt);
 
-  std::vector<prong_pref_data> pref_data(M);
-  for (int m = 0; m < M; ++m)
-    {
-      const multigon& mm = ctt.Multigon(m);
-      const int k = mm.prongs();
-      pref_data[m].k = k;
-      pref_data[m].pref.assign(k,0.0);
-      pref_data[m].has_pref.assign(k,false);
-      for (int p = 0; p < mm.prongs(); ++p)
-        {
-          vec2 accum = {0.0,0.0};
-          for (const edge_record& er : edges)
-            {
-              if (er.a.m == m && er.a.p == p)
-                {
-                  vec2 v = sub(ctr[er.b.m],ctr[m]);
-                  accum = add(accum,normalize_or_zero(v));
-                }
-              if (er.b.m == m && er.b.p == p)
-                {
-                  vec2 v = sub(ctr[er.a.m],ctr[m]);
-                  accum = add(accum,normalize_or_zero(v));
-                }
-            }
-
-          if (norm(accum) > 1e-12)
-            {
-              pref_data[m].pref[p] = std::atan2(accum.y,accum.x);
-              pref_data[m].has_pref[p] = true;
-            }
-        }
-    }
-
-  std::vector<int> prong_sign(M,1);
-  std::vector<double> prong_theta(M,0.0);
-  std::vector<std::vector<double> > prong_angle(M);
-
-  for (int m = 0; m < M; ++m)
-    {
-      const prong_pref_data& pd = pref_data[m];
-      const double tpos = local_theta_from_pref(pd, 1);
-      const double tneg = local_theta_from_pref(pd,-1);
-      const double epos = local_fit_error(pd, 1, tpos);
-      const double eneg = local_fit_error(pd,-1, tneg);
-      if (eneg < epos)
-        {
-          prong_sign[m] = -1;
-          prong_theta[m] = tneg;
-        }
-      else
-        {
-          prong_sign[m] = 1;
-          prong_theta[m] = tpos;
-        }
-
-      prong_angle[m].assign(pd.k,0.0);
-      for (int p = 0; p < pd.k; ++p)
-        {
-          prong_angle[m][p] = prong_theta[m] + prong_sign[m]*2.0*pi()*p/pd.k;
-        }
-    }
-
-  int best_score = crossing_score(edges,ctr,prong_angle,prong_radius);
-  for (int pass = 0; pass < 3; ++pass)
-    {
-      bool improved = false;
-      for (int m = 0; m < M; ++m)
-        {
-          if (pref_data[m].k <= 1) continue;
-
-          const int old_sign = prong_sign[m];
-          const double old_theta = prong_theta[m];
-          const std::vector<double> old_angles = prong_angle[m];
-
-          prong_sign[m] = -old_sign;
-          prong_theta[m] = local_theta_from_pref(pref_data[m],prong_sign[m]);
-          for (int p = 0; p < pref_data[m].k; ++p)
-            {
-              prong_angle[m][p] = prong_theta[m] + prong_sign[m]*2.0*pi()*p/pref_data[m].k;
-            }
-
-          const int trial_score = crossing_score(edges,ctr,prong_angle,prong_radius);
-          if (trial_score < best_score)
-            {
-              best_score = trial_score;
-              improved = true;
-            }
-          else
-            {
-              prong_sign[m] = old_sign;
-              prong_theta[m] = old_theta;
-              prong_angle[m] = old_angles;
-            }
-        }
-      if (!improved) break;
-    }
-
-  bool same_multigon_label = true;
-  if (M > 1)
-    {
-      const int l0 = ctt.Multigon(0).label();
-      for (int m = 1; m < M; ++m)
-        {
-          if (ctt.Multigon(m).label() != l0) { same_multigon_label = false; break; }
-        }
-    }
-
-  std::vector<std::vector<double> > prong_side_tangent(M);
-  for (int m = 0; m < M; ++m)
-    {
-      const int k = ctt.Multigon(m).prongs();
-      prong_side_tangent[m].assign(k,opt.curvature);
-    }
-
-  std::vector<std::vector<double> > tangent_sum(M);
-  std::vector<std::vector<int> > tangent_count(M);
-  for (int m = 0; m < M; ++m)
-    {
-      const int k = ctt.Multigon(m).prongs();
-      tangent_sum[m].assign(k,0.0);
-      tangent_count[m].assign(k,0);
-    }
-
-  for (const edge_record& er : edges)
-    {
-      const multigon& ma = ctt.Multigon(er.a.m);
-      const multigon& mb = ctt.Multigon(er.b.m);
-      const double sa = (er.a.e - 0.5*(ma.edges(er.a.p)-1))*opt.slot_spacing;
-      const double sb = (er.b.e - 0.5*(mb.edges(er.b.p)-1))*opt.slot_spacing;
-      const double ka = opt.curvature + opt.edge_waviness*std::fabs(sa);
-      const double kb = opt.curvature + opt.edge_waviness*std::fabs(sb);
-
-      tangent_sum[er.a.m][er.a.p] += ka;
-      tangent_count[er.a.m][er.a.p] += 1;
-      tangent_sum[er.b.m][er.b.p] += kb;
-      tangent_count[er.b.m][er.b.p] += 1;
-    }
-
-  for (int m = 0; m < M; ++m)
-    {
-      for (int p = 0; p < (int)prong_side_tangent[m].size(); ++p)
-        {
-          if (tangent_count[m][p] == 0) continue;
-          const double avgk = tangent_sum[m][p]/tangent_count[m][p];
-          prong_side_tangent[m][p] = std::min(0.42,std::max(0.16,0.08 + 0.18*avgk));
-        }
-    }
+  const std::vector<prong_pref_data> pref_data = compute_prong_preferences(ctt,edges,ctr);
+  const std::vector<std::vector<double> > prong_angle =
+    compute_prong_angles(pref_data,edges,ctr,prong_radius);
+  const bool same_multigon_label = all_multigon_labels_equal(ctt);
+  const std::vector<std::vector<double> > prong_side_tangent =
+    compute_prong_side_tangents(ctt,edges,opt);
+  const std::vector<cusp_record> cusps = enumerate_cusps(ctt);
 
   std::ofstream out(opt.output_file.c_str());
   if (!out)
@@ -829,17 +1006,17 @@ int main(int argc, char** argv)
     }
 
   out << "\\begin{tikzpicture}[x=1cm,y=1cm,scale=" << opt.scale << ","
-      << " line cap=round,line join=round,font=\\scriptsize]\n";
+      << " line cap=round,line join=round,font=" << tikz_font_command(opt.label_font) << "]\n";
 
   out << "  \\tikzset{ttedge/.style={line width=0.9pt},"
       << " ttcore/.style={line width=0.7pt,draw=black!70},"
-      << " ttlab/.style={fill=white,fill opacity=0.9,text opacity=1,inner sep=1.2pt,draw=black!20,rounded corners=1pt}}\n";
+      << " ttlab/.style={inner sep=0.7pt}}\n";
 
   out << "  % Canonical prong tangency convention:\n";
   out << "  %   edges: +d direction at prong\n";
   out << "  %   side convention: fixed cw\n";
 
-  const int side_sign = -1;
+  constexpr int side_sign = -1;
 
   for (int m = 0; m < M; ++m)
     {
@@ -853,6 +1030,20 @@ int main(int argc, char** argv)
           vec2 t = perp_ccw(d);
           vec2 tip = add(ctr[m],mul(d,prong_radius));
           vec2 tail = add(ctr[m],mul(d,-monogon_depth));
+          if (!opt.first_monogon_fill.empty() && m == first_monogon)
+            {
+              const double st = prong_side_tangent[m][0];
+              vec2 c1f = add(tip,mul(d,side_sign*st));
+              vec2 c2f = add(tail,mul(t,monogon_tail_tangent));
+              vec2 c3f = add(tail,mul(t,-monogon_tail_tangent));
+              vec2 c4f = add(tip,mul(d,side_sign*st));
+              out << "  \\filldraw[fill=" << opt.first_monogon_fill
+                  << ",draw=none] " << fmt(tip)
+                  << " .. controls " << fmt(c1f) << " and " << fmt(c2f)
+                  << " .. " << fmt(tail)
+                  << " .. controls " << fmt(c3f) << " and " << fmt(c4f)
+                  << " .. " << fmt(tip) << ";\n";
+            }
           // Side arcs should approach the prong from inside the multigon,
           // while track edges leave outward along +d.
           const double st = prong_side_tangent[m][0];
@@ -877,7 +1068,7 @@ int main(int argc, char** argv)
               vec2 qq = add(ctr[m],mul(dq,prong_radius));
               // Canonical tangent frame at each prong:
               //  - branch edges leave along +d
-              //  - side-arc orientation is chosen globally (cw/ccw)
+              //  - side arcs approach with fixed CW orientation
               const double stp = prong_side_tangent[m][p];
               const double stq = prong_side_tangent[m][q];
               const double side_scale = (k == 3 ? trigon_side_tangent_scale : 1.0);
@@ -897,32 +1088,36 @@ int main(int argc, char** argv)
 
           if (want_label(opt.labels,"prongs"))
             {
-              vec2 lp = add(ctr[m],mul(d,prong_radius+0.35));
-              lp = add(lp,mul(d,opt.label_offset));
+              vec2 lp = add(ctr[m],mul(d,prong_radius+prong_label_base_offset));
+              lp = add(lp,mul(d,0.35*opt.label_offset));
               out << "  \\node[ttlab] at " << fmt(lp) << " {$p_" << (p+1) << "$};\n";
             }
         }
 
       if (want_label(opt.labels,"multigons"))
         {
-          vec2 ml = add(ctr[m],{0.0,-0.34-opt.label_offset});
+          vec2 ml = multigon_label_position(ctr,prong_angle,m,prong_radius,
+                                            monogon_depth,opt.multigon_label_inset,
+                                            opt.label_offset,k);
           out << "  \\node[ttlab] at " << fmt(ml) << " {$m_" << (m+1);
           if (!same_multigon_label) out << "\\!:\\!" << (mm.label()+1);
           out << "$};\n";
         }
 
-      if (mm.punctured())
+      if (opt.plot_punctures && mm.punctured())
         {
+          // In core traintracks code, punctures live on monogons and bigons
+          // by default (k == 1 or k == 2), unless explicitly changed.
           if (k == 1)
             {
               const double a = prong_angle[m][0];
               vec2 d = dir_from_angle(a);
               vec2 punct = add(ctr[m],mul(d,-0.62*monogon_depth));
-              out << "  \\fill[black] " << fmt(punct) << " circle (0.040);\n";
+              out << "  \\fill[black] " << fmt(punct) << " circle (" << puncture_radius << ");\n";
             }
           else
             {
-              out << "  \\fill[black] " << fmt(ctr[m]) << " circle (0.040);\n";
+              out << "  \\fill[black] " << fmt(ctr[m]) << " circle (" << puncture_radius << ");\n";
             }
         }
     }
@@ -943,8 +1138,8 @@ int main(int argc, char** argv)
       vec2 pa = add(ctr[er.a.m],mul(da,prong_radius));
       vec2 pb = add(ctr[er.b.m],mul(db,prong_radius));
 
-      const double ka = opt.curvature + opt.edge_waviness*std::fabs(sa);
-      const double kb = opt.curvature + opt.edge_waviness*std::fabs(sb);
+      const double ka = branch_tangent_length(opt,sa);
+      const double kb = branch_tangent_length(opt,sb);
       vec2 c1 = add(pa,mul(da,ka));
       vec2 c2 = add(pb,mul(db,kb));
 
@@ -968,6 +1163,28 @@ int main(int argc, char** argv)
           vec2 nrm = unit_or_default(perp_ccw(tan),{0.0,1.0});
           vec2 lbl = add(mid,mul(nrm,opt.label_offset));
           out << "  \\node[ttlab] at " << fmt(lbl) << " {$e_" << er.id << "$};\n";
+        }
+    }
+
+  if (want_fold_labels(opt.labels))
+    {
+      for (const cusp_record& c : cusps)
+        {
+          const double a = prong_angle[c.m][c.p];
+          vec2 d = dir_from_angle(a);
+          vec2 t = perp_ccw(d);
+
+          const multigon& mm = ctt.Multigon(c.m);
+          const double slotL = (c.e - 0.5*(mm.edges(c.p)-1))*opt.slot_spacing;
+          const double slotR = ((c.e+1) - 0.5*(mm.edges(c.p)-1))*opt.slot_spacing;
+          const double slotM = 0.5*(slotL + slotR);
+
+          vec2 prong_point = add(ctr[c.m],mul(d,prong_radius));
+          vec2 cusp_mid = add(prong_point,mul(t,opt.fold_tangent_scale*slotM));
+          vec2 lbl = add(cusp_mid,mul(d,opt.fold_label_sep + opt.label_offset));
+
+          out << "  \\node[ttlab] at " << fmt(lbl)
+              << " {" << c.fold_cw << "/" << c.fold_ccw << "};\n";
         }
     }
 
