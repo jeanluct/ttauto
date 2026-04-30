@@ -25,6 +25,7 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <functional>
 #include "traintracks/edge.hpp"
 #include "traintracks/multigon.hpp"
 #include "traintracks/traintrack.hpp"
@@ -313,6 +314,90 @@ traintrack::intVec traintrack::coding(const int dir) const
       if (code < codemin) { codemin = code; }
     }
 
+  return codemin;
+}
+
+traintrack::intVec traintrack::canonical_coding(const int dir) const
+{
+  // Start from current coding minimization over uncusped monogons.
+  // Then also minimize over per-multigon rotational symmetries that are
+  // currently ambiguous under multigon::normalise() ties.
+  traintrack ttself(*this);
+  ttself.normalise();
+  intVec codemin = ttself.coding(dir);
+
+  std::vector<int> ambiguous;
+  for (int m = 0; m < multigons(); ++m)
+    {
+      const multigon& mm = Multigon(m);
+      if (mm.prongs() <= 1) continue;
+
+      const multigon::intVec es0 = mm.edge_sequence();
+      bool has_symmetry = false;
+      for (int s = 1; s < mm.prongs(); ++s)
+        {
+          if (mm.edge_sequence(-s) == es0)
+            {
+              has_symmetry = true;
+              break;
+            }
+        }
+      if (has_symmetry) ambiguous.push_back(m);
+    }
+
+  if (ambiguous.empty()) return codemin;
+
+  traintrack ttbase(*this);
+
+  struct orient_opts
+  {
+    int m;
+    std::vector<int> shifts;
+  };
+
+  std::vector<orient_opts> opts;
+  opts.reserve(ambiguous.size());
+  for (int i = 0; i < (int)ambiguous.size(); ++i)
+    {
+      const int m = ambiguous[i];
+      const multigon& mm = ttbase.Multigon(m);
+      orient_opts oo;
+      oo.m = m;
+      oo.shifts.push_back(0);
+      const multigon::intVec es0 = mm.edge_sequence();
+      for (int s = 1; s < mm.prongs(); ++s)
+        {
+          if (mm.edge_sequence(-s) == es0) oo.shifts.push_back(s);
+        }
+      opts.push_back(oo);
+    }
+
+  std::function<void(int,traintrack&)> recurse;
+  recurse = [&](const int i, traintrack& ttw)
+    {
+      if (i == (int)opts.size())
+        {
+          traintrack ttnorm(ttw);
+          ttnorm.normalise();
+          const intVec c = ttnorm.coding(dir);
+          if (c < codemin) codemin = c;
+          return;
+        }
+
+      const int m = opts[i].m;
+      const std::vector<int>& sh = opts[i].shifts;
+      for (int j = 0; j < (int)sh.size(); ++j)
+        {
+          traintrack ttnext(ttw);
+          if (sh[j] != 0)
+            {
+              ttnext.Multigon(m).cycle_prongs(sh[j]);
+            }
+          recurse(i+1,ttnext);
+        }
+    };
+
+  recurse(0,ttbase);
   return codemin;
 }
 

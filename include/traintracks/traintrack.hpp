@@ -149,6 +149,11 @@ public:
   // leave the monogons untouched.
   intVec coding(const int dir = 1) const;
 
+  // Canonical coding entry point used for identity/equality checks.
+  // This may be stricter than coding() for rotationally symmetric
+  // multigons; use this for identity/equality.
+  intVec canonical_coding(const int dir = 1) const;
+
   // Return true if the train track is reflection-symmetric.
   bool is_reflection_symmetric() const { return (coding(1) == coding(-1)); }
 
@@ -478,7 +483,7 @@ inline bool traintrack::operator==(const traintrack& tt) const
   // with the same number of edges hooked to each prongs.
   if (!same_multigons(tt)) return false;
 
-  return (coding() == tt.coding());
+  return (canonical_coding() == tt.canonical_coding());
 }
 
 // Compare two train tracks on the basis of multigons only.
