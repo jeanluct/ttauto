@@ -327,23 +327,6 @@ private:
   // obtained from the first position.
   intVec minimise_coding();
 
-  // Return a coding vector for the train track, which is used to test
-  // for equality.  The coding vector starts at a given monogon.
-  intVec coding_from_monogon(const int mono, const int dir = 1) const;
-
-  // Canonical coding traversal with first-visit prong anchoring.
-  intVec canonical_coding_from_monogon(const int mono, const int dir = 1) const;
-
-  // Minimise canonical coding over all uncusped starting monogons.
-  intVec canonical_coding_min_over_monogons(const int dir = 1) const;
-
-  // Recursively emit canonical coding blocks while fixing each multigon's
-  // prong-0 anchor at its first traversal entry.
-  void recursive_canonical_coding(const multigon& mm,
-                                  const int pin, const int ein,
-                                  intVec& code, const int dir,
-                                  jlt::vector<int>& first_pin) const;
-
   // Sort ascending using the strict order relation for multigons.
   void sort();
 

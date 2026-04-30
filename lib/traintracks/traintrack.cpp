@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <set>
 #include <functional>
+#include "traintracks/coding.hpp"
 #include "traintracks/edge.hpp"
 #include "traintracks/multigon.hpp"
 #include "traintracks/traintrack.hpp"
@@ -250,68 +251,18 @@ void traintrack::check() const
     }
 }
 
-// Compute a coding vector for a train track, starting from an
-// uncusped monogon.
-// Assumes the train track is sorted.
-traintrack::intVec traintrack::coding_from_monogon(const int mono,
-					   const int dir) const
-{
-  if (Multigon(mono).edges() > 1)
-    {
-      std::cerr << "Not an uncusped monogon in traintrack::traintrack::coding_from_monogon.\n";
-      std::exit(1);
-    }
-
-  intVec code;
-  // Start the coding vector with the monogon.
-  // Uncusped monogons are marked with a coding_block() sequence.
-  coding_block(0,1,Multigon(mono).label(),0,1).append_to(code);
-
-  // Recurse down and compute coding.
-  // Start by finding the multigon the edge is attached to, and which
-  // prong.
-  int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
-
-  recursive_coding(*egmono,pmono,pemono,code,dir);
-
-  return code;
-}
-
-traintrack::intVec traintrack::canonical_coding_from_monogon(const int mono,
-                                                             const int dir) const
-{
-  if (Multigon(mono).edges() > 1)
-    {
-      std::cerr << "Not an uncusped monogon in traintrack::traintrack::canonical_coding_from_monogon.\n";
-      std::exit(1);
-    }
-
-  intVec code;
-  coding_block(0,1,Multigon(mono).label(),0,1).append_to(code);
-
-  int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
-
-  jlt::vector<int> first_pin(multigons(),-1);
-  recursive_canonical_coding(*egmono,pmono,pemono,code,dir,first_pin);
-  return code;
-}
-
 // Minimise coding over uncusped monogons, such that the min is
 // obtained from the first position.
 // Assumes a track is normalised.
 traintrack::intVec traintrack::minimise_coding()
 {
   int mono = 0, monomin = 0;
-  intVec codemin = coding_from_monogon(mono);
+  intVec codemin = traintracks::coding::coding_from_monogon(*this,mono);
 
   // Loop over monogons with only one edge (uncusped).
   while (Multigon(++mono).edges() <= 1)
     {
-      intVec code = coding_from_monogon(mono);
+      intVec code = traintracks::coding::coding_from_monogon(*this,mono);
       if (code < codemin) { codemin = code; monomin = mono; }
     }
   // Move the minimising monogon to the first slot.
@@ -325,76 +276,12 @@ traintrack::intVec traintrack::minimise_coding()
 // Assumes a track is normalised (?).
 traintrack::intVec traintrack::coding(const int dir) const
 {
-  int mono = 0;
-  intVec codemin = coding_from_monogon(mono,dir);
-
-  // Loop over monogons with only one edge (uncusped).
-  while (Multigon(++mono).edges() <= 1)
-    {
-      intVec code = coding_from_monogon(mono,dir);
-      if (code < codemin) { codemin = code; }
-    }
-
-  return codemin;
+  return traintracks::coding::coding(*this,dir);
 }
 
 traintrack::intVec traintrack::canonical_coding(const int dir) const
 {
-  return canonical_coding_min_over_monogons(dir);
-}
-
-traintrack::intVec traintrack::canonical_coding_min_over_monogons(const int dir) const
-{
-  int mono = 0;
-  intVec codemin = canonical_coding_from_monogon(mono,dir);
-
-  while (Multigon(++mono).edges() <= 1)
-    {
-      intVec code = canonical_coding_from_monogon(mono,dir);
-      if (code < codemin) codemin = code;
-    }
-
-  return codemin;
-}
-
-void traintrack::recursive_canonical_coding(const multigon& mm,
-                                            const int pin, const int ein,
-                                            intVec& code, const int dir,
-                                            jlt::vector<int>& first_pin) const
-{
-  const int mi = multigon_index(&mm);
-  if (first_pin[mi] < 0) first_pin[mi] = pin;
-  const int p0 = first_pin[mi];
-
-  int p = pin, e = ein;
-
-  if (mm.edges() == 1)
-    {
-      coding_block(0,1,mm.label(),0,1).append_to(code);
-      return;
-    }
-
-  do
-    {
-      const int prong = traintracks::mod(dir*(p-p0),mm.prongs());
-      const int nprongs = mm.prongs();
-      const int label = mm.label();
-      const int nedges = mm.edges(p);
-      const int edge = (dir == 1 ? e : nedges-1-e);
-
-      coding_block(prong,nprongs,label,edge,nedges).append_to(code);
-
-      int pout, eout;
-      multigon *ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
-
-      if (!(p == pin && e == ein))
-        {
-          recursive_canonical_coding(*ed,pout,eout,code,dir,first_pin);
-        }
-
-      mm.cycle_edges(p,e,dir);
-    }
-  while (!(p == pin && e == ein));
+  return traintracks::coding::canonical_coding(*this,dir);
 }
 
 void traintrack::recursive_coding(const multigon& mm,
@@ -451,13 +338,13 @@ void traintrack::recursive_coding(const multigon& mm,
 mathmatrix_permplus1 traintrack::cyclic_symmetry()
 {
   int mono = 0, nmatch = 0;
-  intVec code = coding_from_monogon(mono);
+  intVec code = traintracks::coding::coding_from_monogon(*this,mono);
   mathmatrix_permplus1 perm(jlt::identity_matrix<int>(edges()));
 
   // Loop over monogons with only one edge (uncusped) and save codings.
   while (Multigon(++mono).edges() <= 1)
     {
-      if (code == coding_from_monogon(mono))
+      if (code == traintracks::coding::coding_from_monogon(*this,mono))
 	{
 	  ++nmatch;
 	  // The first time we have a match, compute the permutation matrix.
