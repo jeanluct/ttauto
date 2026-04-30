@@ -13,15 +13,24 @@ render_case() {
   local label="$1"
   local coding="$2"
   local idx="$3"
+  local center_order="$4"
   local snip="$OUTDIR/traintrack_${idx}.tex"
 
-  ../examples/ttplot \
-    --snippet \
-    --no-punctures \
-    --coding "$coding" \
-    --output "$snip" \
-    --relax-iters 300 \
+  local cmd=(
+    ../examples/ttplot
+    --snippet
+    --no-punctures
+    --coding "$coding"
+    --output "$snip"
+    --relax-iters 300
+    --relax-step 0.1
     --labels folds,multigons,edges
+  )
+  if [[ -n "$center_order" ]]; then
+    cmd+=(--center-order "$center_order")
+  fi
+
+  "${cmd[@]}"
 
   printf '%s|%s\n' "$label" "$snip" >> "$MANIFEST"
 }
@@ -36,15 +45,23 @@ codings=(
   "11111 13111 23111 11111 33111 11112 11122 11122 11112 13111 23111 11111 33111 11111"
   "11111 13111 23111 11111 33111 11112 11122 13122 23111 11111 33111 11111 13112 11111"
 )
+center_orders=(
+  ""                    # 29: default order
+  "1,2,3,4,5,6,8,7"     # 46: swap m7/m8 to remove e6/e7 crossing
+  ""                    # 43: default order
+  ""                    # 71: default order
+  "1,2,3,4,5,6,8,7"     # 88: same m7/m8 swap improves self-crossing
+  ""                    # 85: default order
+)
 
-if [[ "${#labels[@]}" -ne "${#codings[@]}" ]]; then
-  echo "labels/codings length mismatch" >&2
+if [[ "${#labels[@]}" -ne "${#codings[@]}" || "${#labels[@]}" -ne "${#center_orders[@]}" ]]; then
+  echo "labels/codings/center_orders length mismatch" >&2
   exit 1
 fi
 
 for i in "${!codings[@]}"; do
   idx=$((idx+1))
-  render_case "${labels[$i]}" "${codings[$i]}" "$idx"
+  render_case "${labels[$i]}" "${codings[$i]}" "$idx" "${center_orders[$i]}"
 done
 
 if [[ "$idx" -eq 0 ]]; then

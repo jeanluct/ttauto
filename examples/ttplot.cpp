@@ -78,6 +78,7 @@ struct options
   bool snippet = false;
   bool plot_punctures = true;
   std::string first_monogon_fill = "gray!12";
+  std::string center_order;
   double scale = 1.0;
   double curvature = 1.3;
   double slot_spacing = 0.18;
@@ -488,6 +489,74 @@ std::vector<cusp_record> enumerate_cusps(const traintrack& tt)
   return out;
 }
 
+bool parse_center_order(const std::string& text,
+                        const int M,
+                        std::vector<int>& order,
+                        std::string& err)
+{
+  order.clear();
+  if (text.empty())
+    {
+      order.resize(M);
+      for (int i = 0; i < M; ++i) order[i] = i;
+      return true;
+    }
+
+  std::string s = text;
+  for (size_t i = 0; i < s.size(); ++i)
+    {
+      if (s[i] == ',' || s[i] == ';' || s[i] == '|') s[i] = ' ';
+    }
+
+  std::istringstream in(s);
+  std::string tok;
+  std::vector<int> vals;
+  while (in >> tok)
+    {
+      char* end = nullptr;
+      const long v = std::strtol(tok.c_str(),&end,10);
+      if (!end || *end != '\0')
+        {
+          err = "non-integer token '" + tok + "'";
+          return false;
+        }
+      vals.push_back((int)v);
+    }
+
+  if ((int)vals.size() != M)
+    {
+      std::ostringstream e;
+      e << "expected " << M << " indices, got " << vals.size();
+      err = e.str();
+      return false;
+    }
+
+  std::vector<bool> seen(M,false);
+  order.resize(M);
+  for (int i = 0; i < M; ++i)
+    {
+      const int v = vals[i];
+      if (v < 1 || v > M)
+        {
+          std::ostringstream e;
+          e << "index " << v << " is out of range 1.." << M;
+          err = e.str();
+          return false;
+        }
+      if (seen[v-1])
+        {
+          std::ostringstream e;
+          e << "index " << v << " appears more than once";
+          err = e.str();
+          return false;
+        }
+      seen[v-1] = true;
+      order[i] = v-1;
+    }
+
+  return true;
+}
+
 std::string fmt(const vec2& p)
 {
   std::ostringstream s;
@@ -509,6 +578,7 @@ void usage(std::ostream& out)
     << "  --snippet             Emit TikZ picture only (no standalone preamble)\n"
     << "  --no-punctures        Do not draw puncture dots\n"
     << "  --first-monogon-fill COLOR  Fill first monogon with TikZ color (default: gray!12, use none to disable)\n"
+    << "  --center-order LIST   Circular multigon order, e.g. 1,2,3,4,5,6,8,7\n"
     << "  --labels MODE         Label mode: none|multigons|prongs|edges|folds|all or comma list\n"
     << "  --scale X             Global scale (default: 1.0)\n"
     << "  --curvature X         Bezier control strength (default: 1.3)\n"
@@ -569,6 +639,10 @@ bool parse_args(const int argc, char** argv, options& opt)
         {
           opt.first_monogon_fill = argv[++i];
           if (opt.first_monogon_fill == "none") opt.first_monogon_fill.clear();
+        }
+      else if (a == "--center-order" && i+1 < argc)
+        {
+          opt.center_order = argv[++i];
         }
       else if (a == "--scale" && i+1 < argc)
         {
@@ -975,10 +1049,18 @@ int main(int argc, char** argv)
   const double prong_label_base_offset = 0.04;
 
   std::vector<vec2> ctr(M);
-  for (int m = 0; m < M; ++m)
+  std::vector<int> center_order;
+  std::string center_order_err;
+  if (!parse_center_order(opt.center_order,M,center_order,center_order_err))
     {
-      const double a = 2.0*pi()*m/M;
-      ctr[m] = mul(dir_from_angle(a),center_radius);
+      std::cerr << "Invalid --center-order: " << center_order_err << "\n";
+      return 1;
+    }
+
+  for (int pos = 0; pos < M; ++pos)
+    {
+      const double a = 2.0*pi()*pos/M;
+      ctr[center_order[pos]] = mul(dir_from_angle(a),center_radius);
     }
 
   relax_centers(ctr,edges,opt);
