@@ -23,7 +23,7 @@
 // LICENSE>
 
 #include <algorithm>
-#include <cassert>
+#include <iostream>
 #include <sstream>
 #include "traintracks/build.hpp"
 #include "traintracks/traintrack.hpp"
@@ -31,26 +31,33 @@
 #include "ttauto/ttauto.hpp"
 #include "ttauto/ttfoldgraph.hpp"
 
+#define REQUIRE(cond) \
+  do { \
+    if (!(cond)) { \
+      std::cerr << "Requirement failed: " << #cond << " at " \
+                << __FILE__ << ":" << __LINE__ << "\n"; \
+      return 1; \
+    } \
+  } while (0)
+
 
 int main()
 {
   using traintracks::build_traintrack_list;
   using traintracks::traintrack;
-  using ttauto::ttauto;
-  using ttauto::ttfoldgraph;
 
   // Deterministic small fixture: same strata family as examples/ttauto
   // but with a tiny graph and bounded path length for fast CTest runs.
   const int n = 5;
   const int trk = 0;
   auto ttv = build_traintrack_list(n);
-  assert(!ttv.empty());
-  assert(static_cast<int>(ttv.size()) > trk);
+  REQUIRE(!ttv.empty());
+  REQUIRE(static_cast<int>(ttv.size()) > trk);
 
-  ttfoldgraph<traintrack> ttg(ttv[trk]);
-  assert(ttg.vertices() > 0);
+  ttauto::ttfoldgraph<traintrack> ttg(ttv[trk]);
+  REQUIRE(ttg.vertices() > 0);
 
-  ttauto<traintrack> tta(ttg);
+  ttauto::ttauto<traintrack> tta(ttg);
   tta.max_pathlength(8);
   tta.max_dilatation(3.0);
   tta.badword_length(0);
@@ -60,27 +67,26 @@ int main()
   // slightly different counts while still being correct. Instead, we verify
   // that every result has the basic properties we expect.
   const auto& pal = tta.pA_list();
-  assert(!pal.empty());
-  assert(pal.size() < 1000);
+  REQUIRE(pal.size() < 1000);
 
   for (auto it = pal.begin(); it != pal.end(); ++it)
     {
       [[maybe_unused]] const auto& cls = it->second;
-      assert(cls.number_of_paths() > 0);
-      assert(cls.shortest() > 0);
-      assert(cls.longest() >= cls.shortest());
-      assert(cls.dilatation() > 1.0);
+      REQUIRE(cls.number_of_paths() > 0);
+      REQUIRE(cls.shortest() > 0);
+      REQUIRE(cls.longest() >= cls.shortest());
+      REQUIRE(cls.dilatation() > 1.0);
     }
 
   // Ensure reporting helpers stay callable and non-empty on valid results.
   std::ostringstream out;
   tta.print_pA_list(out);
-  assert(!out.str().empty());
+  REQUIRE(!out.str().empty());
 
   out.str("");
   out.clear();
   tta.print_pA_list_MathematicaForm(out);
-  assert(!out.str().empty());
+  REQUIRE(!out.str().empty());
 
   return 0;
 }
