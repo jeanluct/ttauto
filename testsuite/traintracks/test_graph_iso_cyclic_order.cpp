@@ -83,6 +83,11 @@ int main()
   REQUIRE(tA.coding() != tB.coding());
   REQUIRE(tA == tB);
 
+  // Label-sensitive equality: relabeling one track should break equality.
+  traintrack tLbl(tA);
+  tLbl.set_label(0,8);
+  REQUIRE(!(tA == tLbl));
+
   // Trivial self-equality and a basic negative control.
   REQUIRE(tA == tA);
   REQUIRE(!(tA == tC));

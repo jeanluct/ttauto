@@ -38,6 +38,7 @@ namespace graph_iso {
 //   (multigon,prong) slots and branch multiplicity is preserved.
 // - Solve orientation-preserving isomorphism by backtracking over multigon and
 //   prong correspondences.
+// - Preserve multigon labels and puncture flags in candidate matching.
 //
 // This is not a canonical-coding sequence algorithm; it is a direct structural
 // matcher. It is in the same family as Ullmann/VF2-style recursive pruning,
@@ -264,6 +265,8 @@ struct iso_search
         if (used_b[n]) continue;
         const multigon& mbb = b.Multigon(n);
         if (ma.prongs() != mbb.prongs()) continue;
+        if (ma.label() != mbb.label()) continue;
+        if (ma.punctured() != mbb.punctured()) continue;
 
         std::vector<std::vector<int> > opts = mapping_options_for_multigon(ma,mbb);
         for (const auto& pmap : opts)
