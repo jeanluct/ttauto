@@ -113,22 +113,31 @@ int main()
 
   if (debug_issue12)
     {
+      std::cout << "tt29==tt71: " << (tt29 == tt71) << "\n";
+    }
+
+  if (debug_issue12)
+    {
       std::cout << "tt29 old coding:      " << to_compact_coding(tt29.coding()) << "\n";
       std::cout << "tt29 canonical coding:" << to_compact_coding(tt29.canonical_coding()) << "\n";
       std::cout << "tt71 old coding:      " << to_compact_coding(tt71.coding()) << "\n";
       std::cout << "tt71 canonical coding:" << to_compact_coding(tt71.canonical_coding()) << "\n";
     }
 
-  // Orientation-preserving equality should keep these distinct; they are
-  // related by reflection (detected via coding reversal / graph symmetry).
+  // Orientation-preserving graph-isotopy equality should identify these.
   REQUIRE(tt29.coding() != tt71.coding());
   REQUIRE(tt29.canonical_coding() != tt71.canonical_coding());
-  REQUIRE(!(tt29 == tt71));
+  REQUIRE(tt29 == tt71);
 
   // Build the reported automaton and verify reflection pairing remains a
-  // graph-level symmetry notion, distinct from isotopy/equality.
+  // graph-level notion based on coding reversal.
   traintrack seed(6,3);
   ttfoldgraph<traintrack> ttg(seed);
+  if (debug_issue12)
+    {
+      std::cout << "ttg vertices: " << ttg.vertices() << "\n";
+    }
+  REQUIRE(ttg.vertices() < 90);
 
   if (debug_issue12)
     {
@@ -142,7 +151,6 @@ int main()
     }
 
   int npairs = 0;
-  int nmirror_not_equal = 0;
   for (int i = 0; i < ttg.vertices(); ++i)
     {
       const traintrack& ti = ttg.traintrack(i);
@@ -157,10 +165,8 @@ int main()
 
       const traintrack& tj = ttg.traintrack(j);
       REQUIRE(ti.coding() == tj.coding(-1));
-      if (!(ti == tj)) ++nmirror_not_equal;
     }
   REQUIRE(npairs > 0);
-  REQUIRE(nmirror_not_equal > 0);
 
   return 0;
 }

@@ -30,6 +30,7 @@
 #include <jlt/vector.hpp>
 #include <jlt/mathmatrix.hpp>
 #include "traintracks/edge.hpp"
+#include "traintracks/graph_iso.hpp"
 #include "traintracks/multigon.hpp"
 #include "traintracks/map.hpp"
 #include "traintracks/mathmatrix_permplus1.hpp"
@@ -472,7 +473,7 @@ inline int traintrack::cusps() const
 // Use coding to decide equality.
 inline bool traintrack::operator==(const traintrack& tt) const
 {
-  return (canonical_coding() == tt.canonical_coding());
+  return traintracks::graph_iso::is_isotopic_oriented(*this,tt);
 }
 
 // Put into normal form.
