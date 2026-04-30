@@ -32,6 +32,13 @@ class traintrack;
 namespace graph_iso {
 
 // Orientation-preserving isotopy test using blown-up prong graph.
+//
+// Phase-1 semantics:
+// - preserves branch incidence and multiplicity at each multigon prong,
+// - preserves cyclic prong order up to rotation (for k>=3),
+// - ignores puncture flags and multigon labels.
+//
+// This is a direct structural matcher, not a coding-sequence generator.
 bool is_isotopic_oriented(const traintrack& lhs, const traintrack& rhs);
 
 } // namespace graph_iso

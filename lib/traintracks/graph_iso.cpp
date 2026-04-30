@@ -26,13 +26,22 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
-#include <set>
 #include <vector>
 #include "traintracks/graph_iso.hpp"
 #include "traintracks/traintrack.hpp"
 
 namespace traintracks {
 namespace graph_iso {
+
+// Isotopy approach used here:
+// - Convert each train track to a prong-incidence multigraph where endpoints are
+//   (multigon,prong) slots and branch multiplicity is preserved.
+// - Solve orientation-preserving isomorphism by backtracking over multigon and
+//   prong correspondences.
+//
+// This is not a canonical-coding sequence algorithm; it is a direct structural
+// matcher. It is in the same family as Ullmann/VF2-style recursive pruning,
+// specialized to train-track prong structure and cyclic order constraints.
 
 namespace {
 
@@ -49,24 +58,22 @@ struct endpoint
 
 using endpoint_pair = std::pair<endpoint,endpoint>;
 
+// Order endpoints deterministically in maps.
 inline bool endpoint_less(const endpoint& a, const endpoint& b)
 {
   if (a.m != b.m) return a.m < b.m;
   return a.p < b.p;
 }
 
-inline bool endpoint_equal(const endpoint& a, const endpoint& b)
-{
-  return (a.m == b.m && a.p == b.p);
-}
-
+// Order endpoint pairs deterministically in maps.
 inline bool endpoint_pair_less(const endpoint_pair& a,
                                const endpoint_pair& b)
 {
-  if (!endpoint_equal(a.first,b.first)) return endpoint_less(a.first,b.first);
+  if (!(a.first == b.first)) return endpoint_less(a.first,b.first);
   return endpoint_less(a.second,b.second);
 }
 
+// Normalize endpoint pair ordering.
 void normalize_endpoint_pair(endpoint_pair& ep)
 {
   if (endpoint_less(ep.second,ep.first)) std::swap(ep.first,ep.second);
@@ -75,6 +82,7 @@ void normalize_endpoint_pair(endpoint_pair& ep)
 using endpoint_count_map = std::map<endpoint_pair,int,
                                     bool(*)(const endpoint_pair&,const endpoint_pair&)>;
 
+// Collect branch multiplicities between prong endpoints.
 endpoint_count_map collect_branch_endpoints(const traintrack& tt)
 {
   endpoint_count_map counts(endpoint_pair_less);
@@ -118,30 +126,25 @@ endpoint_count_map collect_branch_endpoints(const traintrack& tt)
   return counts;
 }
 
+// Generate orientation-preserving prong maps for a k-prong multigon.
+//   For k>=3 this is exactly the k cyclic rotations.
 std::vector<std::vector<int> > all_oriented_cycles(const int k)
 {
   std::vector<std::vector<int> > out;
   if (k <= 0) return out;
 
-  std::vector<int> perm(k);
-  for (int i = 0; i < k; ++i) perm[i] = i;
-
-  do
+  out.reserve(k);
+  for (int shift = 0; shift < k; ++shift)
     {
-      bool ok = true;
-      for (int i = 0; i < k; ++i)
-        {
-          int a = perm[i];
-          int b = perm[(i+1)%k];
-          if (((a+1)%k) != b) { ok = false; break; }
-        }
-      if (ok) out.push_back(perm);
+      std::vector<int> rot(k);
+      for (int i = 0; i < k; ++i) rot[i] = (i + shift) % k;
+      out.push_back(rot);
     }
-  while (std::next_permutation(perm.begin(),perm.end()));
 
   return out;
 }
 
+// generate candidate prong maps for a pair of multigons.
 std::vector<std::vector<int> > mapping_options_for_multigon(const multigon& a,
                                                              const multigon& b)
 {
@@ -174,6 +177,7 @@ struct iso_search
       prong_map(aa.multigons()), cnt_a(collect_branch_endpoints(aa)),
       cnt_b(collect_branch_endpoints(bb)) {}
 
+  // Prune search using already-fixed multigon/prong correspondences.
   bool check_partial_edges() const
   {
     endpoint_count_map mapped(endpoint_pair_less);
@@ -205,6 +209,7 @@ struct iso_search
     return true;
   }
 
+  // Check whether all multigons have been assigned.
   bool done() const
   {
     for (int m = 0; m < a.multigons(); ++m)
@@ -214,6 +219,7 @@ struct iso_search
     return true;
   }
 
+  // Verify full edge-multiplicity agreement for a complete mapping.
   bool check_full_edges() const
   {
     endpoint_count_map mapped(endpoint_pair_less);
@@ -232,6 +238,7 @@ struct iso_search
     return (mapped == cnt_b);
   }
 
+  // Choose next unassigned multigon (largest prong count first).
   int choose_next_m() const
   {
     int best = -1;
@@ -244,6 +251,7 @@ struct iso_search
     return best;
   }
 
+  // Recursively search for an orientation-preserving isomorphism.
   bool rec()
   {
     if (done()) return check_full_edges();
@@ -278,6 +286,7 @@ struct iso_search
 
 } // namespace
 
+// Test orientation-preserving train-track isotopy.
 bool is_isotopic_oriented(const traintrack& lhs, const traintrack& rhs)
 {
   if (lhs.multigons() != rhs.multigons()) return false;
