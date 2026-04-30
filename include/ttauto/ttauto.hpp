@@ -417,7 +417,11 @@ template<class TrTr>
 std::ostream&
 ttauto<TrTr>::print_pA_list_MathematicaForm(std::ostream& strm) const
 {
-  using std::setw;
+  if (pAl.empty())
+    {
+      strm << "{}\n";
+      return strm;
+    }
 
   strm << "{";
   auto it = pAl.begin();
@@ -785,7 +789,7 @@ bool ttauto<TrTr>::descend_graph()
 
 	  if (lambda > lambdaupper)
 	    {
-	      std::cerr << "Oops!  lambda = " << lambda << " shoulnd't ";
+	      std::cerr << "Oops!  lambda = " << lambda << " shouldn't ";
 	      std::cerr << "exceed upper bound " << lambdaupper << std::endl;
 	      exit(1);
 	    }
