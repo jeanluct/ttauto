@@ -76,13 +76,11 @@ int main()
   const traintrack tt29(code29);
   const traintrack tt71(code71);
 
-  // Guard that we are still reproducing the reported discrepancy now.
+  // Canonical coding should identify the two as equivalent even though the
+  // legacy coding() representation differs.
   assert(tt29.coding() != tt71.coding());
-  assert(!(tt29 == tt71));
-
-  // This is intentionally a reproducer test at this stage.  When the
-  // canonicalization fix lands, this test should be updated to assert
-  // equality and coding uniqueness instead.
+  assert(tt29.canonical_coding() == tt71.canonical_coding());
+  assert(tt29 == tt71);
 
   // Build the reported automaton and pin the currently duplicated
   // representatives by 0-based vertex index (issue lists them as 29 and 71
@@ -99,12 +97,13 @@ int main()
   [[maybe_unused]] const traintrack& g28 = ttg.traintrack(v28);
   [[maybe_unused]] const traintrack& g70 = ttg.traintrack(v70);
 
-  // Current behavior: both vertices are present separately and keep distinct
-  // codings despite representing the same topology.
+  // Legacy coding() remains distinct but canonical coding/equality should now
+  // match for this issue pair.
   assert(g28.coding() == code29);
   assert(g70.coding() == code71);
   assert(g28.coding() != g70.coding());
-  assert(!(g28 == g70));
+  assert(g28.canonical_coding() == g70.canonical_coding());
+  assert(g28 == g70);
 
   return 0;
 }
