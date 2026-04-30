@@ -105,5 +105,19 @@ int main()
   assert(g28.canonical_coding() == g70.canonical_coding());
   assert(g28 == g70);
 
+  int npairs = 0;
+  for (int i = 0; i < ttg.vertices(); ++i)
+    {
+      for (int j = i+1; j < ttg.vertices(); ++j)
+        {
+          const traintrack& ti = ttg.traintrack(i);
+          const traintrack& tj = ttg.traintrack(j);
+          if (!(ti == tj)) continue;
+          if (ti.coding() == tj.coding()) continue;
+          ++npairs;
+        }
+    }
+  assert(npairs == 2);
+
   return 0;
 }
