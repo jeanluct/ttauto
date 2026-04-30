@@ -213,6 +213,17 @@ public:
   // - ec:  cusp index on that prong (first edge encountered clockwise)
   void fold_cusp_location(const int f, multigon*& mmc, int& pc, int& ec) const;
 
+  // Return cusp location for canonical fold index f.
+  void fold_cusp_location_canonical(const int f,
+                                    multigon*& mmc, int& pc, int& ec) const;
+
+  // Return canonical infinitesimal generator index (0-based).
+  int fold_infinitesimal_index_canonical(const int f) const;
+
+  // Return canonical infinitesimal generator for fold index f.
+  int fold_infinitesimal_generator_canonical(const int f,
+                                             const int nmain) const;
+
   // Apply fold f and return its transition matrix.
   mathmatrix_permplus1 fold_transition_matrix(const int f)
   {

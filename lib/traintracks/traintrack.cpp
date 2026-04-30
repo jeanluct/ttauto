@@ -28,6 +28,7 @@
 #include <functional>
 #include "traintracks/coding.hpp"
 #include "traintracks/edge.hpp"
+#include "traintracks/graph_iso.hpp"
 #include "traintracks/multigon.hpp"
 #include "traintracks/traintrack.hpp"
 
@@ -552,6 +553,80 @@ int traintrack::fold_infinitesimal_generator(const int f, const int nmain) const
   const int mi = multigon_index(mmc);
   const int infix = multigon_prong_index(mi,pc);
   return nmain + infix + 1;
+}
+
+void traintrack::fold_cusp_location_canonical(const int f,
+                                              multigon*& mmc,
+                                              int& pc,
+                                              int& ec) const
+{
+  if (f < 0 || f >= foldings())
+    {
+      std::cerr << "Illegal folding index in traintrack::traintrack::fold_cusp_location_canonical.\n";
+      std::exit(1);
+    }
+
+  struct cusp_loc { int m; int p; int e; };
+  std::vector<cusp_loc> locs;
+  locs.reserve(cusps());
+  for (int fi = 0; fi < foldings(); fi += 2)
+    {
+      multigon* mm = 0;
+      int pp = -1, ee = -1;
+      fold_cusp_location(fi,mm,pp,ee);
+      locs.push_back(cusp_loc{multigon_index(mm),pp,ee});
+    }
+
+  auto w = traintracks::graph_iso::canonical_witness_oriented(*this);
+  if (!w.valid)
+    {
+      std::cerr << "Invalid canonical witness in fold_cusp_location_canonical.\n";
+      std::exit(1);
+    }
+
+  std::vector<int> order(locs.size());
+  for (int i = 0; i < (int)order.size(); ++i) order[i] = i;
+
+  auto key_lt = [&](int i, int j)
+    {
+      const cusp_loc& a = locs[i];
+      const cusp_loc& b = locs[j];
+      const int ma = w.multigon_rank[a.m];
+      const int mb = w.multigon_rank[b.m];
+      if (ma != mb) return ma < mb;
+      const int pa = traintracks::mod(a.p + w.prong_shift[a.m],Multigon(a.m).prongs());
+      const int pb = traintracks::mod(b.p + w.prong_shift[b.m],Multigon(b.m).prongs());
+      if (pa != pb) return pa < pb;
+      return a.e < b.e;
+    };
+
+  std::sort(order.begin(),order.end(),key_lt);
+
+  const int cidx = f/2;
+  const int idir = f%2;
+  const cusp_loc& c = locs[order[cidx]];
+  mmc = const_cast<multigon*>(&Multigon(c.m));
+  pc = c.p;
+  ec = c.e;
+  if (idir == 1)
+    {
+      // keep same cusp location; fold orientation is encoded by odd/even index
+    }
+}
+
+int traintrack::fold_infinitesimal_index_canonical(const int f) const
+{
+  multigon* mmc = 0;
+  int pc = -1, ec = -1;
+  fold_cusp_location_canonical(f,mmc,pc,ec);
+  const int mi = multigon_index(mmc);
+  return multigon_prong_index(mi,pc);
+}
+
+int traintrack::fold_infinitesimal_generator_canonical(const int f,
+                                                       const int nmain) const
+{
+  return nmain + fold_infinitesimal_index_canonical(f) + 1;
 }
 
 // Depth-first cusp locator used by fold() and fold_cusp_location().

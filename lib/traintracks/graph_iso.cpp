@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <limits>
 #include <vector>
 #include "traintracks/graph_iso.hpp"
 #include "traintracks/traintrack.hpp"
@@ -287,6 +288,123 @@ struct iso_search
   }
 };
 
+struct witness_search
+{
+  const traintrack& t;
+  std::vector<int> order;
+  std::vector<int> used;
+  std::vector<int> shift;
+
+  std::vector<int> best_cert;
+  std::vector<int> best_order;
+  std::vector<int> best_shift;
+  bool have_best;
+
+  witness_search(const traintrack& tt)
+    : t(tt), order(tt.multigons(),-1), used(tt.multigons(),0),
+      shift(tt.multigons(),0), have_best(false) {}
+
+  int choose_next_slot() const
+  {
+    int best = -1;
+    for (int m = 0; m < t.multigons(); ++m)
+      {
+        if (order[m] >= 0) continue;
+        if (best < 0) { best = m; continue; }
+        if (t.Multigon(m).prongs() > t.Multigon(best).prongs()) best = m;
+      }
+    return best;
+  }
+
+  std::vector<int> build_certificate() const
+  {
+    std::vector<int> cert;
+    cert.reserve(4*t.multigons() + 8*t.edges());
+
+    for (int m = 0; m < t.multigons(); ++m)
+      {
+        cert.push_back(t.Multigon(m).prongs());
+        cert.push_back(t.Multigon(m).punctured() ? 1 : 0);
+        cert.push_back(t.Multigon(m).label());
+      }
+
+    endpoint_count_map cnt = collect_branch_endpoints(t);
+    std::vector<std::vector<int> > edgesig;
+    edgesig.reserve(cnt.size());
+    for (const auto& kv : cnt)
+      {
+        int m1 = order[kv.first.first.m];
+        int p1 = (kv.first.first.p + shift[kv.first.first.m]) %
+                 t.Multigon(kv.first.first.m).prongs();
+        int m2 = order[kv.first.second.m];
+        int p2 = (kv.first.second.p + shift[kv.first.second.m]) %
+                 t.Multigon(kv.first.second.m).prongs();
+        if (m2 < m1 || (m2 == m1 && p2 < p1))
+          {
+            std::swap(m1,m2);
+            std::swap(p1,p2);
+          }
+        edgesig.push_back({m1,p1,m2,p2,kv.second});
+      }
+    std::sort(edgesig.begin(),edgesig.end());
+    for (const auto& e : edgesig)
+      {
+        cert.insert(cert.end(),e.begin(),e.end());
+      }
+
+    return cert;
+  }
+
+  void maybe_record_best()
+  {
+    std::vector<int> cert = build_certificate();
+    std::vector<int> ord = order;
+
+    if (!have_best || cert < best_cert || (cert == best_cert && ord < best_order))
+      {
+        best_cert = cert;
+        best_order = ord;
+        best_shift = shift;
+        have_best = true;
+      }
+  }
+
+  void rec()
+  {
+    int m = choose_next_slot();
+    if (m < 0)
+      {
+        maybe_record_best();
+        return;
+      }
+
+    const multigon& mm = t.Multigon(m);
+    for (int slot = 0; slot < t.multigons(); ++slot)
+      {
+        if (used[slot]) continue;
+        used[slot] = 1;
+        order[m] = slot;
+
+        const int k = mm.prongs();
+        if (k <= 0)
+          {
+            used[slot] = 0;
+            order[m] = -1;
+            continue;
+          }
+
+        for (int s = 0; s < k; ++s)
+          {
+            shift[m] = s;
+            rec();
+          }
+
+        used[slot] = 0;
+        order[m] = -1;
+      }
+  }
+};
+
 } // namespace
 
 // Test orientation-preserving train-track isotopy.
@@ -297,6 +415,26 @@ bool is_isotopic_oriented(const traintrack& lhs, const traintrack& rhs)
 
   iso_search s(lhs,rhs);
   return s.rec();
+}
+
+graph_iso::canonical_witness canonical_witness_oriented(const traintrack& tt)
+{
+  witness_search ws(tt);
+  ws.rec();
+
+  graph_iso::canonical_witness w;
+  w.valid = ws.have_best;
+  if (!w.valid) return w;
+
+  w.multigon_rank = ws.best_order;
+  w.prong_shift = ws.best_shift;
+  w.multigon_order.assign(tt.multigons(),-1);
+  for (int m = 0; m < tt.multigons(); ++m)
+    {
+      const int r = w.multigon_rank[m];
+      if (r >= 0 && r < tt.multigons()) w.multigon_order[r] = m;
+    }
+  return w;
 }
 
 } // namespace graph_iso
