@@ -480,10 +480,19 @@ inline int traintrack::cusps() const
   return c;
 }
 
-// Isotopy of train tracks.
-// Equality mode is selected by TRAINTRACKS_USE_GRAPH_ISO_EQUALITY:
+// Equality policy for train tracks.
+//
+// Why this switch exists:
+// - graph_iso mode merges representatives that are structurally isotopic even
+//   when legacy coding order choices differ;
+// - legacy mode preserves historical behavior for reproducibility studies.
+//
+// Selected via TRAINTRACKS_USE_GRAPH_ISO_EQUALITY:
 // - 1 (default): orientation-preserving graph-isotopy matcher
 // - 0: legacy canonical_coding() comparison
+//
+// Important: this only affects operator==. Fold-index/cusp APIs remain
+// available in both modes.
 inline bool traintrack::operator==(const traintrack& tt) const
 {
 #if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY

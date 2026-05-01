@@ -42,6 +42,9 @@ int main()
 {
   using traintracks::traintrack;
 
+  // Compact coding parser used in issue #12 regressions.
+  // Digits are stored one-indexed in fixtures and converted back to the
+  // traintrack internal zero/one-index mixed representation here.
   auto parse_compact_coding = [](const char* text)
   {
     traintrack::intVec out;
@@ -87,8 +90,14 @@ int main()
   const bool expect_operator_eq = false;
 #endif
 
+  // Guardrail 1: coding strings differ, so any equality merge here must come
+  // from structural matching rather than lexical coding coincidence.
   REQUIRE(tA.coding() != tB.coding());
+
+  // Guardrail 2: structural matcher should still recognize isotopy.
   REQUIRE(traintracks::graph_iso::is_isotopic_oriented(tA,tB));
+
+  // Guardrail 3: operator== follows the currently selected compile-time mode.
   REQUIRE((tA == tB) == expect_operator_eq);
 
   // Label-sensitive equality: relabeling one track should break equality.

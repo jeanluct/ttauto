@@ -32,6 +32,9 @@
 
 static traintracks::traintrack::intVec parse_compact_coding(const char* text)
 {
+  // The issue fixtures are authored in the old compact human-readable format
+  // (five digits per block). Convert them into the internal coding vector used
+  // by traintrack constructors.
   traintracks::traintrack::intVec out;
   std::istringstream in(text);
   std::string blk;
@@ -128,6 +131,9 @@ int main()
   // Orientation-preserving graph-isotopy equality should identify these.
   REQUIRE(tt29.coding() != tt71.coding());
   REQUIRE(tt29.canonical_coding() != tt71.canonical_coding());
+
+  // This assertion is mode-independent and guards the core structural claim
+  // behind issue #12.
   REQUIRE(traintracks::graph_iso::is_isotopic_oriented(tt29,tt71));
 
 #if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
@@ -145,6 +151,9 @@ int main()
     {
       std::cout << "ttg vertices: " << ttg.vertices() << "\n";
     }
+// In graph-iso mode the automaton deduplicates more aggressively, giving the
+// smaller known vertex count for this fixture. Legacy mode intentionally keeps
+// the larger historical count.
 #if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
   REQUIRE(ttg.vertices() < 90);
 #else

@@ -73,6 +73,9 @@ int main()
 
   const traintrack t29(code29);
   const traintrack t71(code71);
+
+  // Structural isotopy remains the primary invariant regardless of
+  // operator== mode.
   REQUIRE(traintracks::graph_iso::is_isotopic_oriented(t29,t71));
 
 #if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
@@ -82,6 +85,9 @@ int main()
 #endif
   REQUIRE((t29 == t71) == expect_operator_eq);
 
+  // Canonical witness should collapse equivalent representatives to the same
+  // multigon ordering/ranking and prong shifts. This is the key deterministic
+  // ingredient used by canonical fold-index APIs.
   const canonical_witness w29 = canonical_witness_oriented(t29);
   const canonical_witness w71 = canonical_witness_oriented(t71);
   REQUIRE(w29.valid);
@@ -92,7 +98,8 @@ int main()
   REQUIRE(w29.multigon_rank == w71.multigon_rank);
   REQUIRE(w29.prong_shift == w71.prong_shift);
 
-  // Canonical fold/cusp APIs should agree across equal tracks.
+  // Canonical fold/cusp APIs should agree across structurally equal tracks,
+  // independent of the equality mode selected for operator==.
   REQUIRE(t29.foldings() == t71.foldings());
   for (int f = 0; f < t29.foldings(); ++f)
     {

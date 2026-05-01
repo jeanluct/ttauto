@@ -40,6 +40,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Equality policy for traintrack::operator==.
+#
+# ON  (default): structural orientation-preserving graph-isotopy matching.
+# OFF          : legacy canonical_coding() equality.
+#
+# This is intentionally a build-time switch so deterministic experiments can
+# replay historical behavior without changing call sites.
 option(TTAUTO_USE_GRAPH_ISO_EQUALITY
   "Use graph-isotopy matcher for traintrack::operator== (OFF uses legacy canonical_coding comparison)."
   ON)
@@ -94,6 +101,9 @@ target_include_directories(ttauto PUBLIC
   "${CMAKE_SOURCE_DIR}/include"
   "${CMAKE_SOURCE_DIR}/extern/jlt"
   "${CMAKE_SOURCE_DIR}/extern/jlt/extern/CSparse/Include")
+# Export equality mode through the public interface so every consumer target
+# (tests, examples, downstream libs) compiles against a single consistent
+# operator== semantic.
 target_compile_definitions(ttauto PUBLIC
   $<$<BOOL:${TTAUTO_USE_GRAPH_ISO_EQUALITY}>:TRAINTRACKS_USE_GRAPH_ISO_EQUALITY=1>
   $<$<NOT:$<BOOL:${TTAUTO_USE_GRAPH_ISO_EQUALITY}>>:TRAINTRACKS_USE_GRAPH_ISO_EQUALITY=0>)
