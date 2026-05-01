@@ -1,5 +1,54 @@
 # Issue #12 Canonical Fold/Cusp Ordering Plan
 
+## Restart Snapshot (2026-05-01)
+
+This file now doubles as the fold-ordering restart checklist.
+
+### What is implemented
+
+1. Canonical witness API in graph-iso layer:
+   - `canonical_witness canonical_witness_oriented(const traintrack&)`
+2. Canonical fold/cusp APIs in `traintrack`:
+   - `fold_cusp_location_canonical(...)`
+   - `fold_infinitesimal_index_canonical(...)`
+   - `fold_infinitesimal_generator_canonical(...)`
+3. Equality mode switch does not disable canonical fold APIs.
+   - They are available in both operator== modes.
+4. Regression coverage includes:
+   - `test_graph_iso_canonical_witness`
+   - `test_issue12_coding_uniqueness`
+   - `test_canonical_fold_map_consistency` (new)
+
+### Commits to anchor current state
+
+- `234fd63` add canonical witness and canonical fold-index APIs
+- `d8dbb99` prune witness search by signature classes
+- `3a5c93e` compile-time equality mode switch (graph-iso vs legacy coding)
+- `a327805` expanded in-source docs for switch/tests
+- `219367c` canonical fold map consistency regression
+
+### Known caveat
+
+The new fold-map consistency regression currently uses exhaustive matrix
+relabel-canonicalization and takes ~30s. This is acceptable for now but is the
+top optimization candidate for next pass.
+
+### Exact restart commands
+
+Default (graph-iso mode):
+
+1. `cmake -S . -B build`
+2. `cmake --build build -j`
+3. `ctest --test-dir build --output-on-failure`
+
+Legacy mode:
+
+1. `cmake -S . -B build-legacy -DTTAUTO_USE_GRAPH_ISO_EQUALITY=OFF`
+2. `cmake --build build-legacy -j`
+3. `ctest --test-dir build-legacy --output-on-failure`
+
+Expected result at snapshot: `9/9` tests pass in both modes.
+
 ## Goal
 
 Restore a canonical fold/cusp ordering under the new oriented graph-isotopy
@@ -65,3 +114,13 @@ multigon order vector. This avoids search-order dependence.
    ordering.
 3. Relabeled tracks are no longer equivalent under strict mode and should not
    share canonical fold order.
+
+## Next Action Queue (ordered)
+
+1. Replace exhaustive canonicalization in
+   `test_canonical_fold_map_consistency.cpp` with a faster structural
+   fingerprint based on `mathmatrix_permplus1` sparse data.
+2. Add one additional negative-control pair where canonical fold-generator
+   sequences differ (to ensure test would fail on wrong witness/permutation).
+3. If runtime is reduced significantly, include this test in any future
+   expanded CI matrix by default.

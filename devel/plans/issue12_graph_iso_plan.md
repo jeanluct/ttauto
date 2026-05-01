@@ -1,18 +1,74 @@
 # Issue #12 Graph-Isotopy Canonicalization Plan
 
+## Restart Snapshot (2026-05-01)
+
+This section is the authoritative quick-restart state for future work.
+
+### Current behavior in tree
+
+1. `traintrack::operator==` is now compile-time selectable:
+   - graph-iso mode (default): orientation-preserving structural matcher
+   - legacy mode: canonical-coding equality
+2. Build flag:
+   - CMake option: `TTAUTO_USE_GRAPH_ISO_EQUALITY` (default `ON`)
+   - public compile define: `TRAINTRACKS_USE_GRAPH_ISO_EQUALITY`
+3. Equality-mode switch commit history (latest relevant):
+   - `3a5c93e` add equality mode switch and mode-aware tests
+   - `a327805` add explanatory comments/docs in touched source/tests
+4. Canonical fold-map regression was added:
+   - `219367c` `testsuite/traintracks/test_canonical_fold_map_consistency.cpp`
+5. Issue tracker updates posted:
+   - `https://github.com/jeanluct/ttauto/issues/12#issuecomment-4360080783`
+   - `https://github.com/jeanluct/ttauto/issues/12#issuecomment-4360174783`
+
+### Validation matrix at snapshot
+
+Both modes pass full testsuite deterministically:
+
+- graph-iso mode:
+  - configure/build: `cmake -S . -B build && cmake --build build -j`
+  - test: `ctest --test-dir build --output-on-failure`
+  - result: `9/9` pass
+- legacy mode:
+  - configure/build: `cmake -S . -B build-legacy -DTTAUTO_USE_GRAPH_ISO_EQUALITY=OFF && cmake --build build-legacy -j`
+  - test: `ctest --test-dir build-legacy --output-on-failure`
+  - result: `9/9` pass
+
+### Known runtime/perf note
+
+`testsuite_test_canonical_fold_map_consistency` currently takes ~30 seconds in
+each mode. The test is deterministic and stable, but uses exhaustive matrix
+relabel-canonicalization for robustness.
+
+### Next technical target from this snapshot
+
+Optimize canonical fold-map cross-representation comparison so the new test keeps
+the same semantic guarantee with lower runtime:
+
+1. Prefer exploiting `mathmatrix_permplus1` structure directly (single
+   permutation + optional plus-one location) instead of full bi-permutation
+   search over dense matrices.
+2. Build a canonical fingerprint from sparse decode tuples
+   `(row_perm, plus1_row, plus1_col)` under admissible relabel actions.
+3. Keep existing test logic and acceptance criteria unchanged; only replace the
+   fingerprint implementation.
+
 ## Goal
 
 Implement a structural, orientation-preserving isotopy oracle/canonicalizer for
 `traintrack` that does not rely on existing coding-numbering conventions, then
 use it to resolve the 29/71 equivalence case from issue #12.
 
-## Scope for Phase 1
+## Scope for Phase 1 (historical)
 
 1. Preserve orientation (no reflection equivalence in this phase).
 2. Ignore puncture flags and multigon labels in matching/canonicalization.
 3. Treat tracks as topological graphs with prong incidence preserved by gadget
    expansion.
 4. Keep existing legacy `coding()` untouched.
+
+Status: completed and then tightened. Current semantics are stricter than this
+historical initial scope (puncture and label preservation are enforced).
 
 ## Core Representation
 
@@ -135,3 +191,5 @@ Run at minimum:
 2. Canonical key is numbering-independent and stable across rebuilds.
 3. Existing core deterministic tests remain green.
 4. Reflection remains a separate notion unless explicitly enabled.
+
+Status at snapshot: met for current branch state.
