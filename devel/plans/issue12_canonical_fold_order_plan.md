@@ -33,6 +33,8 @@ The new fold-map consistency regression currently uses exhaustive matrix
 relabel-canonicalization and takes ~30s. This is acceptable for now but is the
 top optimization candidate for next pass.
 
+Status update (2026-05-01): resolved in `1e8676a`; runtime is now sub-second.
+
 ### Exact restart commands
 
 Default (graph-iso mode):
@@ -117,10 +119,20 @@ multigon order vector. This avoids search-order dependence.
 
 ## Next Action Queue (ordered)
 
-1. Replace exhaustive canonicalization in
-   `test_canonical_fold_map_consistency.cpp` with a faster structural
-   fingerprint based on `mathmatrix_permplus1` sparse data.
-2. Add one additional negative-control pair where canonical fold-generator
+1. Add one additional negative-control pair where canonical fold-generator
    sequences differ (to ensure test would fail on wrong witness/permutation).
-3. If runtime is reduced significantly, include this test in any future
+2. If runtime is reduced significantly, include this test in any future
    expanded CI matrix by default.
+3. Coordinate legacy-mode removal pass (planned): delete compile-time switch and
+   simplify tests to graph-iso-only expectations.
+
+## Practical Restart Gate
+
+For quick resume validation, run:
+
+1. `cmake -S . -B build`
+2. `cmake --build build -j`
+3. `ctest --test-dir build --output-on-failure`
+
+Current expected result: `9/9` pass, including
+`testsuite_test_canonical_fold_map_consistency` in under ~1s.

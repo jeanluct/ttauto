@@ -53,6 +53,100 @@ the same semantic guarantee with lower runtime:
 3. Keep existing test logic and acceptance criteria unchanged; only replace the
    fingerprint implementation.
 
+Status update (2026-05-01): completed in `1e8676a`.
+
+## Release Gate Checklist (Graph-Iso Default)
+
+This is the short sign-off matrix to rerun before closing issue #12 work on
+this branch. The goal is to validate default production behavior, not to expand
+legacy-mode coverage.
+
+### 0) Clean configure/build
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+```
+
+Expected:
+
+- configure/generate succeeds
+- build completes with no link errors
+- `testsuite/test_canonical_fold_map_consistency` builds
+
+### 1) Deterministic testsuite gate (primary)
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+Expected:
+
+- all tests pass (`9/9` at current snapshot)
+- includes:
+  - `testsuite_test_issue12_coding_uniqueness`
+  - `testsuite_test_graph_iso_canonical_witness`
+  - `testsuite_test_canonical_fold_map_consistency`
+
+### 2) Fast repo smoke binaries (recommended by AGENTS)
+
+```bash
+./tests/test_permplus1
+./tests/test_traintrack
+./tests/test_folding_path
+./tests/test_badwords
+./examples/ttauto_torus
+```
+
+Expected:
+
+- all commands exit `0`
+- no crash/assert in release build
+
+Note: `./examples/ttauto_min_example` has historically been noisy/long in some
+sessions; use it manually when needed, but keep gate time bounded.
+
+### 3) Issue #12 behavior sanity spot-check
+
+Run:
+
+```bash
+./build/testsuite/test_issue12_coding_uniqueness
+```
+
+Expected:
+
+- exit `0`
+- confirms structural equality for the 29/71 pair and graph-iso-level
+  deduplication behavior assumptions used by the regression.
+
+### 4) (Optional) legacy guard while flag still exists
+
+Only while `TTAUTO_USE_GRAPH_ISO_EQUALITY` remains in tree:
+
+```bash
+cmake -S . -B build-legacy -DTTAUTO_USE_GRAPH_ISO_EQUALITY=OFF
+cmake --build build-legacy -j
+ctest --test-dir build-legacy --output-on-failure
+```
+
+Expected:
+
+- all tests pass in compatibility mode
+
+When legacy mode is removed from this branch, remove this step entirely.
+
+## Pre-close TODOs
+
+Before declaring production-final on this branch:
+
+1. Add at least one negative-control canonical-fold test where non-isotopic
+   tracks are required to disagree in canonical fold-generator sequence.
+2. Remove legacy equality mode if/when approved (switch, macro, and mode-guard
+   branches in tests).
+3. Re-run the release gate checklist after legacy removal to ensure no hidden
+   dependency on compatibility paths.
+
 ## Goal
 
 Implement a structural, orientation-preserving isotopy oracle/canonicalizer for
