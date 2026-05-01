@@ -1,0 +1,240 @@
+// <LICENSE
+//   ttauto: a C++ library for building train track automata
+//
+//   https://github.com/jeanluct/ttauto
+//
+//   Copyright (C) 2010-2026  Jean-Luc Thiffeault   <jeanluc@math.wisc.edu>
+//                            Erwan Lanneau <erwan.lanneau@ujf-grenoble.fr>
+//
+//   This file is part of ttauto.
+//
+//   ttauto is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//
+//   ttauto is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
+// LICENSE>
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <jlt/freeauto.hpp>
+#include <jlt/mathmatrix.hpp>
+#include "traintracks/graph_iso.hpp"
+#include "traintracks/map.hpp"
+#include "traintracks/traintrack.hpp"
+
+namespace traintracks { class multigon; }
+
+#define REQUIRE(cond) \
+  do { \
+    if (!(cond)) { \
+      std::cerr << "Requirement failed: " << #cond << " at " \
+                << __FILE__ << ":" << __LINE__ << "\n"; \
+      return 1; \
+    } \
+  } while (0)
+
+static traintracks::traintrack::intVec parse_compact_coding(const char* text)
+{
+  traintracks::traintrack::intVec out;
+  std::istringstream in(text);
+  std::string blk;
+  while (in >> blk)
+    {
+      if (blk.size() != 5)
+        {
+          std::cerr << "Bad coding block length: '" << blk << "'\n";
+          std::exit(2);
+        }
+      const int prong = (blk[0] - '0') - 1;
+      const int nprongs = (blk[1] - '0');
+      const int label = (blk[2] - '0') - 1;
+      const int edge = (blk[3] - '0') - 1;
+      const int nedges = (blk[4] - '0');
+      out.push_back(prong);
+      out.push_back(nprongs);
+      out.push_back(label);
+      out.push_back(edge);
+      out.push_back(nedges);
+    }
+  return out;
+}
+
+static int native_fold_index_from_canonical(const traintracks::traintrack& tt,
+                                            const int fcanon)
+{
+  traintracks::multigon* mmc = 0;
+  int pc = -1, ec = -1;
+  tt.fold_cusp_location_canonical(fcanon,mmc,pc,ec);
+  if (mmc == 0 || pc < 0 || ec < 0)
+    {
+      std::cerr << "Bad canonical cusp location.\n";
+      std::exit(2);
+    }
+
+  auto locate_multigon_index = [&](const traintracks::multigon* needle)
+  {
+    for (int m = 0; m < tt.multigons(); ++m)
+      {
+        if (needle == &tt.Multigon(m)) return m;
+      }
+    return -1;
+  };
+
+  const int target_m = locate_multigon_index(mmc);
+  if (target_m < 0)
+    {
+      std::cerr << "Canonical cusp multigon is not in track.\n";
+      std::exit(2);
+    }
+  const int want_dir = (fcanon % 2);
+
+  for (int f = want_dir; f < tt.foldings(); f += 2)
+    {
+      traintracks::multigon* mm = 0;
+      int p = -1, e = -1;
+      tt.fold_cusp_location(f,mm,p,e);
+      if (mm == 0) continue;
+      if (locate_multigon_index(mm) == target_m && p == pc && e == ec)
+        return f;
+    }
+
+  std::cerr << "Could not map canonical fold index to native fold index.\n";
+  std::exit(2);
+}
+
+// Canonicalize a square 0/1 transition matrix under independent row and
+// column relabelings.
+//
+// Why this is needed:
+// - equal train tracks may still use different internal edge indices;
+// - fold transition matrices can therefore differ by different source/target
+//   edge relabelings, not necessarily a single shared conjugation;
+// - reducing each matrix to a minimal representative over all bi-permutations
+//   gives a representation-independent fingerprint suitable for cross-track
+//   comparisons.
+static std::vector<int> canonicalize_under_biperm(const jlt::mathmatrix<int>& M)
+{
+  const int n = M.dim();
+  std::vector<int> rowp(n), colp(n);
+  for (int i = 0; i < n; ++i) { rowp[i] = i; colp[i] = i; }
+
+  std::vector<int> best;
+  bool has_best = false;
+
+  do
+    {
+      std::sort(colp.begin(),colp.end());
+      do
+        {
+          std::vector<int> code;
+          code.reserve(n*n);
+
+          for (int i = 0; i < n; ++i)
+            {
+              for (int j = 0; j < n; ++j)
+                {
+                  code.push_back(M(rowp[i],colp[j]));
+                }
+            }
+
+          if (!has_best || code < best)
+            {
+              best = code;
+              has_best = true;
+            }
+        }
+      while (std::next_permutation(colp.begin(),colp.end()));
+    }
+  while (std::next_permutation(rowp.begin(),rowp.end()));
+
+  return best;
+}
+
+int main()
+{
+  using traintracks::traintrack;
+  using traintracks::mathmatrix_permplus1;
+  using traintracks::fold_transition_matrix;
+  using traintracks::fold_traintrack_map;
+  using traintracks::transition_matrix_from_map;
+
+  // Same pair as issue #12: structurally isotopic but with different
+  // coding/canonical_coding strings. This is ideal to validate canonical fold
+  // ordering because naive fold index order is representation-dependent.
+  const traintrack::intVec code29 = parse_compact_coding(
+    "11111 11113 11123 13111 23111 11111 33111 11111 "
+    "11133 13111 23111 11111 33111 11111");
+  const traintrack::intVec code71 = parse_compact_coding(
+    "11111 11133 11113 13111 23111 11111 33111 11111 "
+    "11123 13111 23111 11111 33111 11111");
+
+  const traintrack t29(code29);
+  const traintrack t71(code71);
+
+  // Always assert structural isotopy directly; this test targets canonical
+  // fold behavior and should remain meaningful in either operator== mode.
+  REQUIRE(traintracks::graph_iso::is_isotopic_oriented(t29,t71));
+  REQUIRE(t29.foldings() == t71.foldings());
+  REQUIRE(t29.edges() == t71.edges());
+  REQUIRE(t29.total_prongs() == t71.total_prongs());
+
+  const int nmain = t29.edges();
+
+  // For each canonical fold index f:
+  // 1) canonical infinitesimal generator selection must agree,
+  // 2) canonical fold transition matrix must agree,
+  // 3) train-track map projected to main edges must reproduce that matrix,
+  // 4) this matrix/map agreement must hold for both representatives.
+  for (int f = 0; f < t29.foldings(); ++f)
+    {
+      const int g29 = t29.fold_infinitesimal_generator_canonical(f,nmain);
+      const int g71 = t71.fold_infinitesimal_generator_canonical(f,nmain);
+      REQUIRE(g29 == g71);
+
+      const int f29 = native_fold_index_from_canonical(t29,f);
+      const int f71 = native_fold_index_from_canonical(t71,f);
+
+      traintracks::multigon* mm29 = 0;
+      traintracks::multigon* mm71 = 0;
+      int p29 = -1, e29 = -1;
+      int p71 = -1, e71 = -1;
+      t29.fold_cusp_location_canonical(f,mm29,p29,e29);
+      t71.fold_cusp_location_canonical(f,mm71,p71,e71);
+      REQUIRE(mm29 != 0);
+      REQUIRE(mm71 != 0);
+      REQUIRE(p29 >= 0);
+      REQUIRE(p71 >= 0);
+      REQUIRE(e29 >= 0);
+      REQUIRE(e71 >= 0);
+
+      const mathmatrix_permplus1 TM29 = fold_transition_matrix(t29,f29);
+      const mathmatrix_permplus1 TM71 = fold_transition_matrix(t71,f71);
+
+      const jlt::freeauto<int> AM29 = fold_traintrack_map(t29,f29);
+      const jlt::freeauto<int> AM71 = fold_traintrack_map(t71,f71);
+      const jlt::mathmatrix<int> TM29fromAM = transition_matrix_from_map(t29,AM29);
+      const jlt::mathmatrix<int> TM71fromAM = transition_matrix_from_map(t71,AM71);
+      REQUIRE(TM29fromAM == TM29.full());
+      REQUIRE(TM71fromAM == TM71.full());
+
+      // Cross-representation check: matrices should agree up to simultaneous
+      // edge relabeling, not necessarily entrywise in native indexing.
+      REQUIRE(canonicalize_under_biperm(TM29.full())
+              == canonicalize_under_biperm(TM71.full()));
+      REQUIRE(canonicalize_under_biperm(TM29fromAM)
+              == canonicalize_under_biperm(TM71fromAM));
+    }
+
+  return 0;
+}
