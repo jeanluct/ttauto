@@ -26,6 +26,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "traintracks/graph_iso.hpp"
 #include "traintracks/traintrack.hpp"
 
 #define REQUIRE(cond) \
@@ -80,8 +81,15 @@ int main()
   // A control track with different topology.
   const traintrack tC(5,3);
 
+#if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
+  const bool expect_operator_eq = true;
+#else
+  const bool expect_operator_eq = false;
+#endif
+
   REQUIRE(tA.coding() != tB.coding());
-  REQUIRE(tA == tB);
+  REQUIRE(traintracks::graph_iso::is_isotopic_oriented(tA,tB));
+  REQUIRE((tA == tB) == expect_operator_eq);
 
   // Label-sensitive equality: relabeling one track should break equality.
   traintrack tLbl(tA);

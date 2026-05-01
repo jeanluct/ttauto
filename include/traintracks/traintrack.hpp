@@ -481,10 +481,16 @@ inline int traintrack::cusps() const
 }
 
 // Isotopy of train tracks.
-// Use coding to decide equality.
+// Equality mode is selected by TRAINTRACKS_USE_GRAPH_ISO_EQUALITY:
+// - 1 (default): orientation-preserving graph-isotopy matcher
+// - 0: legacy canonical_coding() comparison
 inline bool traintrack::operator==(const traintrack& tt) const
 {
+#if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
   return traintracks::graph_iso::is_isotopic_oriented(*this,tt);
+#else
+  return (canonical_coding() == tt.canonical_coding());
+#endif
 }
 
 // Put into normal form.

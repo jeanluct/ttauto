@@ -73,7 +73,14 @@ int main()
 
   const traintrack t29(code29);
   const traintrack t71(code71);
-  REQUIRE(t29 == t71);
+  REQUIRE(traintracks::graph_iso::is_isotopic_oriented(t29,t71));
+
+#if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
+  const bool expect_operator_eq = true;
+#else
+  const bool expect_operator_eq = false;
+#endif
+  REQUIRE((t29 == t71) == expect_operator_eq);
 
   const canonical_witness w29 = canonical_witness_oriented(t29);
   const canonical_witness w71 = canonical_witness_oriented(t71);

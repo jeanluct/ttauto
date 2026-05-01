@@ -25,6 +25,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "traintracks/graph_iso.hpp"
 #include "traintracks/traintrack.hpp"
 #include "ttauto/ttfoldgraph.hpp"
 
@@ -127,7 +128,14 @@ int main()
   // Orientation-preserving graph-isotopy equality should identify these.
   REQUIRE(tt29.coding() != tt71.coding());
   REQUIRE(tt29.canonical_coding() != tt71.canonical_coding());
-  REQUIRE(tt29 == tt71);
+  REQUIRE(traintracks::graph_iso::is_isotopic_oriented(tt29,tt71));
+
+#if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
+  const bool expect_operator_eq = true;
+#else
+  const bool expect_operator_eq = false;
+#endif
+  REQUIRE((tt29 == tt71) == expect_operator_eq);
 
   // Build the reported automaton and verify reflection pairing remains a
   // graph-level notion based on coding reversal.
@@ -137,7 +145,11 @@ int main()
     {
       std::cout << "ttg vertices: " << ttg.vertices() << "\n";
     }
+#if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
   REQUIRE(ttg.vertices() < 90);
+#else
+  REQUIRE(ttg.vertices() >= 90);
+#endif
 
   if (debug_issue12)
     {

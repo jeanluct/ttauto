@@ -40,6 +40,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(TTAUTO_USE_GRAPH_ISO_EQUALITY
+  "Use graph-isotopy matcher for traintrack::operator== (OFF uses legacy canonical_coding comparison)."
+  ON)
+
 function(ttauto_set_inplace_output target dir)
   set_target_properties(${target} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${dir}"
@@ -90,6 +94,9 @@ target_include_directories(ttauto PUBLIC
   "${CMAKE_SOURCE_DIR}/include"
   "${CMAKE_SOURCE_DIR}/extern/jlt"
   "${CMAKE_SOURCE_DIR}/extern/jlt/extern/CSparse/Include")
+target_compile_definitions(ttauto PUBLIC
+  $<$<BOOL:${TTAUTO_USE_GRAPH_ISO_EQUALITY}>:TRAINTRACKS_USE_GRAPH_ISO_EQUALITY=1>
+  $<$<NOT:$<BOOL:${TTAUTO_USE_GRAPH_ISO_EQUALITY}>>:TRAINTRACKS_USE_GRAPH_ISO_EQUALITY=0>)
 target_link_libraries(ttauto PUBLIC csparse)
 ttauto_add_compile_flags(ttauto)
 ttauto_set_inplace_output(ttauto "${CMAKE_SOURCE_DIR}/lib")
