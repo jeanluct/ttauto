@@ -25,7 +25,6 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <algorithm>
 #include <vector>
 #include <jlt/freeauto.hpp>
 #include <jlt/mathmatrix.hpp>
@@ -113,52 +112,41 @@ static int native_fold_index_from_canonical(const traintracks::traintrack& tt,
   std::exit(2);
 }
 
-// Canonicalize a square 0/1 transition matrix under independent row and
-// column relabelings.
+// Build a relabeling-invariant fingerprint for permutation/permutation+1
+// transition matrices under independent row/column relabelings.
 //
-// Why this is needed:
-// - equal train tracks may still use different internal edge indices;
-// - fold transition matrices can therefore differ by different source/target
-//   edge relabelings, not necessarily a single shared conjugation;
-// - reducing each matrix to a minimal representative over all bi-permutations
-//   gives a representation-independent fingerprint suitable for cross-track
-//   comparisons.
-static std::vector<int> canonicalize_under_biperm(const jlt::mathmatrix<int>& M)
+// Performance rationale:
+// - the previous implementation canonicalized dense matrices by exhaustive
+//   bi-permutation search (factorial cost); deterministic but slow (~30s);
+// - fold matrices in this code path are already decoded as mathmatrix_permplus1,
+//   so we can fingerprint directly from sparse structure in O(1).
+//
+// Invariance rationale:
+// - under independent row/column relabelings, all permutation matrices of a
+//   fixed size are equivalent;
+// - likewise, all proper permutation+1 matrices of a fixed size are equivalent;
+// - therefore `(dim, is_perm)` is the complete class key in this quotient.
+static std::vector<int> biperm_class_key(const traintracks::mathmatrix_permplus1& PM)
 {
-  const int n = M.dim();
-  std::vector<int> rowp(n), colp(n);
-  for (int i = 0; i < n; ++i) { rowp[i] = i; colp[i] = i; }
-
-  std::vector<int> best;
-  bool has_best = false;
-
-  do
+  std::vector<int> key;
+  key.push_back(PM.dim());
+  if (PM.is_perm())
     {
-      std::sort(colp.begin(),colp.end());
-      do
-        {
-          std::vector<int> code;
-          code.reserve(n*n);
-
-          for (int i = 0; i < n; ++i)
-            {
-              for (int j = 0; j < n; ++j)
-                {
-                  code.push_back(M(rowp[i],colp[j]));
-                }
-            }
-
-          if (!has_best || code < best)
-            {
-              best = code;
-              has_best = true;
-            }
-        }
-      while (std::next_permutation(colp.begin(),colp.end()));
+      key.push_back(0);
+      return key;
     }
-  while (std::next_permutation(rowp.begin(),rowp.end()));
 
-  return best;
+  // Non-permutation folds must expose one valid +1 location.
+  const int p1r = PM.plus1_row();
+  const int p1c = PM.plus1_col();
+  if (p1r < 0 || p1c < 0)
+    {
+      std::cerr << "Missing +1 location in non-permutation fold matrix.\n";
+      std::exit(2);
+    }
+
+  key.push_back(1);
+  return key;
 }
 
 int main()
@@ -228,12 +216,12 @@ int main()
       REQUIRE(TM29fromAM == TM29.full());
       REQUIRE(TM71fromAM == TM71.full());
 
-      // Cross-representation check: matrices should agree up to simultaneous
-      // edge relabeling, not necessarily entrywise in native indexing.
-      REQUIRE(canonicalize_under_biperm(TM29.full())
-              == canonicalize_under_biperm(TM71.full()));
-      REQUIRE(canonicalize_under_biperm(TM29fromAM)
-              == canonicalize_under_biperm(TM71fromAM));
+      // Cross-representation check: matrices should agree up to independent
+      // source/target edge relabelings. Use sparse class keys instead of
+      // factorial dense canonicalization.
+      REQUIRE(biperm_class_key(TM29) == biperm_class_key(TM71));
+      REQUIRE(biperm_class_key(traintracks::mathmatrix_permplus1(TM29fromAM))
+              == biperm_class_key(traintracks::mathmatrix_permplus1(TM71fromAM)));
     }
 
   return 0;
