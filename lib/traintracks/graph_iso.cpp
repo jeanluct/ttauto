@@ -50,10 +50,11 @@ struct endpoint
 {
   int m;
   int p;
+  int e;
 
   bool operator==(const endpoint& o) const
   {
-    return (m == o.m && p == o.p);
+    return (m == o.m && p == o.p && e == o.e);
   }
 };
 
@@ -63,7 +64,8 @@ using endpoint_pair = std::pair<endpoint,endpoint>;
 inline bool endpoint_less(const endpoint& a, const endpoint& b)
 {
   if (a.m != b.m) return a.m < b.m;
-  return a.p < b.p;
+  if (a.p != b.p) return a.p < b.p;
+  return a.e < b.e;
 }
 
 // Order endpoint pairs deterministically in maps.
@@ -83,7 +85,11 @@ void normalize_endpoint_pair(endpoint_pair& ep)
 using endpoint_count_map = std::map<endpoint_pair,int,
                                     bool(*)(const endpoint_pair&,const endpoint_pair&)>;
 
-// Collect branch multiplicities between prong endpoints.
+// Collect branch multiplicities between concrete endpoint slots (m,p,e).
+//
+// This is stricter than (m,p)-only matching and preserves cusp/slot geometry
+// inside each prong. That distinction is required to avoid over-merging tracks
+// that share prong-level incidence counts but differ by within-prong edge order.
 endpoint_count_map collect_branch_endpoints(const traintrack& tt)
 {
   endpoint_count_map counts(endpoint_pair_less);
@@ -105,11 +111,11 @@ endpoint_count_map collect_branch_endpoints(const traintrack& tt)
               auto it = first.find(eg);
               if (it == first.end())
                 {
-                  first[eg] = endpoint{m,p};
+                  first[eg] = endpoint{m,p,e};
                 }
               else
                 {
-                  endpoint_pair ep(it->second,endpoint{m,p});
+                  endpoint_pair ep(it->second,endpoint{m,p,e});
                   normalize_endpoint_pair(ep);
                   ++counts[ep];
                   first.erase(it);
@@ -194,8 +200,10 @@ struct iso_search
 
         const int p1 = prong_map[epa.first.m][epa.first.p];
         const int p2 = prong_map[epa.second.m][epa.second.p];
+        const int e1 = epa.first.e;
+        const int e2 = epa.second.e;
 
-        endpoint_pair epb(endpoint{m1,p1},endpoint{m2,p2});
+        endpoint_pair epb(endpoint{m1,p1,e1},endpoint{m2,p2,e2});
         normalize_endpoint_pair(epb);
         mapped[epb] += c;
       }
@@ -232,7 +240,9 @@ struct iso_search
         const int m2 = mb[epa.second.m];
         const int p1 = prong_map[epa.first.m][epa.first.p];
         const int p2 = prong_map[epa.second.m][epa.second.p];
-        endpoint_pair epb(endpoint{m1,p1},endpoint{m2,p2});
+        const int e1 = epa.first.e;
+        const int e2 = epa.second.e;
+        endpoint_pair epb(endpoint{m1,p1,e1},endpoint{m2,p2,e2});
         normalize_endpoint_pair(epb);
         mapped[epb] += c;
       }
@@ -271,6 +281,17 @@ struct iso_search
         std::vector<std::vector<int> > opts = mapping_options_for_multigon(ma,mbb);
         for (const auto& pmap : opts)
           {
+            bool same_prong_edge_profile = true;
+            for (int pa = 0; pa < ma.prongs(); ++pa)
+              {
+                if (ma.edges(pa) != mbb.edges(pmap[pa]))
+                  {
+                    same_prong_edge_profile = false;
+                    break;
+                  }
+              }
+            if (!same_prong_edge_profile) continue;
+
             mb[m] = n;
             used_b[n] = 1;
             prong_map[m] = pmap;
@@ -363,15 +384,18 @@ struct witness_search
         int m1 = order[kv.first.first.m];
         int p1 = (kv.first.first.p + shift[kv.first.first.m]) %
                  t.Multigon(kv.first.first.m).prongs();
+        int e1 = kv.first.first.e;
         int m2 = order[kv.first.second.m];
         int p2 = (kv.first.second.p + shift[kv.first.second.m]) %
                  t.Multigon(kv.first.second.m).prongs();
-        if (m2 < m1 || (m2 == m1 && p2 < p1))
+        int e2 = kv.first.second.e;
+        if (m2 < m1 || (m2 == m1 && (p2 < p1 || (p2 == p1 && e2 < e1))))
           {
             std::swap(m1,m2);
             std::swap(p1,p2);
+            std::swap(e1,e2);
           }
-        edgesig.push_back({m1,p1,m2,p2,kv.second});
+        edgesig.push_back({m1,p1,e1,m2,p2,e2,kv.second});
       }
     std::sort(edgesig.begin(),edgesig.end());
     for (const auto& e : edgesig)

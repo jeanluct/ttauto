@@ -84,21 +84,15 @@ int main()
   // A control track with different topology.
   const traintrack tC(5,3);
 
-#if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
-  const bool expect_operator_eq = true;
-#else
-  const bool expect_operator_eq = false;
-#endif
-
-  // Guardrail 1: coding strings differ, so any equality merge here must come
-  // from structural matching rather than lexical coding coincidence.
+  // Guardrail 1: coding strings differ.
   REQUIRE(tA.coding() != tB.coding());
 
-  // Guardrail 2: structural matcher should still recognize isotopy.
-  REQUIRE(traintracks::graph_iso::is_isotopic_oriented(tA,tB));
+  // Guardrail 2: these are not orientation-preserving isotopic when full cusp
+  // slot structure is respected.
+  REQUIRE(!traintracks::graph_iso::is_isotopic_oriented(tA,tB));
 
-  // Guardrail 3: operator== follows the currently selected compile-time mode.
-  REQUIRE((tA == tB) == expect_operator_eq);
+  // Guardrail 3: equality should remain false.
+  REQUIRE(!(tA == tB));
 
   // Label-sensitive equality: relabeling one track should break equality.
   traintrack tLbl(tA);

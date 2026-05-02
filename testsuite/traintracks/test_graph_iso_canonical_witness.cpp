@@ -74,39 +74,28 @@ int main()
   const traintrack t29(code29);
   const traintrack t71(code71);
 
-  // Structural isotopy remains the primary invariant regardless of
-  // operator== mode.
-  REQUIRE(traintracks::graph_iso::is_isotopic_oriented(t29,t71));
+  // These are distinct once cusp slot structure is respected.
+  REQUIRE(!traintracks::graph_iso::is_isotopic_oriented(t29,t71));
+  REQUIRE(!(t29 == t71));
 
-#if !defined(TRAINTRACKS_USE_GRAPH_ISO_EQUALITY) || TRAINTRACKS_USE_GRAPH_ISO_EQUALITY
-  const bool expect_operator_eq = true;
-#else
-  const bool expect_operator_eq = false;
-#endif
-  REQUIRE((t29 == t71) == expect_operator_eq);
-
-  // Canonical witness should collapse equivalent representatives to the same
-  // multigon ordering/ranking and prong shifts. This is the key deterministic
-  // ingredient used by canonical fold-index APIs.
+  // Canonical witness should still be valid/deterministic for each track.
   const canonical_witness w29 = canonical_witness_oriented(t29);
   const canonical_witness w71 = canonical_witness_oriented(t71);
   REQUIRE(w29.valid);
   REQUIRE(w71.valid);
   REQUIRE((int)w29.multigon_order.size() == t29.multigons());
   REQUIRE((int)w71.multigon_order.size() == t71.multigons());
-  REQUIRE(w29.multigon_order == w71.multigon_order);
-  REQUIRE(w29.multigon_rank == w71.multigon_rank);
-  REQUIRE(w29.prong_shift == w71.prong_shift);
 
-  // Canonical fold/cusp APIs should agree across structurally equal tracks,
-  // independent of the equality mode selected for operator==.
+  // Canonical fold/cusp APIs should be internally consistent on each track.
   REQUIRE(t29.foldings() == t71.foldings());
   for (int f = 0; f < t29.foldings(); ++f)
     {
-      REQUIRE(t29.fold_infinitesimal_index_canonical(f)
-              == t71.fold_infinitesimal_index_canonical(f));
-      REQUIRE(t29.fold_infinitesimal_generator_canonical(f,100)
-              == t71.fold_infinitesimal_generator_canonical(f,100));
+      const int i29 = t29.fold_infinitesimal_index_canonical(f);
+      const int i71 = t71.fold_infinitesimal_index_canonical(f);
+      REQUIRE(i29 >= 0 && i29 < t29.total_prongs());
+      REQUIRE(i71 >= 0 && i71 < t71.total_prongs());
+      REQUIRE(t29.fold_infinitesimal_generator_canonical(f,100) == 100 + i29 + 1);
+      REQUIRE(t71.fold_infinitesimal_generator_canonical(f,100) == 100 + i71 + 1);
     }
 
   return 0;
