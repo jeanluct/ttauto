@@ -62,16 +62,17 @@ private:
   // Ownership: traintrack is the sole owner of multigons.
   // Internal cross-links between multigons and edges are non-owning.
   mgpVec mgv;
+  bool isnormalised;
 
 public:
   //
   // Constructors
   //
 
-  traintrack() {}
+  traintrack() : isnormalised(true) {}
 
   // Copy constructor.
-  traintrack(const traintrack& tt) { copy(*this,tt); }
+  traintrack(const traintrack& tt) : isnormalised(tt.isnormalised) { copy(*this,tt); }
 
   // Make a train track from its coding.
   traintrack(const intVec& code);
@@ -176,6 +177,8 @@ public:
   // coding (lexicographically) at the start.
   //
   void normalise();
+
+  bool is_normalised() const { return isnormalised; }
 
   // Check that everything is hooked properly.
   void check() const;
@@ -292,6 +295,10 @@ private:
 
   // Deep-copy track topology and relink all edge/multigon attachments.
   void copy(traintrack& ttnew, const traintrack& ttexist);
+
+  // Fail fast if a routine requiring canonical normal form is called
+  // on a track that has not been normalised.
+  void require_normalised(const char* where) const;
 
   // Find the index of a multigon edge in the vector, given a pointer.
   int multigon_index(const multigon* mm) const;
@@ -485,6 +492,9 @@ inline bool traintrack::operator==(const traintrack& tt) const
 // Both tracks must be normalised.
 inline bool traintrack::same_multigons(const traintrack& tt) const
 {
+  require_normalised("traintrack::same_multigons(lhs)");
+  tt.require_normalised("traintrack::same_multigons(rhs)");
+
   if (edges() != tt.edges() || multigons() != tt.multigons()) return false;
 
   for (int m = 0; m < multigons(); ++m)
@@ -504,6 +514,7 @@ inline void traintrack::normalise()
     }
   sort();
   minimise_coding();
+  isnormalised = true;
 }
 
 // Find index of multigon pointer within mgv.

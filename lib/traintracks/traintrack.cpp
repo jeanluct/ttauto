@@ -34,6 +34,8 @@ namespace traintracks {
 // Make a train track from its coding.
 traintrack::traintrack(const traintrack::intVec& code)
 {
+  isnormalised = false;
+
   // Train track always starts with an uncusped monogon.
 #if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   // C++14 has make_unique.
@@ -61,6 +63,8 @@ traintrack::traintrack(const traintrack::intVec& code)
 // as output by print_coding().
 traintrack::traintrack(const char* codes)
 {
+  isnormalised = false;
+
   std::cerr << "traintrack(char *) constructor: Broken?: ";
   std::cerr << "Reads in an \"old style\" (unlabeled) coding.";
   exit(1);
@@ -166,6 +170,8 @@ void traintrack::recursive_build(traintrack::edgep& ee,
 // Copy a traintrack ttexist onto ttnew.
 void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
 {
+  ttnew.isnormalised = ttexist.isnormalised;
+
   // Copy the multigons and create new edges.
 
   // Have to carefully hook the new edges in the proper places.
@@ -234,6 +240,14 @@ void traintrack::copy(traintrack& ttnew, const traintrack& ttexist)
     }
 }
 
+void traintrack::require_normalised(const char* where) const
+{
+  if (isnormalised) return;
+
+  std::cerr << "traintrack must be normalised in " << where << ".\n";
+  std::exit(1);
+}
+
 // Check that everything is hooked
 void traintrack::check() const
 {
@@ -300,9 +314,10 @@ traintrack::intVec traintrack::minimise_coding()
 
 // Find minimal coding over uncusped monogons.
 // Do not move to beginning (see minimise_coding).
-// Assumes a track is normalised (?).
 traintrack::intVec traintrack::coding(const int dir) const
 {
+  require_normalised("traintrack::coding");
+
   int mono = 0;
   intVec codemin = coding_from_monogon(mono,dir);
 
@@ -369,6 +384,8 @@ void traintrack::recursive_coding(const multigon& mm,
 // The symmetry is Delta^order, where Delta = sigma_1 ... sigma_(n-1).
 mathmatrix_permplus1 traintrack::cyclic_symmetry()
 {
+  require_normalised("traintrack::cyclic_symmetry");
+
   int mono = 0, nmatch = 0;
   intVec code = coding_from_monogon(mono);
   mathmatrix_permplus1 perm(jlt::identity_matrix<int>(edges()));
@@ -418,6 +435,8 @@ mathmatrix_permplus1 traintrack::cyclic_symmetry()
 
 void traintrack::set_label(const int m, const int lb)
 {
+  isnormalised = false;
+
   // If this is called explicitly, then we are labeling multiprongs.
   if (label_multiprongs)
     mgv[m]->set_label(lb);
@@ -433,6 +452,8 @@ void traintrack::set_label(const int m, const int lb)
 // Give unique label to each punctured multigon; label 0 if unpunctured.
 void traintrack::pure_braid()
 {
+  isnormalised = false;
+
   // If this is called explicitly, then we are labeling multiprongs.
   if (!label_multiprongs)
     {
@@ -471,12 +492,13 @@ void traintrack::sort()
   } while (swapped);
 }
 
-// Need normalised train track.
-/* Group together all functions that need normalised tt's. */
 //  f even = fold clockwise
 //  f odd  = fold counterclockwise
 bool traintrack::fold(const int f)
 {
+  // Need normalised train track.
+  require_normalised("traintrack::fold");
+
   int fcusp = f/2;
   int fdir = 1 - 2*(f % 2);
 
@@ -525,6 +547,8 @@ bool traintrack::fold(const int f)
 // Resolve fold index f to the concrete cusp location on the current track.
 void traintrack::fold_cusp_location(const int f, multigon*& mmc, int& pc, int& ec) const
 {
+  require_normalised("traintrack::fold_cusp_location");
+
   if (f < 0 || f >= foldings())
     {
       std::cerr << "Illegal folding index in traintrack::traintrack::fold_cusp_location.\n";
@@ -715,6 +739,8 @@ bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
 // Assumes a track is normalised.
 traintrack::dblVec traintrack::weights(const int mono) const
 {
+  require_normalised("traintrack::weights(get)");
+
   // Start the weights vector with the monogon.
   dblVec wv;
   wv.push_back(Multigon(mono).Edge(0,0)->weight());
@@ -761,6 +787,8 @@ void traintrack::recursive_get_weights(const multigon& mm,
 traintrack::dblVec::const_iterator
 traintrack::weights(traintrack::dblVec::const_iterator wi)
 {
+  require_normalised("traintrack::weights(set)");
+
   // Since normalised, distribute weights from 0th monogon.
   int mono = 0;
 
