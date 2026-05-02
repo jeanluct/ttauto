@@ -187,8 +187,8 @@ public:
   // Fold at a cusp until the next edge.
   // This combines two edges.
   // Cusps have to be given an ordering.
-  //  f even = fold counterclockwise
-  //  f odd  = fold clockwise
+  //  f even = fold clockwise
+  //  f odd  = fold counterclockwise
   bool fold(const int f);
 
   // Return the infinitesimal generator index (0-based)
@@ -336,7 +336,7 @@ private:
   void swap(const int m1, const int m2);
 
   // Fold cusp c of prong p of multigon m in direction dir.
-  //   dir = 1 clockwise, dir = 1 anticlockwise.
+  //   dir = 1 clockwise, dir = -1 anticlockwise.
   bool fold(multigon& mm, const int p, const int c, const int dir);
 
   // Print a coding block.
