@@ -202,13 +202,7 @@ run_ttauto_for_stratum() {
   printf "%s\n" "${out}"
 }
 
-{
-  printf "# ttauto Strata Scan (n=%s..%s)\n\n" "${N_MIN}" "${N_MAX}"
-  printf -- "- Binary: \`%s\`\n" "${TTAUTO_BIN}"
-  printf -- "- Default max path length fallback (when no stratum default): \`%s\`\n" "${MAX_PATH_LEN}"
-  printf -- "- Puncture range: \`n=%s..%s\`\n" "${N_MIN}" "${N_MAX}"
-  printf -- "- Stratum max path defaults are hardwired in \`MAX_PATH_LEN_BY_NS\` in this script.\n\n"
-} > "${OUTPUT_MD}"
+printf "# ttauto Strata Scan (n=%s..%s)\n\n" "${N_MIN}" "${N_MAX}" > "${OUTPUT_MD}"
 
 for ((n=N_MIN; n<=N_MAX; ++n)); do
   strata_lines="$(extract_strata_lines "${n}")"
@@ -217,14 +211,13 @@ for ((n=N_MIN; n<=N_MAX; ++n)); do
   progress "[n=${n}] found ${nstrata} strata"
 
   {
-    printf "## Punctures %s\n\n" "${n}"
-    printf -- "- Per-stratum max path lengths come from hardwired defaults; fallback is \`%s\`.\n\n" "${MAX_PATH_LEN}"
-    printf "| Stratum | Singularity Data | Main | non-Main | Min Dil. | Minimizer Length | Shortest Length |\n"
-    printf "|---:|---|---:|---:|---:|---:|---:|\n"
+    printf "## %s Punctures\n\n" "${n}"
+    printf "| Stratum | Singularity Data | Main | non-Main | Min Dil. | Min. Dil Len. | Shortest Len. | Max Len. |\n"
+    printf "|---:|---|---:|---:|---:|---:|---:|---:|\n"
   } >> "${OUTPUT_MD}"
 
   if [[ -z "${strata_lines}" ]]; then
-    printf "| NA | NA | NA | NA | NA | NA | NA |\n\n" >> "${OUTPUT_MD}"
+    printf "| NA | NA | NA | NA | NA | NA | NA | NA |\n\n" >> "${OUTPUT_MD}"
     continue
   fi
 
@@ -244,15 +237,20 @@ for ((n=N_MIN; n<=N_MAX; ++n)); do
     progress "     main=${main_vertices} other=${other_vertices_total} min_dil=${min_dilatation} min_path=${minimizer_path_len} shortest_any=${shortest_path_len_overall}"
 
     singularity_md="${singularity//|/\\|}"
+    shortest_path_len_display="${shortest_path_len_overall}"
+    if [[ "${shortest_path_len_overall}" != "${minimizer_path_len}" ]]; then
+      shortest_path_len_display="**${shortest_path_len_overall}**"
+    fi
 
-    printf "| %s | %s | %s | %s | %s | %s | %s |\n" \
+    printf "| %s | %s | %s | %s | %s | %s | %s | %s |\n" \
       "${stratum}" \
       "${singularity_md}" \
       "${main_vertices}" \
       "${other_vertices_total}" \
       "${min_dilatation}" \
       "${minimizer_path_len}" \
-      "${shortest_path_len_overall}" >> "${OUTPUT_MD}"
+      "${shortest_path_len_display}" \
+      "${max_len_for_case_val}" >> "${OUTPUT_MD}"
   done <<<"${strata_lines}"
 
   printf "\n" >> "${OUTPUT_MD}"
