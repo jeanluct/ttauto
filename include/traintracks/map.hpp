@@ -148,9 +148,9 @@ jlt::freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 
   // Fold direction determines ordering around the inserted infinitesimal edge.
   if (f % 2 == 0)
-    AM[e1] = {e21,infinitesimal,e22}; // fold counterclockwise
+    AM[e1] = {e21,infinitesimal,e22}; // fold clockwise
   else
-    AM[e1] = {e22,infinitesimal,e21}; // fold clockwise
+    AM[e1] = {e22,infinitesimal,e21}; // fold counterclockwise
 
   // Main-edge transition consistency check (debug mode only).
   if (TrTr::debug) check_fold_map_main_transition(tt0,f,AM);
