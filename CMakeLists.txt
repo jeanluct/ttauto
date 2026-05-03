@@ -28,6 +28,8 @@ project(ttauto LANGUAGES C CXX)
 
 include(CTest)
 
+option(TTAUTO_ENABLE_SLOW_TESTS "Enable slow integration tests" OFF)
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
@@ -141,3 +143,10 @@ file(GLOB TTAUTO_TESTSUITE_SOURCES CONFIGURE_DEPENDS
 foreach(testsuite_source ${TTAUTO_TESTSUITE_SOURCES})
   ttauto_add_testsuite("${testsuite_source}")
 endforeach()
+
+if(TTAUTO_ENABLE_SLOW_TESTS)
+  add_test(NAME testsuite_test_scan_strata_markdown
+    COMMAND bash "${CMAKE_SOURCE_DIR}/testsuite/ttauto/test_scan_strata_markdown.sh")
+  set_tests_properties(testsuite_test_scan_strata_markdown PROPERTIES
+    LABELS "deterministic;integration;slow")
+endif()
