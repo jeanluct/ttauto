@@ -2,7 +2,7 @@
 
 This document describes the structure of the main `ttauto` C++ codebase and explains what the major classes and functions are for.
 
-Scope: this covers code in `include/`, `lib/`, `examples/`, and `tests/`. It does not document internals of `extern/jlt`.
+Scope: this covers code in `include/`, `lib/`, `examples/`, `tests/`, and `testsuite/`. It does not document internals of `extern/jlt`.
 
 ## What This Project is About
 
@@ -21,6 +21,7 @@ In concrete terms, it does three main things:
 - `include/ttauto/`: automaton graph, path representation, search algorithm, result grouping.
 - `examples/`: runnable programs showing interactive and scripted usage.
 - `tests/`: executable tests and consistency checks.
+- `testsuite/`: deterministic CTest targets (with optional slow integration checks).
 
 ## Terms Used in This Codebase
 

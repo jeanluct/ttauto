@@ -44,29 +44,13 @@ cmake -S . -B build
 cmake --build build -j
 ctest --test-dir build --output-on-failure
 ```
-
-Only `testsuite/**/*.cpp` programs are registered with `ctest`.
-Current organization aligns tests with headers/components (`testsuite/traintracks/`
-and `testsuite/ttauto/`).  The `tests/` folder remains available for ad-hoc
-feature programs and exploratory checks.
-
-See `testsuite/COVERAGE.md` for a header-to-test mapping.
-
-### build (legacy scons)
-
-SCons files are still present temporarily during migration:
-
-```bash
-scons
-```
-
-The CMake workflow above is the primary path.
+See `TESTING.md` for more details.
 
 ### support
 
 The development of *ttauto* was supported by the [US National Science Foundation][11], under grants [DMS-0806821][12] and [CMMI-1233935][13].
 
-[1]: https://www.math.wisc.edu/~jeanluc/
+[1]: https://people.math.wisc.edu/~thiffeault/
 [2]: https://www-fourier.ujf-grenoble.fr/~lanneau/
 [3]: https://www.suitesparse.com
 [4]: https://github.com/jeanluct/jlt
