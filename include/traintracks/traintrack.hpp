@@ -33,6 +33,7 @@
 #include "traintracks/multigon.hpp"
 #include "traintracks/map.hpp"
 #include "traintracks/mathmatrix_permplus1.hpp"
+#include "traintracks/coding.hpp"
 
 
 namespace traintracks {
@@ -59,6 +60,8 @@ public:
   static const bool exploit_symmetries = true;
 
 private:
+  friend class detail::coding_engine;
+
   // Ownership: traintrack is the sole owner of multigons.
   // Internal cross-links between multigons and edges are non-owning.
   mgpVec mgv;
@@ -82,6 +85,7 @@ public:
   // Train track must be one-indexed: e.g.:
   //   1111 1311 2311 1111 3312 1111 3322 1111
   // as output by print_coding().
+  /* Update this example to new label coding format? */
   traintrack(const char* codes);
 
   // Assignment operator.
@@ -119,7 +123,7 @@ public:
   // Track with all multigons specified by Kv, including monogons.
   traintrack(const intVec& Kv);
   /* Cannot do this since it clashes with creating a track from coding. */
-  /* Introduce coding class. */
+  /* Introduce coding class?  Coding now encapsulated in coding.?pp. */
 #endif
 
   //
@@ -146,8 +150,9 @@ public:
   // Isotopy of train tracks.
   bool operator==(const traintrack& tt) const;
 
-  // Return the coding, minimised over uncusped monogons, but
-  // leave the monogons untouched.
+  // Coding/canonical-form interface (implemented in lib/traintracks/coding.cpp).
+
+  // Return the canonical coding in orientation dir without mutating the track.
   intVec coding(const int dir = 1) const;
 
   // Return true if the train track is reflection-symmetric.
@@ -160,22 +165,18 @@ public:
   // The symmetry is Delta^order, where Delta = sigma_1 ... sigma_(n-1).
   mathmatrix_permplus1 cyclic_symmetry();
 
+  // Print coding.
+  std::ostream& print_coding(std::ostream& strm = std::cout,
+			     const int dir = 1) const;
+
   // Set label of multigon m, then renormalise coding order.
   void set_label(const int m, const int lb);
 
   // Give unique label to each punctured multigon; label 0 if unpunctured.
   void pure_braid();
 
-  //
-  // Put into normal form.
-  //
-  // Order multigons according to increasing prongness,
-  // then ascending total number of branches,
-  // and finally a lexicographical compare of their maximised edge sequence.
-  //
-  // Then put the uncusped monogon that minimises the train track
-  // coding (lexicographically) at the start.
-  //
+  // Put into the canonical normal form used by coding-dependent operations.
+  // (Ordering strategy documented in lib/traintracks/coding.cpp.)
   void normalise();
 
   bool is_normalised() const { return isnormalised; }
@@ -238,10 +239,6 @@ public:
   // Print singularity data of the train track.
   std::ostream& print_singularity_data(std::ostream& strm) const;
 
-  // Print coding.
-  std::ostream& print_coding(std::ostream& strm = std::cout,
-			     const int dir = 1) const;
-
 private:
   //
   // Helper methods for building tracks (defined in lib/traintrack/build.cpp)
@@ -290,9 +287,6 @@ private:
   // non-const reference to multigon is private.
   multigon& Multigon(const int m);
 
-  // The coding of a train track is a sequence of coding_blocks.
-  struct coding_block;
-
   // Deep-copy track topology and relink all edge/multigon attachments.
   void copy(traintrack& ttnew, const traintrack& ttexist);
 
@@ -312,29 +306,17 @@ private:
   // Recursively reconstruct a track from coding blocks.
   void recursive_build(edgep& ee, intVec::const_iterator& cd);
 
-  // Recursively emit coding blocks while traversing adjacent multigons.
-  void recursive_coding(const multigon& mm, const int pp, const int ee,
-			intVec& code, const int dir) const;
-
-  // Recursively collect edge weights in coding traversal order.
+  // Recursively collect edge weights in canonical traversal order.
   void recursive_get_weights(const multigon& mm, const int pp, const int ee,
 			     dblVec& wv) const;
 
-  // Recursively assign edge weights in coding traversal order.
+  // Recursively assign edge weights in canonical traversal order.
   void recursive_set_weights(const multigon& mm, const int pp, const int ee,
 			     dblVec::const_iterator& wi);
 
   // Recursively locate cusp fcusp and return its multigon/prong/edge location.
   bool recursive_find_cusp(multigon& mm, const int pp, const int ee,
 		   int& fcusp, multigon*& mmc, int& pc, int& ec) const;
-
-  // Minimise coding over uncusped monogons, such that the min is
-  // obtained from the first position.
-  intVec minimise_coding();
-
-  // Return a coding vector for the train track, which is used to test
-  // for equality.  The coding vector starts at a given monogon.
-  intVec coding_from_monogon(const int mono, const int dir = 1) const;
 
   // Sort ascending using the strict order relation for multigons.
   void sort();
@@ -345,9 +327,6 @@ private:
   // Fold cusp c of prong p of multigon m in direction dir.
   //   dir = 1 clockwise, dir = -1 anticlockwise.
   bool fold(multigon& mm, const int p, const int c, const int dir);
-
-  // Print a coding block.
-  friend std::ostream& operator<<(std::ostream& strm, const coding_block& b);
 
   // Print in train track Mathematica-friendly format.
   friend std::ostream& printMathematicaForm(std::ostream& strm,
@@ -369,47 +348,6 @@ int boundary_prongs(jlt::vector<int> sdata);
 // How many prongs on the boundary for N punctures and multigons given
 // by the vector K?
 int boundary_prongs(const int N, const jlt::vector<int> K);
-
-
-//
-// Class member definitions
-//
-
-// The coding of a train track is a sequence of coding_blocks.
-struct traintrack::coding_block
-{
-  static const int length = 5;
-
-  int prong;
-  int nprongs;
-  int label;
-  int edge;
-  int nedges;
-
-  // Default is uncusped monogon with label 0.
-  coding_block(const int p = 0, const int np = 1, const int lb = 0,
-	       const int e = 0, const int ne = 1)
-    : prong(p), nprongs(np), label(lb), edge(e), nedges(ne) {}
-
-  coding_block(intVec::const_iterator& ci)
-    : prong(*ci++), nprongs(*ci++), label(*ci++), edge(*ci++), nedges(*ci++) {}
-
-  void append_to(intVec& v) const
-  {
-    v.push_back(prong); v.push_back(nprongs);
-    v.push_back(label);
-    v.push_back(edge); v.push_back(nedges);
-  }
-
-  bool operator==(const coding_block& b) const
-  {
-    return (prong == b.prong && nprongs == b.nprongs &&
-	    label == b.label &&
-	    edge == b.edge && nedges == b.nedges);
-  }
-
-  bool operator!=(const coding_block& b) const { return !operator==(b); }
-};
 
 
 //
@@ -505,18 +443,6 @@ inline bool traintrack::same_multigons(const traintrack& tt) const
   return true;
 }
 
-// Put into normal form.
-inline void traintrack::normalise()
-{
-  for (int m = 0; m < multigons(); ++m)
-    {
-      Multigon(m).normalise();
-    }
-  sort();
-  minimise_coding();
-  isnormalised = true;
-}
-
 // Find index of multigon pointer within mgv.
 inline int traintrack::multigon_index(const multigon* mm) const
 {
@@ -553,21 +479,6 @@ inline void traintrack::swap(const int m1, const int m2)
       std::exit(1);
     }
   traintracks::swap(*mgv[m1],*mgv[m2]);
-}
-
-//
-// Friend functions
-//
-
-inline std::ostream&
-operator<<(std::ostream& strm, const traintrack::coding_block& b)
-{
-  // Print prong/label/edge with 1 offset rather than 0 offset.
-  if (traintrack::label_multiprongs)
-    strm << b.prong+1 << b.nprongs << b.label+1 << b.edge+1 << b.nedges;
-  else
-    strm << b.prong+1 << b.nprongs << b.edge+1 << b.nedges;
-  return strm;
 }
 
 // Print train track in Mathematica-friendly graph-edge format.

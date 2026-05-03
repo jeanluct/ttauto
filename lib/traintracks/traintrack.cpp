@@ -48,7 +48,7 @@ traintrack::traintrack(const traintrack::intVec& code)
     Multigon(0).set_label(code[2]); // Copy the label of first monogon.
 
   // Iterator for coding: skip initial uncusped monogon marker.
-  intVec::const_iterator ci(code.begin() + coding_block::length);
+  intVec::const_iterator ci(code.begin() + detail::coding_block::length);
 
   // Recurse down and build train track.
   recursive_build(Multigon(0).Edge(0,0),ci);
@@ -97,7 +97,7 @@ traintrack::traintrack(const char* codes)
   Multigon(0).attach_edge();
 
   // Iterator for coding: skip initial uncusped monogon marker.
-  intVec::const_iterator ci(code.begin() + coding_block::length);
+  intVec::const_iterator ci(code.begin() + detail::coding_block::length);
 
   // Recurse down and build train track.
   recursive_build(Multigon(0).Edge(0,0),ci);
@@ -109,13 +109,13 @@ traintrack::traintrack(const char* codes)
 void traintrack::recursive_build(traintrack::edgep& ee,
 				 traintrack::intVec::const_iterator& ci)
 {
-  coding_block outb;
+  detail::coding_block outb;
 
   // Extract the block in the coding corresponding to the entry edge.
-  // A block consists of coding_block::length digits.
+  // A block consists of detail::coding_block::length digits.
   // The entry edge info is not strictly needed as it can be deduced,
   // but makes things easier.
-  coding_block inb(ci);
+  detail::coding_block inb(ci);
 
   if (debug)
     {
@@ -144,8 +144,8 @@ void traintrack::recursive_build(traintrack::edgep& ee,
   do
     {
       // Extract the block in the coding corresponding to the next exit edge.
-      // A block consists of coding_block::length digits.
-      outb = coding_block(ci);
+      // A block consists of detail::coding_block::length digits.
+      outb = detail::coding_block(ci);
 
       if (debug)
 	{
@@ -261,176 +261,6 @@ void traintrack::check() const
     {
       (*it)->check();
     }
-}
-
-// Compute a coding vector for a train track, starting from an
-// uncusped monogon.
-// Assumes the train track is sorted.
-traintrack::intVec traintrack::coding_from_monogon(const int mono,
-						   const int dir) const
-{
-  if (Multigon(mono).edges() > 1)
-    {
-      std::cerr << "Not an uncusped monogon in traintrack::traintrack::coding_from_monogon.\n";
-      std::exit(1);
-    }
-
-  intVec code;
-  // Start the coding vector with the monogon.
-  // Uncusped monogons are marked with a coding_block() sequence.
-  coding_block(0,1,Multigon(mono).label(),0,1).append_to(code);
-
-  // Recurse down and compute coding.
-  // Start by finding the multigon the edge is attached to, and which
-  // prong.
-  int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
-
-  recursive_coding(*egmono,pmono,pemono,code,dir);
-
-  return code;
-}
-
-// Minimise coding over uncusped monogons, such that the min is
-// obtained from the first position.
-// Assumes a track is normalised.
-traintrack::intVec traintrack::minimise_coding()
-{
-  int mono = 0, monomin = 0;
-  intVec codemin = coding_from_monogon(mono);
-
-  // Loop over monogons with only one edge (uncusped).
-  while (Multigon(++mono).edges() <= 1)
-    {
-      intVec code = coding_from_monogon(mono);
-      if (code < codemin) { codemin = code; monomin = mono; }
-    }
-  // Move the minimising monogon to the first slot.
-  traintrack::swap(0,monomin);
-
-  return codemin;
-}
-
-// Find minimal coding over uncusped monogons.
-// Do not move to beginning (see minimise_coding).
-traintrack::intVec traintrack::coding(const int dir) const
-{
-  require_normalised("traintrack::coding");
-
-  int mono = 0;
-  intVec codemin = coding_from_monogon(mono,dir);
-
-  // Loop over monogons with only one edge (uncusped).
-  while (Multigon(++mono).edges() <= 1)
-    {
-      intVec code = coding_from_monogon(mono,dir);
-      if (code < codemin) { codemin = code; }
-    }
-
-  return codemin;
-}
-
-void traintrack::recursive_coding(const multigon& mm,
-				  const int pin, const int ein,
-				  intVec& code, const int dir) const
-{
-  int p = pin, e = ein;
-
-  if (mm.edges() == 1)
-    {
-      // This is an uncusped monogon so we won't
-      // recurse. Record it here and continue.  Uncusped
-      // monogons are marked with a coding_block() sequence.
-      coding_block(0,1,mm.label(),0,1).append_to(code);
-      return;
-    }
-
-  do
-    {
-      // Prong number relative to entry prong into multigon.
-      // The entry prong is labeled 0, and the other prongs
-      // clockwise from 0 (anticlockwise if dir = -1).
-      int prong = traintracks::mod(dir*(p-pin),mm.prongs());
-      // Number of prongs in outgoing multigon.
-      int nprongs = mm.prongs();
-      // Label of the multigon.
-      int label = mm.label();
-      // Number of edges in the outgoing prong.
-      int nedges = mm.edges(p);
-      // The outgoing edge.  Number anticlockwise if dir = -1.
-      int edge = (dir == 1 ? e : nedges-1-e);
-
-      // Record the block in the coding corresponding to this edge.
-      // A block consists of coding_block::length digits.
-      coding_block(prong,nprongs,label,edge,nedges).append_to(code);
-
-      // Find the next multigon down.
-      int pout, eout;
-      multigon *ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
-
-      // Don't recurse down the entry edge.
-      if (!(p == pin && e == ein))
-	{
-	  recursive_coding(*ed,pout,eout,code,dir);
-	}
-      // Increment the edge and prong (decrement if dir = -1).
-      mm.cycle_edges(p,e,dir);
-    }
-  while (!(p == pin && e == ein));
-}
-
-// Return positive (order-1) if the train track is cyclically-symmetric.
-// The symmetry is Delta^order, where Delta = sigma_1 ... sigma_(n-1).
-mathmatrix_permplus1 traintrack::cyclic_symmetry()
-{
-  require_normalised("traintrack::cyclic_symmetry");
-
-  int mono = 0, nmatch = 0;
-  intVec code = coding_from_monogon(mono);
-  mathmatrix_permplus1 perm(jlt::identity_matrix<int>(edges()));
-
-  // Loop over monogons with only one edge (uncusped) and save codings.
-  while (Multigon(++mono).edges() <= 1)
-    {
-      if (code == coding_from_monogon(mono))
-	{
-	  ++nmatch;
-	  // The first time we have a match, compute the permutation matrix.
-	  if (nmatch == 1)
-	    {
-	      dblVec w(edges()), w2(edges());
-	      jlt::mathmatrix<int> M(edges(),edges());
-	      for (int i = 0; i < edges(); ++i)
-		{
-		  // Set initial weights.
-		  w[i] = 1;
-		  weights(w.begin());
-		  w[i] = 0;
-		  // Find where the weights are in terms of the new labels.
-		  w2 = weights(mono);
-		  int j = 0;
-		  for (j = 0; j < edges(); ++j) if (w2[j] != 0) break;
-		  // Make permutation matrix.
-		  M(j,i) = 1;
-		}
-	      perm = mathmatrix_permplus1(M);
-	    }
-	}
-    }
-
-  if (nmatch)
-    {
-      // Sanity check: perm should be such that perm^order=id, where
-      // order = nmatch+1.  But it should not be id for a smaller power.
-      if (perm.order() != nmatch+1)
-	{
-      std::cerr << "Bad permutation in traintrack::traintrack::cyclic_symmetry().\n";
-	  exit(1);
-	}
-    }
-
-  return perm;
 }
 
 void traintrack::set_label(const int m, const int lb)
@@ -902,23 +732,6 @@ std::ostream& printMathematicaForm(std::ostream& strm,
       if (std::distance(i,ttg.end()) > 1) strm << ",";
     }
   strm << "}";
-  return strm;
-}
-
-std::ostream& traintrack::print_coding(std::ostream& strm,
-				       const int dir) const
-{
-  int print_length = coding_block::length;
-  // If we're not labeling multiprongs, don't print the label, which
-  // means the coding blocks are shorter.
-  if (!label_multiprongs) --print_length;
-
-  intVec code = coding(dir);
-  for (int i = 0; i < (int)code.size(); i += coding_block::length)
-    {
-      strm << coding_block(code[i],code[i+1],code[i+2],code[i+3],code[i+4]);
-      if (i != ((int)code.size() - print_length)) strm << " ";
-    }
   return strm;
 }
 
