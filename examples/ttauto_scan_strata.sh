@@ -122,6 +122,22 @@ parse_run_metrics() {
   fi
 
   read -r min_dil shortest_minimiser shortest_overall <<<"$(printf "%s\n" "${out}" | awk '
+    function path_length_from_vertices(inner, cleaned, parts, nfields) {
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", inner);
+      if (inner == "") return 0;
+
+      # Vertices are printed either as space-separated integers (when vertex
+      # labels can exceed 9) or as contiguous single digits.
+      if (inner ~ /[[:space:]]/) {
+        nfields = split(inner, parts, /[[:space:]]+/);
+        return (nfields > 0 ? nfields - 1 : 0);
+      }
+
+      cleaned = inner;
+      gsub(/[[:space:]]/, "", cleaned);
+      return (length(cleaned) > 0 ? length(cleaned) - 1 : 0);
+    }
+
     /^[[:space:]]*[0-9]+[[:space:]]+[0-9]+\.[0-9]+/ {
       d = $2;
       if (!have || d < min) {
@@ -129,23 +145,16 @@ parse_run_metrics() {
         min = d;
         best = 1e9;
       }
-      if (d == min) {
-        line = $0;
-        while (match(line, /[0-9]+ \[/)) {
-          token = substr(line, RSTART, RLENGTH - 2);
-          l = length(token);
-          if (l < best) best = l;
-          if (overall == 0 || l < overall) overall = l;
-          line = substr(line, RSTART + RLENGTH);
-        }
-      } else {
-        line = $0;
-        while (match(line, /[0-9]+ \[/)) {
-          token = substr(line, RSTART, RLENGTH - 2);
-          l = length(token);
-          if (overall == 0 || l < overall) overall = l;
-          line = substr(line, RSTART + RLENGTH);
-        }
+
+      line = $0;
+      while (match(line, /\[[^]]+\]/)) {
+        bracket = substr(line, RSTART + 1, RLENGTH - 2);
+        l = path_length_from_vertices(bracket);
+
+        if (overall == 0 || l < overall) overall = l;
+        if (d == min && l < best) best = l;
+
+        line = substr(line, RSTART + RLENGTH);
       }
     }
     END {
