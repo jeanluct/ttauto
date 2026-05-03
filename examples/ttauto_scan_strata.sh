@@ -97,7 +97,7 @@ parse_run_metrics() {
   local out="$1"
 
   local main_size total_size other_size
-  local min_dil shortest_minimizer shortest_overall
+  local min_dil shortest_minimiser shortest_overall
 
   main_size="$(printf "%s\n" "${out}" | awk -F'\t' '
     /^[[:space:]]*1[[:space:]]*\t/ {
@@ -121,7 +121,7 @@ parse_run_metrics() {
     other_size="NA"
   fi
 
-  read -r min_dil shortest_minimizer shortest_overall <<<"$(printf "%s\n" "${out}" | awk '
+  read -r min_dil shortest_minimiser shortest_overall <<<"$(printf "%s\n" "${out}" | awk '
     /^[[:space:]]*[0-9]+[[:space:]]+[0-9]+\.[0-9]+/ {
       d = $2;
       if (!have || d < min) {
@@ -159,7 +159,7 @@ parse_run_metrics() {
     }
   ')"
 
-  printf "%s\t%s\t%s\t%s\t%s\n" "${main_size:-NA}" "${other_size}" "${min_dil}" "${shortest_minimizer}" "${shortest_overall}"
+  printf "%s\t%s\t%s\t%s\t%s\n" "${main_size:-NA}" "${other_size}" "${min_dil}" "${shortest_minimiser}" "${shortest_overall}"
 }
 
 extract_effective_max_len() {
@@ -232,13 +232,13 @@ for ((n=N_MIN; n<=N_MAX; ++n)); do
 
     run_out="$(run_ttauto_for_stratum "${n}" "${stratum}" "${nstrata}" "${max_len_for_case_val}")"
 
-    read -r main_vertices other_vertices_total min_dilatation minimizer_path_len shortest_path_len_overall <<<"$(parse_run_metrics "${run_out}")"
+    read -r main_vertices other_vertices_total min_dilatation minimiser_path_len shortest_path_len_overall <<<"$(parse_run_metrics "${run_out}")"
 
-    progress "     main=${main_vertices} other=${other_vertices_total} min_dil=${min_dilatation} min_path=${minimizer_path_len} shortest_any=${shortest_path_len_overall}"
+    progress "     main=${main_vertices} other=${other_vertices_total} min_dil=${min_dilatation} min_path=${minimiser_path_len} shortest_any=${shortest_path_len_overall}"
 
     singularity_md="${singularity//|/\\|}"
     shortest_path_len_display="${shortest_path_len_overall}"
-    if [[ "${shortest_path_len_overall}" != "${minimizer_path_len}" ]]; then
+    if [[ "${shortest_path_len_overall}" != "${minimiser_path_len}" ]]; then
       shortest_path_len_display="**${shortest_path_len_overall}**"
     fi
 
@@ -248,7 +248,7 @@ for ((n=N_MIN; n<=N_MAX; ++n)); do
       "${main_vertices}" \
       "${other_vertices_total}" \
       "${min_dilatation}" \
-      "${minimizer_path_len}" \
+      "${minimiser_path_len}" \
       "${shortest_path_len_display}" \
       "${max_len_for_case_val}" >> "${OUTPUT_MD}"
   done <<<"${strata_lines}"
