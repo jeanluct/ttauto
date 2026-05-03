@@ -187,9 +187,15 @@ Key public responsibilities:
 Important internal helpers (private):
 
 - `recursive_build`: reconstruct topology from coding blocks.
-- `recursive_coding`: depth-first coding emission.
 - `recursive_find_cusp`: locate cusp by canonical ordering.
 - `recursive_get_weights` / `recursive_set_weights`: aligned weight traversal.
+
+Coding implementation note:
+
+- Canonical coding logic now lives in `include/traintracks/coding.hpp` and
+  `lib/traintracks/coding.cpp` (`traintracks::detail::coding_engine`).
+- `traintrack::{coding, normalise, cyclic_symmetry, print_coding}` delegate to
+  that coding module.
 
 ### `multigon`: Local Piece and Edge-Slot Manager
 
