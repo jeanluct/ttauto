@@ -40,9 +40,9 @@ namespace traintracks {
 
 class traintrack
 {
+public:
   static const bool label_multiprongs = true;
 
-public:
   using edgep = multigon::edgep;
 #if __cplusplus > 199711L && !defined(TRAINTRACKS_NO_SHARED_PTR)
   // There is only one owner for each multigon, so use std::unique_ptr (C++11).
