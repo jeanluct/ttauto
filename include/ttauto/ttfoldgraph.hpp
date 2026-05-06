@@ -28,6 +28,7 @@
 #include <iostream>
 #include <list>
 #include <algorithm>
+#include <jlt/freeauto.hpp>
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
 #include <jlt/csparse.hpp>
@@ -273,7 +274,8 @@ private:
 
     // Delete the vertices in reverse order, so as to not invalidate
     // the earlier members of the list!
-    std::for_each(vl.rbegin(),vl.rend(),delete_vertex);
+    std::for_each(vl.rbegin(),vl.rend(),
+		  [this](const int vv) { delete_vertex(vv); });
 
     // Clear the list since it contains oudated numbers after deletion.
     vl.clear();
