@@ -32,6 +32,11 @@
 #include <jlt/vector.hpp>
 #include <jlt/csparse.hpp>
 #include "traintracks/mathmatrix_permplus1.hpp"
+#include "traintracks/map.hpp"
+
+#if TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS
+#include <cstdlib>
+#endif
 
 // Graph of train tracks linked by foldings.
 
@@ -96,6 +101,13 @@ private:
   Mat TM;		// Transition matrix.
   const Mat id;		// Identity matrix.
 
+  // Diagnostics for recursive graph construction.
+#if TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS
+  long long add_vertex_calls = 0;
+  long long add_vertex_duplicates = 0;
+  int add_vertex_max_depth = 0;
+#endif
+
 public:
 
   // Make a folding graph from an initial train track.
@@ -125,8 +137,39 @@ public:
 
 private:
   // Add a vertex.  This recursively builds the whole graph.
+#if TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS
+  int add_vertex(const TrTr& trtr, const int depth = 0)
+  {
+    ++add_vertex_calls;
+    if (depth > add_vertex_max_depth) add_vertex_max_depth = depth;
+
+    const int progress_vertices_every = []() {
+      const char* env = std::getenv("TTAUTO_ADD_VERTEX_PROGRESS_EVERY");
+      if (!env) return 0;
+      int v = std::atoi(env);
+      return (v > 0 ? v : 0);
+    }();
+
+    const long long progress_calls_every = []() {
+      const char* env = std::getenv("TTAUTO_ADD_VERTEX_PROGRESS_CALLS_EVERY");
+      if (!env) return 0LL;
+      long long v = std::atoll(env);
+      return (v > 0 ? v : 0LL);
+    }();
+
+    if (progress_calls_every > 0 && (add_vertex_calls % progress_calls_every) == 0)
+      {
+	std::cerr << "[ttfoldgraph] calls=" << add_vertex_calls
+		  << " vertices=" << vertices()
+		  << " duplicates=" << add_vertex_duplicates
+		  << " max_depth=" << add_vertex_max_depth << "\n";
+	std::cerr.flush();
+      }
+#else
   int add_vertex(const TrTr& trtr)
   {
+#endif
+
     // See if the vertex is already in the graph.
     int idx = std::distance(trtrv.begin(),
 			    std::find(trtrv.begin(),trtrv.end(),trtr));
@@ -151,6 +194,9 @@ private:
       }
     else
       {
+#if TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS
+	++add_vertex_duplicates;
+#endif
 	if (debug)
 	  std::cerr << "Not adding vertex " << idx << std::endl;
 
@@ -174,10 +220,26 @@ private:
 	    AMv[idx].push_back(AM);
 	    // Add the target vertex, if it's not already in there, and
 	    // point to it.
+#if TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS
+	    int tidx = add_vertex(trtr0,depth+1);
+#else
 	    int tidx = add_vertex(trtr0);
+#endif
 	    tv[idx].push_back(tidx);
 	  }
       }
+
+#if TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS
+    if (progress_vertices_every > 0 && (vertices() % progress_vertices_every) == 0)
+      {
+	std::cerr << "[ttfoldgraph] vertices=" << vertices()
+		  << " calls=" << add_vertex_calls
+		  << " duplicates=" << add_vertex_duplicates
+		  << " max_depth=" << add_vertex_max_depth << "\n";
+	std::cerr.flush();
+      }
+#endif
+
     // Return the index, which allows the recursion.
     return idx;
   }

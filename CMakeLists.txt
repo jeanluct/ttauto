@@ -29,6 +29,8 @@ project(ttauto LANGUAGES C CXX)
 include(CTest)
 
 option(TTAUTO_ENABLE_SLOW_TESTS "Enable slow integration tests" OFF)
+option(TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS
+  "Enable verbose ttfoldgraph construction diagnostics" OFF)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -92,6 +94,13 @@ target_include_directories(ttauto PUBLIC
   "${CMAKE_SOURCE_DIR}/include"
   "${CMAKE_SOURCE_DIR}/extern/jlt"
   "${CMAKE_SOURCE_DIR}/extern/jlt/extern/CSparse/Include")
+if(TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS)
+  target_compile_definitions(ttauto PUBLIC
+    TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS=1)
+else()
+  target_compile_definitions(ttauto PUBLIC
+    TTAUTO_ENABLE_TTFOLDGRAPH_DIAGNOSTICS=0)
+endif()
 target_link_libraries(ttauto PUBLIC csparse)
 ttauto_add_compile_flags(ttauto)
 ttauto_set_inplace_output(ttauto "${CMAKE_SOURCE_DIR}/lib")

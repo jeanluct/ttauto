@@ -37,6 +37,7 @@ class multigon;
 namespace detail {
 
 // Fixed-size block encoding one directed edge-step in canonical coding.
+// The 5-int layout is persisted in comparisons/printing, so keep ordering stable.
 struct coding_block
 {
   using coding_vec = jlt::vector<int>;
@@ -97,6 +98,8 @@ private:
                                         int dir = 1);
 
   // DFS emitter used by coding_from_monogon().
+  // Implementation guards revisits of identical directed entry states
+  // to prevent runaway recursion on cyclic traversals.
   static void recursive_coding(const multigon& mm,
                                int pin,
                                int ein,

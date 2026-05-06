@@ -23,13 +23,95 @@
 // LICENSE>
 
 #include <cstdlib>
+#include <cstdint>
 #include <iostream>
+#include <unordered_set>
 
 #include "traintracks/coding.hpp"
 #include "traintracks/traintrack.hpp"
 #include "traintracks/util.hpp"
 
 namespace traintracks {
+
+namespace {
+
+struct coding_visit_key
+{
+  // Directed entry state into a multigon during coding traversal.
+  const multigon* mm;
+  int pin;
+  int ein;
+  int dir;
+
+  bool operator==(const coding_visit_key& other) const
+  {
+    return (mm == other.mm && pin == other.pin &&
+            ein == other.ein && dir == other.dir);
+  }
+};
+
+struct coding_visit_key_hash
+{
+  std::size_t operator()(const coding_visit_key& key) const
+  {
+    std::size_t h = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(key.mm));
+    // Boost-style hash_combine mix: golden-ratio constant plus shifted
+    // accumulator bits to reduce collisions when folding in each field.
+    h ^= static_cast<std::size_t>(key.pin + 0x9e3779b9 + (h << 6) + (h >> 2));
+    h ^= static_cast<std::size_t>(key.ein + 0x9e3779b9 + (h << 6) + (h >> 2));
+    h ^= static_cast<std::size_t>(key.dir + 0x9e3779b9 + (h << 6) + (h >> 2));
+    return h;
+  }
+};
+
+void recursive_coding_guarded(
+  const multigon& mm,
+  int pin,
+  int ein,
+  detail::coding_engine::coding_vec& code,
+  int dir,
+  std::unordered_set<coding_visit_key,coding_visit_key_hash>& visited)
+{
+  // If this directed entry state was already expanded, stop this branch.
+  const coding_visit_key key{&mm,pin,ein,dir};
+  if (!visited.insert(key).second)
+    {
+      return;
+    }
+
+  int p = pin, e = ein;
+
+  if (mm.edges() == 1)
+    {
+      // Uncusped monogon: emit its marker block and terminate this branch.
+      detail::coding_block(0,1,mm.label(),0,1).append_to(code);
+      return;
+    }
+
+  do
+    {
+      int prong = traintracks::mod(dir*(p-pin),mm.prongs());
+      int nprongs = mm.prongs();
+      int label = mm.label();
+      int nedges = mm.edges(p);
+      int edge = (dir == 1 ? e : nedges-1-e);
+
+      detail::coding_block(prong,nprongs,label,edge,nedges).append_to(code);
+
+      int pout, eout;
+      multigon* ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
+
+      // Skip recursing back through the incoming edge to this multigon.
+      if (!(p == pin && e == ein))
+        {
+          recursive_coding_guarded(*ed,pout,eout,code,dir,visited);
+        }
+      mm.cycle_edges(p,e,dir);
+    }
+  while (!(p == pin && e == ein));
+}
+
+} // namespace
 
 // Canonicalize multigon order and coding root for invariant comparisons.
 void traintrack::normalise()
@@ -128,48 +210,10 @@ void coding_engine::recursive_coding(const multigon& mm,
 				     int dir)
 {
   // Depth-first edge traversal that emits coding blocks in canonical order.
-  int p = pin, e = ein;
-
-  if (mm.edges() == 1)
-    {
-      // This is an uncusped monogon so we won't recurse. Record it
-      // here and continue. Uncusped monogons are marked with a
-      // coding_block() sequence.
-      coding_block(0,1,mm.label(),0,1).append_to(code);
-      return;
-    }
-
-  do
-    {
-      // Prong number relative to entry prong into multigon.
-      // The entry prong is labeled 0, and the other prongs
-      // clockwise from 0 (anticlockwise if dir = -1).
-      int prong = traintracks::mod(dir*(p-pin),mm.prongs());
-      // Number of prongs in outgoing multigon.
-      int nprongs = mm.prongs();
-      // Label of the multigon.
-      int label = mm.label();
-      // Number of edges in the outgoing prong.
-      int nedges = mm.edges(p);
-      // The outgoing edge. Number anticlockwise if dir = -1.
-      int edge = (dir == 1 ? e : nedges-1-e);
-
-      // Record the block in the coding corresponding to this edge.
-      coding_block(prong,nprongs,label,edge,nedges).append_to(code);
-
-      // Find the next multigon down.
-      int pout, eout;
-      multigon* ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
-
-      // Don't recurse down the entry edge.
-      if (!(p == pin && e == ein))
-	{
-	  recursive_coding(*ed,pout,eout,code,dir);
-	}
-      // Increment the edge and prong (decrement if dir = -1).
-      mm.cycle_edges(p,e,dir);
-    }
-  while (!(p == pin && e == ein));
+  // Guard revisits of the same directed entry state to avoid runaway recursion
+  // on cyclic traversals.
+  std::unordered_set<coding_visit_key,coding_visit_key_hash> visited;
+  recursive_coding_guarded(mm,pin,ein,code,dir,visited);
 }
 
 // Detect cyclic coding matches and recover induced branch permutation.
