@@ -1,7 +1,7 @@
 # Issue #2: implementation plan for the gate test
 
-Status: plan approved 2026-09-19; Steps 0 to 3 done the same day (see the
-"Outcome" notes below).  Supersedes `ISSUE2_GATES_PLAN.md`.  The
+Status: plan approved 2026-09-19; Steps 0 to 4 and the census of Step 5
+done the same day (see the "Outcome" notes below).  Supersedes `ISSUE2_GATES_PLAN.md`.  The
 mathematics and the worked example are in `issue2_gates.tex` (built to
 `issue2_gates.pdf`) in this directory; the scratch diagnostic that
 established the result is `gates_check.cpp`.
@@ -318,6 +318,60 @@ O(L (n + ninf)) per candidate.
   closed-path test).
 - Default: on (decision of 2026-09-19).  Rejections are counted and
   printed; `check_gates(false)` restores the old behaviour.
+
+Outcome of Step 4 (2026-09-19):
+
+- `folding_path::gates()` and the check in `record_pA` as planned;
+  rejected candidates go to `rejected_pA_list()` (same `pAclass` keying
+  as the accepted list) and are counted by `gate_rejected()`, which is
+  cumulative over the whole search because the other statistics counters
+  are reset for every initial vertex.  `check_gates(false)` restores the
+  old behaviour.  `ttfoldgraph` untouched.
+- `testsuite/ttauto/test_ttauto_gates.cpp`: on the n=6 stratum 3,3(2)
+  main subautomaton with path length <= 7, 10 classes with the gate test
+  off, 9 with it on; the class with dilatation 2.01536 (3 paths) is the one
+  rejected and every other class is unchanged.
+- Census program `tests/ttauto_gate_census.cpp` (in-place binary,
+  ignored): mirrors `examples/ttauto_scan_strata.sh` (main subautomaton,
+  same per-stratum path lengths) with the gate test on and lists every
+  rejected class.  Results for n = 3..7 (about 8 s):
+
+  | n | stratum | rejected lambda | paths | interpretation |
+  |--:|--:|--:|--:|---|
+  | 4 | 1 `(2)` | 2.61803, `(x-1)(x^2-3x+1)` | 3 | 3-braid sigma1 sigma2^-1 plus an idle puncture; a genuine class with the same dilatation remains accepted |
+  | 6 | 3 `4(2)` | 1.61803, `-(x^2-1)(x^4-3x^2+1)` | 141 (3 classes) | matrix irreducible but not primitive |
+  | 6 | 3 `4(2)` | 1.93185 | | 5-puncture dilatation plus an idle puncture |
+  | 6 | 3 `4(2)` | 2.15372 | | the n=5 stratum 4(1) minimum plus an idle puncture |
+  | 6 | 5 `3 3(2)` | 2.01536 | 3 | the known bad path (n=5 stratum 3 3(1) minimum plus an idle puncture) |
+  | 7 | 7 `3 4(2)` | 1.88320 | 6 | the n=6 stratum (4) minimum plus an idle puncture |
+
+  Six classes, 153 paths, none with an accepted representative.  Every
+  rejection is at a prong of a multi-edge punctured monogon split into
+  two main gates, except the imprimitive one, which is disconnected at an
+  unpunctured 4-gon.  On the n=5 first stratum, 0 of the 726 primitive
+  closed paths of length <= 5 are disconnected.  So the bad path was NOT
+  the only spurious pA, but the mechanism is always the same one.
+- Consequence for the scan baseline `examples/ttauto_scan_strata.md`
+  (regenerated, three rows change):
+  n=6 stratum 3: 1.61803 -> 1.88320; n=6 stratum 5: 2.01536 -> 2.45317;
+  n=7 stratum 7: 1.88320 -> 2.47541.  The paper's table row for n=6
+  stratum 3 (`ttauto.tex` ~1395, `1.61803`) is one of the entries the
+  paper itself marks as below the systole (`\chkabs`); the gate test now
+  explains it.
+- Observation for the user: `descend_graph` accepts an irreducible matrix
+  with dilatation > 1, not a primitive one.  The n=6 stratum 3 class with
+  lambda = 1.61803 has an irreducible, imprimitive matrix (eigenvalues
+  +-phi); the paper's own definition of a primitive closed path would
+  already exclude it.  Adding `is_primitive()` to the acceptance test is
+  a one-line change that would remove such classes even with the gate test
+  off; left as a decision for the user.
+- The fifth control of the scratch program, `{1,18,65,18,56,57,57,1}`, is
+  accepted by the library's gate test (class 2.79497 in
+  `test_ttauto_gates`); the earlier failure was the scratch program's own
+  branch bookkeeping.  Resolved.
+- `tests/test_issue2_bad_path.cpp` removed (its vertex model was wrong and
+  `test_gates.cpp` covers the case); `gates_check.cpp` kept as a documented
+  diagnostic.
 
 ## Step 5: tests
 

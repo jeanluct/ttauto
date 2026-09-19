@@ -51,6 +51,15 @@ For header/component coverage mapping, see `testsuite/COVERAGE.md`.
 `examples/ttauto_count`   (2 minutes)
 `examples/ttauto_labels`   (100 minutes)
 
+## Gate-test census
+
+`tests/ttauto_gate_census [nmin [nmax]]` (default 3 6; n=7 takes about
+7 s) repeats the strata scan with the Bestvina-Handel gate test on and lists
+every class rejected by it, per stratum, with dilatation, characteristic
+polynomial and representative paths.  Use it after any change to the fold
+map or the gate test; the expected rejections are recorded in
+`devel/iss002/ISSUE2_IMPLEMENTATION_PLAN.md` (Step 4 outcome).
+
 ## Programs that should be used for testing
 
 `tests/test_permplus1`
