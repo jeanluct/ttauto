@@ -143,7 +143,7 @@ private:
   llint totalpathstried;	// How many total paths tried?
   double totalpathlength;	// Total pathlength traversed?
   llint closed;			// Total closed paths encountered?
-  llint irreducible;		// Total irreducible paths encountered?
+  llint primitive;		// Total closed paths with primitive matrix?
   llint pseudoAnosov;		// Total pA paths encountered?
   llint maxpathlengthexceeded;	// Total times exceeded max_path_length?
   llint normexceeded;		// Total times exceeded matrix norm?
@@ -154,7 +154,7 @@ private:
 #endif
   llint badwordsomitted;	// Total times we omitted bad words?
   llint gatecandidates;		// Candidates reaching the gate test (closed,
-				// irreducible, inside the dilatation window),
+				// primitive, inside the dilatation window),
 				// cumulative over the whole search (the
 				// other counters are per initial vertex).
   llint gaterejected;		// Of those, rejected by the gate test.
@@ -329,7 +329,7 @@ public:
   const pAlist& rejected_pA_list() const { return rejl; }
 
   // Gate-test statistics, cumulative over the whole search: candidates
-  // that reached the test (closed path, irreducible matrix, dilatation in
+  // that reached the test (closed path, primitive matrix, dilatation in
   // the window), those rejected, and the rejection rate.
   llint gate_candidates() const { return gatecandidates; }
   llint gate_rejected() const { return gaterejected; }
@@ -373,7 +373,7 @@ private:
     totalpathstried = 0;
     totalpathlength = 0;
     closed = 0;
-    irreducible = 0;
+    primitive = 0;
     pseudoAnosov = 0;
     maxpathlengthexceeded = 0;
     normexceeded = 0;
@@ -703,7 +703,7 @@ bool ttauto<TrTr>::find_pAs()
   cout << "Total path length  = " << totalpathlength << endl;
   cout << "Mean path length   = " << totalpathlength/totalpathstried << endl;
   cout << "Closed paths       = " << closed << endl;
-  cout << "Irreducible paths  = " << irreducible << endl;
+  cout << "Primitive paths    = " << primitive << endl;
   if (do_check_gates)
     {
       cout << "Gate test          = " << gaterejected << " rejected of "
@@ -836,11 +836,17 @@ bool ttauto<TrTr>::descend_graph()
       else
 	TM = p.transition_matrix();
 
-      // Is path a pA?
-      if (!(TM.is_reducible()))
+      // Is path a pA?  The transition matrix of a pseudo-Anosov is
+      // primitive (irreducible and aperiodic): its dilatation is a
+      // simple dominant eigenvalue.  An irreducible but imprimitive
+      // matrix (eigenvalues +-lambda, characteristic polynomial in
+      // x^2) cannot come from a pseudo-Anosov; the paper's definition
+      // of a primitive closed path already excludes it, and the search
+      // used to admit it (issue #2).
+      if (TM.is_primitive())
 	{
-	  if (debug) std::cerr << " irreducible";
-	  ++irreducible;
+	  if (debug) std::cerr << " primitive";
+	  ++primitive;
 
 	  // Find the characteristic polynomial.
 	  charpoly = TM.charpoly();
@@ -895,13 +901,11 @@ bool ttauto<TrTr>::descend_graph()
 	    }
 #endif
 
-	  // This is somewhat redundant: there is a theorem (see
-	  // Toby Hall's BH notes) stating that an irreducible
-	  // Perron-Frobenius matrix has unit spectral radius iff it
-	  // is a permutation matrix.  But none of our matrices can
-	  // be permutation matrices, since there is at least one
-	  // fold.  Nevertheless, it is very cheap to do this and we
-	  // need to find the spectral radius anyways.
+	  // This is somewhat redundant: a primitive matrix has unit
+	  // spectral radius iff it is the 1x1 matrix (1), and none of
+	  // our matrices can be permutation matrices since there is at
+	  // least one fold.  Nevertheless, it is very cheap to do this
+	  // and we need to find the spectral radius anyways.
 	  if (lambda-1 > tol) // Avoid false pA's.  Tricky.
 	    {
 	      if (debug) std::cerr << ", pseudo-Anosov";

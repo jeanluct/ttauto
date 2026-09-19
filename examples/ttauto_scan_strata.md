@@ -46,7 +46,9 @@
 > Lefschetz-based enumeration of `devel/iss002/braids.tex` (Lanneau and
 > Thiffeault, "On the minimum dilatation of braids on the punctured disc",
 > Geom. Dedicata 152, 2011), whereas ttauto's
-> irreducibility test admitted it.  The gate test rejects all of these.
+> irreducibility test admitted it.  The search now requires a primitive
+> matrix, as the paper does, so such classes are no longer candidates; the
+> gate test rejects the idle-puncture ones.
 > The search length for stratum 5 was raised from 6 to 8 at the same time;
 > at length 8 the gate test also rejects a class with dilatation 2.54205
 > whose paths extend the 2.01536 cycle.

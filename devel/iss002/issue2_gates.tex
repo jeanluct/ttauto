@@ -887,8 +887,10 @@ One observation falls out of the census: the search accepts an
 \emph{irreducible} matrix with $\lam>1$, not a \emph{primitive} one.
 The $1.61803$ and $1.93185$ classes have irreducible matrices of period
 two, eigenvalues $\pm\lam$; the paper's own definition of a primitive
-closed path would exclude them without any gate test.  Requiring
-primitivity in the search is a one-line change left as a decision.
+closed path would exclude them without any gate test.  The search now
+requires primitivity as well (the change exposed an off-by-one in the
+library's primitivity test, which took one squaring too few and rejected
+every Wielandt matrix; fixed, with a regression test).
 
 The census also settles a comparison with the earlier paper
 \cite{Lanneau2011b}, which found the minimum dilatation of each stratum by

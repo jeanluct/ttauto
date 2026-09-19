@@ -111,7 +111,8 @@ Conventions worth knowing:
 Issue #2: the search reported some pAs that are actually reducible.  An
 irreducible matrix and a plausible dilatation are not sufficient; the
 Bestvina-Handel gate condition must also hold.  Fixed 2026-09-19: the
-search now runs the gate test in `ttauto::record_pA` (default on,
+search now requires a primitive matrix (not just irreducible) and runs
+the gate test in `ttauto::record_pA` (default on,
 `check_gates(false)` to disable; rejected classes in
 `rejected_pA_list()`).  The machinery is `ttnumbering` (coding module),
 `fold_map` and `gates` in `traintracks`.  Read

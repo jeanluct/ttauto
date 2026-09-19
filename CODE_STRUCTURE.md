@@ -107,7 +107,7 @@ This is why `folding_path` is the core DFS state in `ttauto`: it is both combina
 During DFS in `ttauto`:
 
 - pruning checks reject many partial paths early (norm bounds, badwords, depth limits, etc.),
-- closed paths with an irreducible matrix and dilatation above 1 become candidates,
+- closed paths with a primitive matrix (irreducible and aperiodic) and dilatation above 1 become candidates,
 - `record_pA` applies the dilatation window and then the Bestvina-Handel gate test (`folding_path::gates()`, `traintracks/gates.hpp`); candidates with a disconnected gate graph are reducible and go to `rejected_pA_list()`,
 - accepted candidates are grouped into `pAclass` objects keyed by polynomial/dilatation.
 

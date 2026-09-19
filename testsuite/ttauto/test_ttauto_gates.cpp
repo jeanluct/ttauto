@@ -56,10 +56,11 @@ static std::set<std::string> polys(const ttsearch::pAlist& l)
   return out;
 }
 
-static bool has_dilatation(const ttsearch::pAlist& l, const double lam)
+static bool has_dilatation(const ttsearch::pAlist& l, const double lam,
+                           const double tol = 1e-6)
 {
   for (auto it = l.begin(); it != l.end(); ++it)
-    if (std::fabs(it->second.dilatation() - lam) < 1e-6) return true;
+    if (std::fabs(it->second.dilatation() - lam) < tol) return true;
   return false;
 }
 
@@ -101,6 +102,29 @@ int main()
   CHECK(poff.size() == pon.size() + 1);
   for (const std::string& q : pon) CHECK(poff.count(q) == 1);
   for (const std::string& q : prej) CHECK(poff.count(q) == 1 && pon.count(q) == 0);
+
+  // n=6 stratum 3 (4 (2)): the search requires a primitive matrix, so the
+  // imprimitive classes 1.61803 and 1.93185 never become candidates even
+  // with the gate test off; the idle-puncture class 2.15372 does, and the
+  // gate test rejects it.
+  {
+    ttgraph full3(ttv[2]);
+    std::list<ttgraph> sgs3 = ttauto::subgraphs(full3);
+    const ttgraph& ttg3 = *sgs3.begin();
+    ttsearch off3(ttg3);
+    off3.check_gates(false).max_pathlength(5);
+    off3.search();
+    CHECK(!has_dilatation(off3.pA_list(),1.61803,1e-4));
+    CHECK(!has_dilatation(off3.pA_list(),1.93185,1e-4));
+    CHECK(has_dilatation(off3.pA_list(),2.15372,1e-4));
+    ttsearch on3(ttg3);
+    on3.max_pathlength(5);
+    on3.search();
+    CHECK(!has_dilatation(on3.pA_list(),2.15372,1e-4));
+    CHECK(has_dilatation(on3.rejected_pA_list(),2.15372,1e-4));
+    CHECK(has_dilatation(on3.pA_list(),1.88320,1e-4));
+    CHECK(on3.gate_candidates() == off3.gate_candidates());
+  }
 
   std::cout << "\ntest_ttauto_gates: classes with gates off " << poff.size()
             << ", with gates on " << pon.size() << ", rejected " << prej.size()

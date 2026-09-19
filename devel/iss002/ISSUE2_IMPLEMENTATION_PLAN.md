@@ -346,14 +346,17 @@ Outcome of Step 4 (2026-09-19):
   | 6 | 5 `3 3(2)` | 2.54205 | 8 | two length-8 extensions of the bad cycle (search length raised to 8) |
   | 7 | 7 `3 4(2)` | 1.88320 | 6 | the n=6 stratum (4) minimum plus an idle puncture |
 
-  Rejection rate (candidates = closed paths with irreducible matrix inside
-  the dilatation window, counted by `gate_candidates()`): 161 of 11142
-  candidate paths over n=3..7 (1.44%), 7 of 95 classes.  Per stratum the
-  rate is 0 except n=4 stratum 1 (3 of 47, 6.4%), n=6 stratum 3 (141 of
-  266, 53%, the two imprimitive classes dominate), n=6 stratum 5 (11 of
-  7401, 0.15%) and n=7 stratum 7 (6 of 2208, 0.27%).  The search prints
-  the same figure in its statistics block and exposes it through
-  `gate_candidates()`, `gate_rejected()` and `gate_rejection_rate()`.
+  Rejection rate (candidates = closed paths with a primitive matrix
+  inside the dilatation window, counted by `gate_candidates()`), after
+  the primitivity change: 26 of 11007 candidate paths over n=3..7
+  (0.24%), 5 of 93 classes.  Per stratum the rate is 0 except n=4
+  stratum 1 (3 of 47, 6.4%), n=6 stratum 3 (6 of 131, 4.6%), n=6 stratum
+  5 (11 of 7401, 0.15%) and n=7 stratum 7 (6 of 2208, 0.27%).  Before the
+  primitivity change the two imprimitive classes of n=6 stratum 3 reached
+  the gate test too: 161 of 11142 paths (1.44%), 7 of 95 classes, 53% on
+  that stratum.  The search prints the figure in its statistics block and
+  exposes it through `gate_candidates()`, `gate_rejected()` and
+  `gate_rejection_rate()`.
 
   Seven classes, 161 paths, none with an accepted representative.  Every
   rejection is at a prong of a multi-edge punctured monogon split into
@@ -380,13 +383,18 @@ Outcome of Step 4 (2026-09-19):
   stratum 3 (`ttauto.tex` ~1395, `1.61803`) is one of the entries the
   paper itself marks as below the systole (`\chkabs`); the gate test now
   explains it.
-- Observation for the user: `descend_graph` accepts an irreducible matrix
-  with dilatation > 1, not a primitive one.  The n=6 stratum 3 class with
-  lambda = 1.61803 has an irreducible, imprimitive matrix (eigenvalues
-  +-phi); the paper's own definition of a primitive closed path would
-  already exclude it.  Adding `is_primitive()` to the acceptance test is
-  a one-line change that would remove such classes even with the gate test
-  off; left as a decision for the user.
+- Primitivity (decided and done 2026-09-19): `descend_graph` now requires
+  `TM.is_primitive()` instead of `!TM.is_reducible()`, matching the
+  paper's definition of a primitive closed path; the counter and the
+  statistics line say "Primitive paths".  The two imprimitive classes of
+  n=6 stratum 3 (1.61803, 1.93185; eigenvalues +-lambda) are no longer
+  candidates at all, with or without the gate test.  While doing this,
+  `jlt::mathmatrix::is_primitive` was found to do one squaring too few
+  (it tested A^(2^(pmax-1)) against Wielandt's bound n^2-2n+2), returning
+  false for every Wielandt matrix; fixed in `extern/jlt` with a Catch2
+  test over n=3..9, and the submodule pointer updated.  Without that fix
+  the primitivity rule would have dropped genuine pseudo-Anosovs with a
+  large exponent of primitivity.
 - The fifth control of the scratch program, `{1,18,65,18,56,57,57,1}`, is
   accepted by the library's gate test (class 2.79497 in
   `test_ttauto_gates`); the earlier failure was the scratch program's own
