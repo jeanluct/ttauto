@@ -1,3 +1,6 @@
+> Superseded (2026-09-19) by `ISSUE2_IMPLEMENTATION_PLAN.md`; kept for
+> history.  The mathematics is now in `issue2_gates.tex`.
+
 # Issue #2 Detailed Plan - Gates Including Infinitesimal Edges
 
 ## Objective

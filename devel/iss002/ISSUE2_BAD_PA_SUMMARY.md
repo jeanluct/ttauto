@@ -1,5 +1,11 @@
 # Issue #2 - "Bad pA" Repro Summary
 
+> Status 2026-09-19: root cause identified (Bestvina-Handel gate
+> connectivity fails at the fixed 3-edge monogon).  See `issue2_gates.tex`
+> for the analysis and `ISSUE2_IMPLEMENTATION_PLAN.md` for the fix plan.
+> The gate pipeline described below in `tests/test_issue2_bad_path.cpp` is
+> superseded by `gates_check.cpp`.
+
 ## Problem
 
 Issue #2 is that ttauto can very rarely report a pseudo-Anosov candidate that
