@@ -2,7 +2,7 @@
 
 This document describes the structure of the main `ttauto` C++ codebase and explains what the major classes and functions are for.
 
-Scope: this covers code in `include/`, `lib/`, `examples/`, and `tests/`. It does not document internals of `extern/jlt`.
+Scope: this covers code in `include/`, `lib/`, `examples/`, `tests/`, and `testsuite/`. It does not document internals of `extern/jlt`.
 
 ## What This Project is About
 
@@ -21,6 +21,7 @@ In concrete terms, it does three main things:
 - `include/ttauto/`: automaton graph, path representation, search algorithm, result grouping.
 - `examples/`: runnable programs showing interactive and scripted usage.
 - `tests/`: executable tests and consistency checks.
+- `testsuite/`: deterministic CTest targets (with optional slow integration checks).
 
 ## Terms Used in This Codebase
 
@@ -186,9 +187,15 @@ Key public responsibilities:
 Important internal helpers (private):
 
 - `recursive_build`: reconstruct topology from coding blocks.
-- `recursive_coding`: depth-first coding emission.
 - `recursive_find_cusp`: locate cusp by canonical ordering.
 - `recursive_get_weights` / `recursive_set_weights`: aligned weight traversal.
+
+Coding implementation note:
+
+- Canonical coding logic now lives in `include/traintracks/coding.hpp` and
+  `lib/traintracks/coding.cpp` (`traintracks::detail::coding_engine`).
+- `traintrack::{coding, normalise, cyclic_symmetry, print_coding}` delegate to
+  that coding module.
 
 ### `multigon`: Local Piece and Edge-Slot Manager
 

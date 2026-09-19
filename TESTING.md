@@ -15,10 +15,23 @@ This compiles:
 - all `tests/*.cpp` into `tests/`
 - all `testsuite/**/*.cpp` into `build/testsuite/`
 
-`ctest` runs only the deterministic tests in `testsuite/`.
+`ctest` runs deterministic fast tests by default.
 
 ```bash
 ctest --test-dir build --output-on-failure
+```
+
+To include slow integration tests, configure with:
+
+```bash
+cmake -S . -B build -DTTAUTO_ENABLE_SLOW_TESTS=ON
+ctest --test-dir build --output-on-failure
+```
+
+To run only slow tests:
+
+```bash
+ctest --test-dir build --output-on-failure -L slow
 ```
 
 The `tests/` folder remains available for direct-run feature and exploratory

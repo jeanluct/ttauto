@@ -10,9 +10,10 @@
 
 - `include/traintracks/` - public headers for train-track core primitives.
 - `include/ttauto/` - public headers for automaton/search layer.
-- `lib/` - `ttauto` implementation (`multigon`, `traintrack`, builders, etc.).
+- `lib/` - `ttauto` implementation (`multigon`, `traintrack`, coding, builders, etc.).
 - `examples/` - executable programs used for smoke/integration checks.
 - `tests/` - executable tests (plain `main()`, no unit-test framework).
+- `testsuite/` - deterministic CTest targets (plus optional slow integration tests).
 - `extern/jlt/` - bundled dependency with its own build/tests and AGENTS file.
 - `extern/jlt/extern/CSparse/` - bundled CSparse source/build directory.
 

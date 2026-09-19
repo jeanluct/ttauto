@@ -86,7 +86,7 @@ int main()
   cout << "\nOne-step fold maps from initial vertex:\n";
   for (int f = 0; f < ttg.foldings(0); ++f)
     {
-      cout << "f=" << f << " (" << (f % 2 ? "clockwise" : "counterclockwise")
+      cout << "f=" << f << " (" << (f % 2 ? "counterclockwise" : "clockwise")
            << ")\n";
       cout << ttg.traintrack_map(0,f) << endl;
     }
@@ -135,7 +135,7 @@ int main()
 
   // Hand-checked mapping example alignment (issue #3):
   // a=1, b=2, infinitesimal generator at folded cusp has index 5.
-  // Step 1: f=1 (clockwise): a->-a, b->a 5 b.
+  // Step 1: f=1 (counterclockwise): a->-a, b->a 5 b.
   freeauto<int> AMf1 = ttg.traintrack_map(0,1);
   assert((AMf1[1] == freeword<int>({-1})));
   assert((AMf1[2] == freeword<int>({1,5,2})));

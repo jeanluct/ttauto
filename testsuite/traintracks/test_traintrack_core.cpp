@@ -40,7 +40,8 @@ int main()
   Kv[2] = 3;
 
   traintrack tt(N,Kv);
-  tt.set_label(0,8);
+  if (traintrack::label_multiprongs)
+    tt.set_label(0,8);
   tt.check();
 
   traintrack tt_copy(tt);

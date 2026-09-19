@@ -66,7 +66,6 @@ This file maps public headers to deterministic CTest programs in `testsuite/`.
     - deterministic badword matrix dimensions and construction on fixed fixture
 
 - `include/ttauto/ttauto.hpp`
-- `include/ttauto/ttauto.hpp`
   - Primary: `testsuite/ttauto/test_ttauto_search.cpp`
   - Coverage focus:
     - deterministic bounded search smoke on a small fixed automaton
@@ -81,5 +80,8 @@ This file maps public headers to deterministic CTest programs in `testsuite/`.
 
 ## Notes
 
-- CTest executes only programs under `testsuite/`.
+- CTest executes only tests defined from `testsuite/`.
+- Slow scan-strata markdown regression is provided by
+  `testsuite/ttauto/test_scan_strata_markdown.sh` and is enabled with
+  `-DTTAUTO_ENABLE_SLOW_TESTS=ON`.
 - Existing `tests/` programs remain available for exploratory or feature-branch work.
