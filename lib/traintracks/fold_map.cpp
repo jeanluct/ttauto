@@ -83,10 +83,11 @@ bool traintrack::fold_with_map(const int f, fold_map_data& fm)
   fm.nmain = B.nedges();
   fm.nsides = B.nprongs();
 
-  // Locate the cusp and the two edges, as fold(int) does.
-  multigon* mmc = 0;
-  int pc = -1, ec = -1;
-  fold_cusp_location(f,mmc,pc,ec);
+  // Locate the cusp and the two edges from the numbering, as fold(int)
+  // does.
+  int mc0 = -1, pc = -1, ec = -1;
+  B.fold_cusp(f,mc0,pc,ec);
+  multigon* mmc = &Multigon(mc0);
   const int dir = 1 - 2*(f % 2);
   const int s0 = (dir == 1 ? ec : ec+1);   // slot of the moved edge
   const int s1 = (dir == 1 ? ec+1 : ec);   // slot of the edge folded onto

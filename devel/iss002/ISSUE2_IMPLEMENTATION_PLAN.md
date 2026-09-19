@@ -465,18 +465,22 @@ and 2 land together with the updated word expectations, since they change
 the infinitesimal letters of every stored map.  Step 4 is the only
 user-visible behaviour change and goes last, with its test.
 
-## Follow-ups (flagged, not part of this work)
+## Follow-ups
 
-- Consolidate the four copies of the monogon-0 DFS.  After the gate test
-  is in and validated, reimplement `recursive_get_weights` /
-  `recursive_set_weights` as a loop over edge numbers and
-  `fold_cusp_location` / `recursive_find_cusp` as an enumeration of cusps
-  in prong-number order, both on top of `ttnumbering`.  That retires two of
-  the three existing walks and leaves two with distinct jobs: the coding
-  (identity and normal form, runs in both directions) and the numbering
-  (index).  About 100 existing lines in `lib/traintracks/traintrack.cpp`.
-  Regression guards: the exact-matrix tests and the slow strata-scan
-  comparison, since edge order and cusp order are load-bearing everywhere.
+- DONE 2026-09-19: consolidate the four copies of the monogon-0 DFS.
+  `ttnumbering` now also records the cusps in fold order (the walk checks
+  the entry slot of each multigon first, then the other slots before
+  descending, exactly as `recursive_find_cusp` did); `weights(mono)`,
+  `weights(iter)`, `fold(f)` and `fold_cusp_location(f)` read the
+  numbering, and `recursive_get_weights`, `recursive_set_weights` and
+  `recursive_find_cusp` are gone (about 180 lines of
+  `lib/traintracks/traintrack.cpp`).  `fold_with_map` reuses its pre-fold
+  numbering for the cusp location.  Two walks remain: the coding (normal
+  form, both directions) and the numbering (index).  The old walks live on
+  as oracles in `test_numbering.cpp`, which compares edge order (from every
+  uncusped monogon) and cusp order on every n=3..5 stratum and one-fold
+  neighbour; the slow strata scan is byte-identical; census unchanged;
+  `ttauto_gate_census 7 7` 7.4 s before and after (search-dominated).
 - Derive the transition matrix from the fold record.
   `fold_transition_matrix` folds `n` copies of the track with unit weights,
   and `fold_traintrack_map` calls it, so building a graph costs `n+1` folds
@@ -494,8 +498,8 @@ user-visible behaviour change and goes last, with its test.
 - Automorphic vertices: the canonical-numbering argument removes the
   transport step, but `test_fold_map_paths` must include such vertices to
   prove it.
-- Redundancy: a fourth copy of the monogon-0 DFS until the follow-up
-  consolidation lands; the four must be kept in step, and
-  `test_numbering.cpp` checks the edge order against `weights()`.
+- Redundancy (resolved): the numbering was briefly a fourth copy of the
+  monogon-0 DFS; the weights and cusp walks now read it, and
+  `test_numbering.cpp` keeps the old walks as oracles.
 - Published numbers may change (Step 5 diff).  That is the point of the
   exercise, but it needs a note in the paper.

@@ -234,9 +234,10 @@ ttnumbering coding_engine::numbering(const traintrack& tt, int mono)
       }
   }
 
-  // Every prong must have been numbered exactly once and every edge
-  // must have a head.
-  if (num.nprongs() != tt.total_prongs() || num.nedges() != tt.edges())
+  // Every prong must have been numbered exactly once, every edge must
+  // have a head, and every cusp must have been met.
+  if (num.nprongs() != tt.total_prongs() || num.nedges() != tt.edges() ||
+      num.ncusps() != tt.cusps())
     {
       std::cerr << "Incomplete walk in traintracks::coding_engine::numbering.\n";
       std::exit(1);
@@ -276,9 +277,10 @@ void coding_engine::number_prongs(const traintrack& tt, int mi, int pin,
     }
 }
 
-// Same walk as traintrack::recursive_get_weights: the entry edge has
-// already been numbered by the caller; number the other edges of mm in
-// cycle_edges order, descending into every non-monogon target.
+// The depth-first walk that defines the canonical order of edges, prongs
+// and cusps (the one the coding also uses): the entry edge has already
+// been numbered by the caller; number the other edges of mm in cycle_edges
+// order, descending into every non-monogon target.
 void coding_engine::recursive_numbering(const traintrack& tt,
                                         const multigon& mm,
                                         int pin,
@@ -291,6 +293,8 @@ void coding_engine::recursive_numbering(const traintrack& tt,
   num.edge_head[entry_edge] = num.prong_number[mi][pin];
 
   int p = pin, e = ein;
+  // The cusp at the entry slot comes first in fold order.
+  if (e < mm.edges(p)-1) num.cusp.push_back(std::make_pair(num.prong_number[mi][p],e));
   mm.cycle_edges(p,e);
 
   do
@@ -300,6 +304,8 @@ void coding_engine::recursive_numbering(const traintrack& tt,
       num.edge_tail.push_back(num.prong_number[mi][p]);
       num.edge_head.push_back(-1);
       num.edge_ptr.push_back(E);
+      // Cusp at this slot, before descending into the child.
+      if (e < mm.edges(p)-1) num.cusp.push_back(std::make_pair(num.prong_number[mi][p],e));
 
       int pout, eout;
       multigon* ed = E->target_multigon(&mm,pout,eout);
@@ -452,6 +458,19 @@ int ttnumbering::tail_of(const int letter) const
   return (letter > 0 ? q : side_to(q));
 }
 
+void ttnumbering::fold_cusp(const int f, int& m, int& p, int& slot) const
+{
+  if (f < 0 || f >= foldings())
+    {
+      std::cerr << "Illegal folding index in traintracks::ttnumbering::fold_cusp.\n";
+      std::exit(1);
+    }
+  const std::pair<int,int>& c = cusp[f/2];
+  m = prong[c.first].multigon;
+  p = prong[c.first].prong;
+  slot = c.second;
+}
+
 int ttnumbering::side_from_prev(const int q) const
 {
   const prong_info& info = prong[q];
@@ -483,7 +502,7 @@ bool ttnumbering::operator==(const ttnumbering& o) const
     }
   return (prong_number == o.prong_number &&
           edge_tail == o.edge_tail && edge_head == o.edge_head &&
-          prong_letters == o.prong_letters);
+          prong_letters == o.prong_letters && cusp == o.cusp);
 }
 
 std::ostream& ttnumbering::print(std::ostream& strm) const
@@ -496,6 +515,9 @@ std::ostream& ttnumbering::print(std::ostream& strm) const
            << (prong[q].punctured ? "; punctured" : "")
            << "; side " << side_letter(q) << " -> prong " << side_to(q) << "\n";
     }
+  strm << "cusps (fold index/2: prong number, slot):\n";
+  for (int c = 0; c < ncusps(); ++c)
+    strm << "  " << c << ": prong " << cusp[c].first << " slot " << cusp[c].second << "\n";
   strm << "edges (number: tail prong -> head prong):\n";
   for (int e = 0; e < nedges(); ++e)
     {

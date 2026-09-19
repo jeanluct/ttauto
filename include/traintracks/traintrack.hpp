@@ -230,10 +230,11 @@ public:
     return fm.to_freeauto();
   }
 
-  // Return vector of edge weights.
+  // Return vector of edge weights, in the canonical edge order of
+  // ttnumbering rooted at uncusped monogon mono.
   dblVec weights(const int mono = 0) const;
 
-  // Set edge weights from iterator.
+  // Set edge weights from iterator, in the canonical edge order.
   dblVec::const_iterator weights(dblVec::const_iterator wi);
 
   // Print some information about the traintrack.
@@ -308,18 +309,6 @@ private:
 
   // Recursively reconstruct a track from coding blocks.
   void recursive_build(edgep& ee, intVec::const_iterator& cd);
-
-  // Recursively collect edge weights in canonical traversal order.
-  void recursive_get_weights(const multigon& mm, const int pp, const int ee,
-			     dblVec& wv) const;
-
-  // Recursively assign edge weights in canonical traversal order.
-  void recursive_set_weights(const multigon& mm, const int pp, const int ee,
-			     dblVec::const_iterator& wi);
-
-  // Recursively locate cusp fcusp and return its multigon/prong/edge location.
-  bool recursive_find_cusp(multigon& mm, const int pp, const int ee,
-		   int& fcusp, multigon*& mmc, int& pc, int& ec) const;
 
   // Sort ascending using the strict order relation for multigons.
   void sort();

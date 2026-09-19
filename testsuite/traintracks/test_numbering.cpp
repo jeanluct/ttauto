@@ -30,6 +30,7 @@
 #include <vector>
 #include "check.hpp"
 #include "traintracks/build.hpp"
+#include "traintracks/coding.hpp"
 #include "traintracks/traintrack.hpp"
 
 using traintracks::traintrack;
@@ -114,6 +115,111 @@ static void check_numbering(const traintrack& tt, const char* what)
   CHECK_MSG(tt2.numbering() == N, what);
 }
 
+// ---- Oracles: the walks that weights() and fold() used before they were
+// expressed through the numbering, written against the public API.
+
+static void oracle_weight_walk(const traintrack& tt, const traintracks::multigon& mm,
+                               int pin, int ein, std::vector<const traintracks::edge*>& order)
+{
+  int p = pin, e = ein;
+  mm.cycle_edges(p,e);
+  do
+    {
+      order.push_back(mm.Edge(p,e).get());
+      int pout, eout;
+      traintracks::multigon* ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
+      if (ed->edges() > 1) oracle_weight_walk(tt,*ed,pout,eout,order);
+      mm.cycle_edges(p,e);
+    }
+  while (!(p == pin && e == ein));
+}
+
+static std::vector<const traintracks::edge*> oracle_edge_order(const traintrack& tt, int mono)
+{
+  std::vector<const traintracks::edge*> order;
+  const traintracks::multigon& m0 = tt.Multigon(mono);
+  order.push_back(m0.Edge(0,0).get());
+  int pmono, pemono;
+  traintracks::multigon* eg = m0.Edge(0,0)->target_multigon(&m0,pmono,pemono);
+  if (eg->edges() > 1) oracle_weight_walk(tt,*eg,pmono,pemono,order);
+  return order;
+}
+
+// Cusps as (multigon pointer, prong, slot) in the order of the old
+// recursive_find_cusp: entry slot first, then slots in cycle order,
+// descending before moving on.
+typedef std::vector<std::pair<const traintracks::multigon*,std::pair<int,int> > > cusp_list;
+
+static void oracle_cusp_walk(const traintracks::multigon& mm, int pin, int ein, cusp_list& out)
+{
+  int p = pin, e = ein;
+  do
+    {
+      if (e < mm.edges(p)-1) out.push_back(std::make_pair(&mm,std::make_pair(p,e)));
+      int pout, eout;
+      traintracks::multigon* ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
+      if (!(p == pin && e == ein) && ed->edges() > 1) oracle_cusp_walk(*ed,pout,eout,out);
+      mm.cycle_edges(p,e);
+    }
+  while (!(p == pin && e == ein));
+}
+
+static cusp_list oracle_cusps(const traintrack& tt)
+{
+  cusp_list out;
+  const traintracks::multigon& m0 = tt.Multigon(0);
+  int pmono, pemono;
+  traintracks::multigon* eg = m0.Edge(0,0)->target_multigon(&m0,pmono,pemono);
+  if (eg->edges() > 1) oracle_cusp_walk(*eg,pmono,pemono,out);
+  return out;
+}
+
+static void check_against_oracles(const traintrack& tt, const char* what)
+{
+  // Edge order from every uncusped monogon, via numbering() and weights().
+  for (int mono = 0; mono < tt.multigons(); ++mono)
+    {
+      if (tt.Multigon(mono).edges() != 1) continue;
+      const std::vector<const traintracks::edge*> order = oracle_edge_order(tt,mono);
+      const ttnumbering N = traintracks::detail::coding_engine::numbering(tt,mono);
+      CHECK_MSG((int)order.size() == N.nedges(), what);
+      for (int e = 0; e < N.nedges(); ++e) CHECK_MSG(N.edge_ptr[e] == order[e], what);
+      traintrack ttw(tt);
+      traintrack::dblVec wv(N.nedges());
+      for (int e = 0; e < N.nedges(); ++e) wv[e] = 10 + e;
+      ttw.weights(wv.begin());
+      const traintrack::dblVec back = ttw.weights(mono);
+      const std::vector<const traintracks::edge*> order0 = oracle_edge_order(ttw,0);
+      const std::vector<const traintracks::edge*> orderm = oracle_edge_order(ttw,mono);
+      for (int e = 0; e < N.nedges(); ++e)
+        {
+          // weights(mono)[e] is the weight of the e-th edge of the mono walk,
+          // which was set to 10 + (its position in the monogon-0 walk).
+          int pos0 = -1;
+          for (int k = 0; k < (int)order0.size(); ++k) if (order0[k] == orderm[e]) pos0 = k;
+          CHECK_MSG(pos0 >= 0, what);
+          CHECK_MSG(back[e] == 10 + pos0, what);
+        }
+    }
+
+  // Cusp order via numbering() and fold_cusp_location().
+  const cusp_list cl = oracle_cusps(tt);
+  const ttnumbering N = tt.numbering();
+  CHECK_MSG((int)cl.size() == N.ncusps() && N.ncusps() == tt.cusps(), what);
+  CHECK_MSG(N.foldings() == tt.foldings(), what);
+  for (int f = 0; f < tt.foldings(); ++f)
+    {
+      int m, p, slot;
+      N.fold_cusp(f,m,p,slot);
+      CHECK_MSG(&tt.Multigon(m) == cl[f/2].first, what);
+      CHECK_MSG(p == cl[f/2].second.first && slot == cl[f/2].second.second, what);
+      traintracks::multigon* mmc = 0;
+      int pc = -1, ec = -1;
+      tt.fold_cusp_location(f,mmc,pc,ec);
+      CHECK_MSG(mmc == cl[f/2].first && pc == p && ec == slot, what);
+    }
+}
+
 int main()
 {
   int count = 0;
@@ -123,11 +229,17 @@ int main()
       for (std::size_t trk = 0; trk < ttv.size(); ++trk)
         {
           check_numbering(ttv[trk],"initial track");
+          check_against_oracles(ttv[trk],"initial track vs oracles");
           // Also every neighbour reached by one fold.
           for (int f = 0; f < ttv[trk].foldings(); ++f)
             {
               traintrack t2(ttv[trk]);
-              if (t2.fold(f)) { check_numbering(t2,"folded track"); ++count; }
+              if (t2.fold(f))
+                {
+                  check_numbering(t2,"folded track");
+                  check_against_oracles(t2,"folded track vs oracles");
+                  ++count;
+                }
             }
         }
     }

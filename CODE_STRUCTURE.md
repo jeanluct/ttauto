@@ -189,8 +189,12 @@ Key public responsibilities:
 Important internal helpers (private):
 
 - `recursive_build`: reconstruct topology from coding blocks.
-- `recursive_find_cusp`: locate cusp by canonical ordering.
-- `recursive_get_weights` / `recursive_set_weights`: aligned weight traversal.
+- `weights()`, `fold(f)` and `fold_cusp_location(f)` no longer walk the
+  track themselves: they read the canonical numbering
+  (`coding_engine::numbering`, which records edge order, prong numbers and
+  the cusp order used by fold indices in one depth-first walk).  Only two
+  walks remain: the coding (normal form, both directions) and the
+  numbering (index).
 
 Coding implementation note:
 

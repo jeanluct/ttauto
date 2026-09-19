@@ -81,12 +81,23 @@ struct ttnumbering
   // Signed main letters leaving each prong, in slot (cycle_edges) order:
   // +(e+1) if the edge's tail is at the prong, -(e+1) if its head is.
   std::vector<std::vector<int> > prong_letters;  // by prong number
+  // Cusps (prong number, slot index) in the order used by fold indices:
+  // cusp c lies between slots c.second and c.second+1 of its prong, and
+  // fold index f acts at cusp f/2 in direction 1 - 2*(f%2).  The order is
+  // that of the depth-first walk (entry slot of each multigon first).
+  std::vector<std::pair<int,int> > cusp;
   // Identity of the edge objects, by edge number.  Valid only as long as
   // the track is not modified; used to follow edges through a fold.
   std::vector<const edge*> edge_ptr;
 
   int nprongs() const { return prong.size(); }
   int nedges() const { return edge_tail.size(); }
+  int ncusps() const { return cusp.size(); }
+  int foldings() const { return 2*cusp.size(); }
+
+  // Location of the cusp of fold index f: multigon index, prong index and
+  // slot index of the first of its two edges.
+  void fold_cusp(const int f, int& m, int& p, int& slot) const;
 
   // Prong reached from prong q along side q.
   int side_to(const int q) const;
