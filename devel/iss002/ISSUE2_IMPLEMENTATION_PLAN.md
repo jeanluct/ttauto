@@ -481,7 +481,16 @@ user-visible behaviour change and goes last, with its test.
   uncusped monogon) and cusp order on every n=3..5 stratum and one-fold
   neighbour; the slow strata scan is byte-identical; census unchanged;
   `ttauto_gate_census 7 7` 7.4 s before and after (search-dominated).
-- Derive the transition matrix from the fold record.
+- DONE 2026-09-19: derive the transition matrix from the fold record.
+  `fold_map_data::transition_matrix()` builds the permutation-plus-one
+  matrix from `edge_image`, `moved` and `onto`; `fold_transition_matrix`
+  (free template and member) folds once and reads it; the unit-weight
+  construction (n folds) moved to `testsuite/oracles.hpp` and is compared
+  with the record for every fold index of every vertex of the n=3, 4, 5
+  test graphs.  `check_fold_map_main_transition` removed.  Graph
+  construction was already one fold per branch since Step 2, so no
+  further speed-up was expected or measured.
+- (superseded) Derive the transition matrix from the fold record.
   `fold_transition_matrix` folds `n` copies of the track with unit weights,
   and `fold_traintrack_map` calls it, so building a graph costs `n+1` folds
   per branch.  After Step 2 the fold record knows the permutation and the

@@ -31,6 +31,7 @@
 #include <jlt/freeauto.hpp>
 #include <jlt/stlio.hpp>
 #include "check.hpp"
+#include "oracles.hpp"
 #include "traintracks/build.hpp"
 #include "traintracks/fold_map.hpp"
 #include "traintracks/map.hpp"
@@ -90,6 +91,14 @@ static void check_vertex_fold_consistency(const ttauto::ttfoldgraph<traintracks:
       const jlt::freeauto<int> AMfm = fm.to_freeauto();
       for (int g = 1; g <= nmain + fm.nsides; ++g)
         CHECK(AMstep[g] == AMfm[g]);
+
+      // The record's matrix equals the unit-weight oracle (n folds), the
+      // stored matrix, and the map's abelianisation.
+      const jlt::mathmatrix<int> oracle = oracles::unit_weight_transition_matrix(ttv,f);
+      CHECK(fm.transition_matrix_dense() == oracle);
+      CHECK(fm.transition_matrix().full() == oracle);
+      CHECK(PM.full() == oracle);
+      CHECK(traintracks::fold_transition_matrix(ttv,f).full() == oracle);
 
       // Exactly one side letter appears in the main-edge images, in the
       // image of the moved edge, and it is a side of the target multigon:

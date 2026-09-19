@@ -212,12 +212,13 @@ public:
   // - ec:  cusp index on that prong (first edge encountered clockwise)
   void fold_cusp_location(const int f, multigon*& mmc, int& pc, int& ec) const;
 
-  // Apply fold f and return its transition matrix.
+  // Apply fold f and return its transition matrix (identity if the fold
+  // is illegal, in which case the track is unchanged).
   mathmatrix_permplus1 fold_transition_matrix(const int f)
   {
-    mathmatrix_permplus1 M(traintracks::fold_transition_matrix(*this,f));
-    fold(f);
-    return M;
+    fold_map_data fm;
+    if (!fold_with_map(f,fm)) return identity_transition_matrix(edges());
+    return fm.transition_matrix();
   }
 
   // Apply fold f and return its train-track map (identity if the fold

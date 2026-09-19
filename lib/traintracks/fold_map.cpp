@@ -275,6 +275,27 @@ jlt::freeauto<int> identity_traintrack_map(const int nmain, const int nsides)
   return jlt::freeauto<int>(nmain + nsides);
 }
 
+mathmatrix_permplus1 identity_transition_matrix(const int nmain)
+{
+  jlt::vector<int> id(nmain);
+  for (int i = 0; i < nmain; ++i) id[i] = i;
+  return mathmatrix_permplus1(id);
+}
+
+jlt::mathmatrix<int> fold_map_data::transition_matrix_dense() const
+{
+  jlt::mathmatrix<int> TM(nmain,nmain,0);
+  for (int e = 0; e < nmain; ++e) TM(std::abs(edge_image[e])-1,e) = 1;
+  TM(std::abs(edge_image[onto])-1,moved) += 1;
+  return TM;
+}
+
+mathmatrix_permplus1 fold_map_data::transition_matrix() const
+{
+  // The validating constructor checks the permutation-plus-one shape.
+  return mathmatrix_permplus1(transition_matrix_dense());
+}
+
 
 jlt::freeauto<int> fold_map_data::to_freeauto() const
 {

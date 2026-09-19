@@ -28,7 +28,9 @@
 #include <iosfwd>
 #include <vector>
 #include <jlt/freeauto.hpp>
+#include <jlt/mathmatrix.hpp>
 #include "traintracks/coding.hpp"
+#include "traintracks/mathmatrix_permplus1.hpp"
 
 namespace traintracks {
 
@@ -81,12 +83,20 @@ struct fold_map_data
   // nmain + nsides generators, images in the new numbering.
   jlt::freeauto<int> to_freeauto() const;
 
+  // The one-fold transition matrix on main edges, TM(new, old): the
+  // permutation |edge_image| plus the extra entry (new onto, old moved),
+  // since the moved edge's image runs over its own new copy and over
+  // `onto`.  This is the abelianisation of to_freeauto().
+  jlt::mathmatrix<int> transition_matrix_dense() const;
+  mathmatrix_permplus1 transition_matrix() const;
+
   std::ostream& print(std::ostream& strm) const;
 };
 
 // Identity map on nmain + nsides generators (what a fold that cannot be
-// performed contributes).
+// performed contributes), and the matching identity transition matrix.
 jlt::freeauto<int> identity_traintrack_map(const int nmain, const int nsides);
+mathmatrix_permplus1 identity_transition_matrix(const int nmain);
 
 } // namespace traintracks
 

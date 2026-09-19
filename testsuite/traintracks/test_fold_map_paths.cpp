@@ -33,6 +33,7 @@
 #include <vector>
 #include <jlt/freeauto.hpp>
 #include "check.hpp"
+#include "oracles.hpp"
 #include "traintracks/build.hpp"
 #include "traintracks/map.hpp"
 #include "traintracks/traintrack.hpp"
@@ -108,6 +109,14 @@ static void check_graph(const int n, const int trk, std::mt19937& rng,
   jlt::vector<traintrack> ttv = traintracks::build_traintrack_list(n);
   ttfoldgraph<traintrack> ttg(ttv[trk]);
   const int nmain = ttg.edges();
+
+  // Every fold index at every vertex: the record's matrix equals the
+  // unit-weight oracle (including illegal folds, which give the identity).
+  for (int v = 0; v < ttg.vertices(); ++v)
+    for (int f = 0; f < ttg.traintrack(v).foldings(); ++f)
+      CHECK_MSG(traintracks::fold_transition_matrix(ttg.traintrack(v),f).full()
+                == oracles::unit_weight_transition_matrix(ttg.traintrack(v),f),
+                "record matrix vs unit-weight oracle");
 
   // Every branch.
   for (int v = 0; v < ttg.vertices(); ++v)

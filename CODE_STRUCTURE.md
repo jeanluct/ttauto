@@ -70,13 +70,13 @@ This section gives a concrete mental model of how one fold is represented across
 For the same `tt` and `f`, the code builds two algebraic objects:
 
 - `fold_transition_matrix(tt, f)`:
-  - gives the main-edge transition matrix for that one fold,
-  - represented compactly as `mathmatrix_permplus1`.
+  - gives the main-edge transition matrix for that one fold, read off the fold record (`fold_map_data::transition_matrix`: the edge permutation plus the extra entry for the moved edge running over `onto`),
+  - represented compactly as `mathmatrix_permplus1`; the original unit-weight construction (n folds) survives only as `oracles::unit_weight_transition_matrix` in `testsuite/oracles.hpp`.
 - `fold_traintrack_map(tt, f)` (via `traintrack::fold_with_map`, `include/traintracks/fold_map.hpp`):
   - gives the train-track map on generators (main edges + sides), in the canonical numbering (`ttnumbering`, `include/traintracks/coding.hpp`) of the track before and after the fold,
   - the moved edge's image is the three-letter path `moved copy . side . onto edge` (or reversed), where the side is the side of the *target* multigon traversed between the two target prongs; every other edge maps to its signed new number and every side to its new prong number.
 
-Consistency rule: main-edge counts extracted from the map must agree with the transition matrix (`check_fold_map_main_transition` and test coverage in `tests/test_ttmap.cpp`).
+Consistency rule: main-edge counts extracted from the map must agree with the transition matrix (`transition_matrix_from_map`; checked against the unit-weight oracle in `testsuite/traintracks/test_map_consistency.cpp` and `test_fold_map_paths.cpp`).
 
 ### Step D: Store as One Automaton Branch
 
@@ -265,7 +265,6 @@ Core functions:
 - `fold_transition_matrix(const TrTr&, int f)`: computes one-fold main-edge transition matrix.
 - `fold_traintrack_map(const TrTr&, int f)`: one-fold train-track map including side generators, built from `fold_with_map` on a copy (see `fold_map.hpp`).
 - `transition_matrix_from_map(const TrTr&, const jlt::freeauto<int>&)`: projects map back to main-edge transition matrix.
-- `check_fold_map_main_transition(...)`: consistency assertion helper.
 
 Why this matters: the automaton stores both matrix and map data per branch; these functions keep conventions synchronized.
 
