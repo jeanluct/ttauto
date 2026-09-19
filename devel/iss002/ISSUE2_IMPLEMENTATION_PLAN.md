@@ -1,9 +1,10 @@
 # Issue #2: implementation plan for the gate test
 
-Status: plan approved 2026-09-19, no library code changed yet.  Supersedes
-`ISSUE2_GATES_PLAN.md`.  The mathematics and the worked example are in
-`issue2_gates.tex` (built to `issue2_gates.pdf`) in this directory; the
-scratch diagnostic that established the result is `gates_check.cpp`.
+Status: plan approved 2026-09-19; Step 0 done the same day (see its
+"Outcome" below).  Supersedes `ISSUE2_GATES_PLAN.md`.  The mathematics and
+the worked example are in `issue2_gates.tex` (built to `issue2_gates.pdf`)
+in this directory; the scratch diagnostic that established the result is
+`gates_check.cpp`.
 
 ## Summary of the problem
 
@@ -91,6 +92,38 @@ Why the library cannot express the test today:
 Files: `CMakeLists.txt` (3 lines), new `testsuite/check.hpp` (~20 lines),
 possibly small fixes in existing testsuite programs.
 
+Outcome (2026-09-19):
+
+- Merge of `master` was conflict-free (commit d78b03c).  Build, `ctest`
+  (including the slow strata scan, which is enabled in the local build
+  cache) and `examples/ttauto_min_example` all pass; `gates_check.cpp`
+  still finds the bad vertex.
+- `-UNDEBUG` added to `ttauto_add_testsuite`, plus `testsuite/check.hpp`
+  with `CHECK`/`CHECK_MSG`, and `testsuite/` on the include path.
+- With asserts live, `test_folding_path_and_badwords.cpp` no longer
+  compiled: it called `dim1()`/`dim2()` on a `jlt::matrix`, which has
+  `rows()`/`columns()`.  Fixed.  The stale binary had been passing.
+- All five fast tests pass with live asserts; `nm` confirms
+  `__assert_fail` is referenced in four binaries.  The fifth,
+  `test_ttauto_search.cpp`, uses its own local check macro that returns 1,
+  so it was never affected by `NDEBUG`.
+- `test_map_consistency.cpp` passes with live asserts, including its
+  hard-coded words `{1,5,2}` and the "one positive infinitesimal letter"
+  check.  This confirms that the current map is self-consistently wrong,
+  not that it is right; Step 2 rewrites these expectations.
+- Master's coding module is `traintracks::detail::coding_engine`
+  (`include/traintracks/coding.hpp`, `lib/traintracks/coding.cpp`) with
+  static functions `coding`, `minimise_coding`, `cyclic_symmetry`,
+  `print_coding`, `coding_from_monogon`, `recursive_coding`.  The weights
+  and cusp traversals (`recursive_get_weights`, `recursive_find_cusp`)
+  are still in `traintrack.cpp`.
+- Master added `require_normalised(where)` guards to `fold`,
+  `fold_cusp_location`, `weights` and `coding`.  Consequence for Step 2:
+  the pre-`normalise()` labelling of the folded track must not go through
+  those guarded public entry points; implement it as a `coding_engine`
+  static (or a `traintrack` private) that walks the raw structure, and
+  give it the start monogon explicitly.
+
 ## Step 1: canonical prong labels and edge orientation (`traintracks`)
 
 Files: `include/traintracks/coding.hpp` (+~40 lines),
@@ -99,7 +132,9 @@ Files: `include/traintracks/coding.hpp` (+~40 lines),
 `include/traintracks/map_labels.hpp` (comment: an infinitesimal index is
 now a canonical prong label, ~5 lines).
 
-- New struct `traintracks::ttlabels` in `coding.hpp`.  For each prong label
+- New struct `traintracks::ttlabels` in `coding.hpp`, built by a new static
+  `detail::coding_engine::labels(const traintrack&, int mono)` (and the
+  public wrapper `traintrack::labels()` using monogon 0).  For each prong label
   `q`: multigon index, prong index, `k`, `punctured`.  For each edge label:
   tail and head prong labels.  Helpers `side_from(q)`, `side_to(q)`,
   `directions_at(vertex)`.

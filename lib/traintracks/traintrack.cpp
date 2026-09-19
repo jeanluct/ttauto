@@ -487,7 +487,7 @@ bool traintrack::recursive_find_cusp(multigon& mm,
 }
 
 // Fold cusp c of prong p of multigon m in direction dir.
-//   dir = 1 clockwise, dir = 1 anticlockwise.
+//   dir = 1 clockwise, dir = -1 anticlockwise.
 //
 // A cusp is specified by c, the first of its two edges encountered
 // clockwise.

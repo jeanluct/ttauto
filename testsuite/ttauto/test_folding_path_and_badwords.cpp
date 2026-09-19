@@ -69,8 +69,8 @@ int main()
 
   // badwords() should return a matrix indexed by (vertex, path-length).
   auto pbad = ttauto::badwords(ttg,maxplen);
-  assert(pbad.dim1() == ttg.vertices());
-  assert(pbad.dim2() == maxplen);
+  assert((int)pbad.rows() == ttg.vertices());
+  assert((int)pbad.columns() == maxplen);
 
   return 0;
 }

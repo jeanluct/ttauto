@@ -81,6 +81,8 @@ This file maps public headers to deterministic CTest programs in `testsuite/`.
 ## Notes
 
 - CTest executes only tests defined from `testsuite/`.
+- Testsuite targets are compiled with `-UNDEBUG`; use `CHECK()` from
+  `testsuite/check.hpp` in new tests.
 - Slow scan-strata markdown regression is provided by
   `testsuite/ttauto/test_scan_strata_markdown.sh` and is enabled with
   `-DTTAUTO_ENABLE_SLOW_TESTS=ON`.

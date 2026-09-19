@@ -17,6 +17,13 @@ This compiles:
 
 `ctest` runs deterministic fast tests by default.
 
+Testsuite programs are compiled with `-UNDEBUG` (see `ttauto_add_testsuite`
+in `CMakeLists.txt`), so their `assert()` calls stay live in the default
+Release build.  Before this was added every assert-based test passed
+vacuously.  New tests should prefer `CHECK(cond)` / `CHECK_MSG(cond, msg)`
+from `testsuite/check.hpp`, which print the failing expression and its
+location and exit nonzero.
+
 ```bash
 ctest --test-dir build --output-on-failure
 ```

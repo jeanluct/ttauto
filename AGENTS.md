@@ -14,6 +14,7 @@
 - `examples/` - executable programs used for smoke/integration checks.
 - `tests/` - executable tests (plain `main()`, no unit-test framework).
 - `testsuite/` - deterministic CTest targets (plus optional slow integration tests).
+  Built with `-UNDEBUG` so asserts are live; `testsuite/check.hpp` provides `CHECK()`.
 - `extern/jlt/` - bundled dependency with its own build/tests and AGENTS file.
 - `extern/jlt/extern/CSparse/` - bundled CSparse source/build directory.
 
