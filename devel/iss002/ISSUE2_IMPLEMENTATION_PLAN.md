@@ -59,19 +59,27 @@ Why the library cannot express the test today:
 
 ## Design principles
 
+- Terminology: the new canonical index of prongs and edges is a
+  *numbering* (`ttnumbering`, `traintrack::numbering()`, "prong number",
+  "edge number").  "Label" is already taken in this code for the puncture
+  label of a multigon (`multigon::label()`, `set_label`, `pure_braid`, the
+  5th coding digit) and must not be reused for it.
 - Namespace `traintracks` for everything about one train track and one
-  map: canonical labels, the one-fold map, the gate test.  The test is a
+  map: canonical numbering, the one-fold map, the gate test.  The test is a
   property of a train-track map, independent of the automaton, and
   `traintracks` is concrete (non-template), so the code lives in `lib/` and
   is unit-testable without a graph.  Namespace `ttauto` only gains the
   path-composition of derivative data and the call in the search.
 - New code in new files; existing files get small local edits.  No
   ownership or pointer refactors (see `AGENTS.md`).
-- Canonical labels for everything the map mentions, all derived from the
-  one DFS that already defines edge labels and cusp numbering, started from
-  the same monogon as `weights()`.  Then the graph's identification of a
-  fold result with a stored vertex by edge labels is automatically an
+- Canonical numbers for everything the map mentions, all derived from the
+  one DFS that already defines edge order and cusp order, started from the
+  same monogon as `weights()`.  Then the graph's identification of a fold
+  result with a stored vertex by edge number is automatically an
   isomorphism on prongs and orientations, and no transport step is needed.
+  This adds a fourth copy of that DFS (coding, weights, cusp location,
+  numbering); consolidating them is a flagged follow-up (see the end of
+  this file), not part of this work.
 - Never compose words along a path.  Compose derivative data instead
   (Section 6 of the note).
 - Every new test uses explicit checks that survive `-DNDEBUG`.
@@ -124,34 +132,37 @@ Outcome (2026-09-19):
   static (or a `traintrack` private) that walks the raw structure, and
   give it the start monogon explicitly.
 
-## Step 1: canonical prong labels and edge orientation (`traintracks`)
+## Step 1: canonical prong numbering and edge orientation (`traintracks`)
 
 Files: `include/traintracks/coding.hpp` (+~40 lines),
 `lib/traintracks/coding.cpp` (+~150 lines),
 `include/traintracks/traintrack.hpp` (declare accessor, ~10 lines),
 `include/traintracks/map_labels.hpp` (comment: an infinitesimal index is
-now a canonical prong label, ~5 lines).
+now a canonical prong number, ~5 lines).
 
-- New struct `traintracks::ttlabels` in `coding.hpp`, built by a new static
-  `detail::coding_engine::labels(const traintrack&, int mono)` (and the
-  public wrapper `traintrack::labels()` using monogon 0).  For each prong label
-  `q`: multigon index, prong index, `k`, `punctured`.  For each edge label:
-  tail and head prong labels.  Helpers `side_from(q)`, `side_to(q)`,
-  `directions_at(vertex)`.
+- New struct `traintracks::ttnumbering` in `coding.hpp`, built by a new
+  static `detail::coding_engine::numbering(const traintrack&, int mono)`
+  (and the public wrapper `traintrack::numbering()` using monogon 0).  For
+  each prong number `q`: multigon index, prong index, `k`, `punctured`.
+  For each edge number: tail and head prong numbers.  Helpers
+  `side_from(q)`, `side_to(q)`, `directions_at(vertex)`.
 - New recursion in `coding.cpp` mirroring `recursive_get_weights`: same
   start (monogon 0), same `cycle_edges` order, no descent into uncusped
-  monogons.  On first entry into a multigon at prong `pin`, label all its
+  monogons.  On first entry into a multigon at prong `pin`, number all its
   prongs `pin, pin+1, ...` (mod `k`) consecutively.  A terminal uncusped
-  monogon gets its label when its edge is traversed; monogon 0 gets label
-  0.  Edge orientation = direction of first traversal (from the multigon
-  that first reaches the edge; monogon 0's edge points outward).
-- Side label `q` = side from prong `q` to the next prong in the
+  monogon gets its number when its edge is traversed; monogon 0 gets
+  number 0.  Edge orientation = direction of first traversal (from the
+  multigon that first reaches the edge; monogon 0's edge points outward).
+- Side number `q` = side from prong `q` to the next prong in the
   `cycle_edges` direction (`p <- mod(p+1,k)`), the same direction that
   `t2_pr = mod(t_pr+dir,k)` uses in `fold`.
 - The recursion takes its start monogon from the same place as `weights()`
   and asserts (fail-fast) that it equals what `fold_cusp_location` finds.
-- Accessor `traintrack::labels() const`.  Also a variant that labels from an
-  arbitrary start monogon, needed by Step 2.
+  It walks the raw structure and must not call the
+  `require_normalised`-guarded entry points, because Step 2 runs it on a
+  folded, not yet normalised track.
+- Accessor `traintrack::numbering() const` (monogon 0); the
+  `coding_engine` static takes the start monogon explicitly for Step 2.
 
 ## Step 2: correct one-fold map (`traintracks`)
 
@@ -163,14 +174,14 @@ Files: new `include/traintracks/fold_map.hpp` (~80 lines), new
 the target"), `lib/traintracks/traintrack.cpp` (fix the docstrings; the
 header's "global infinitesimal-loop convention" is false).
 
-- `struct fold_map_data`, all in canonical labels: `moved`, `onto` (old
-  edge labels), `edge_image[e]` (signed new label of each old edge), `side`
-  (signed new side label traversed), `moved_first` (word order),
-  `prong_image[q]` (new label of each old prong).
-- `traintrack::fold_with_map(int f, fold_map_data&)`: compute pre-fold
-  labels; locate `e0`, `e1`, target, `t_pr`, `t2_pr` via
+- `struct fold_map_data`, all in canonical numbers: `moved`, `onto` (old
+  edge numbers), `edge_image[e]` (signed new number of each old edge),
+  `side` (signed new side number traversed), `moved_first` (word order),
+  `prong_image[q]` (new number of each old prong).
+- `traintrack::fold_with_map(int f, fold_map_data&)`: compute the pre-fold
+  numbering; locate `e0`, `e1`, target, `t_pr`, `t2_pr` via
   `fold_cusp_location` and `target_multigon`; perform the structural fold.
-  Preferred correspondence: compute post-fold labels *before*
+  Preferred correspondence: compute the post-fold numbering *before*
   `normalise()`, between `insert_edge` and `normalise()` in
   `fold(multigon&,...)`, starting from the minimising monogon that
   `minimise_coding` already computes.  Edge and multigon objects are then
@@ -180,7 +191,7 @@ header's "global infinitesimal-loop convention" is false).
   `gates_check.cpp` does.
 - `traintracks::fold_traintrack_map(tt0, f)` builds the
   `jlt::freeauto<int>` from `fold_map_data`: unmoved edges map to their
-  signed new label; sides map through `prong_image`; the moved edge maps to
+  signed new number; sides map through `prong_image`; the moved edge maps to
   `e0'.S.(+-e1')` or `(+-e1').S.e0'`.  Template signature unchanged, so
   `ttfoldgraph` needs no edit.  Do not pursue the "one fold with distinct
   weights" shortcut: weights collide because `fold` sets `w1 <- w0 + w1`.
@@ -200,10 +211,10 @@ Files: new `include/traintracks/gates.hpp` (~120 lines), new
   target has one turn between two gates; a fold onto a punctured target has
   two turns at two prong-vertices.  Built from a one-step
   `jlt::freeauto<int>` (at most three letters per image) plus the target's
-  `ttlabels`.
+  `ttnumbering`.
 - `class gate_accumulator`: `push_back(const fold_derivative&)` maintains
   the composed `D` and the turn set `T <- T_i union D_i(T)`;
-  `analyse(const ttlabels& start)` closes `T` under `D x D`, builds gates
+  `analyse(const ttnumbering& start)` closes `T` under `D x D`, builds gates
   per BH vertex by `D^k` coincidence (iterate on the finite direction set to
   a fixed point), joins, and union-find connectivity.  Returns
   `gate_analysis` with `connected`, per-vertex records and `print()`.
@@ -238,7 +249,7 @@ O(L (n + ninf)) per candidate.
 
 - `folding_path::gates() const`: walk `fp`/`vp`, feed a
   `traintracks::gate_accumulator` from `ttg->traintrack_map(v,f)` and
-  `ttg->traintrack(target).labels()`, analyse at the initial vertex.
+  `ttg->traintrack(target).numbering()`, analyse at the initial vertex.
 - `ttauto::record_pA()`: after the `lambdamax`/`lambdamin` window checks
   and before class insertion, `if (do_check_gates && !p.gates().connected)
   { ++gate_rejected; return; }`.  Setter `check_gates(bool)`; the counter is
@@ -250,13 +261,14 @@ O(L (n + ninf)) per candidate.
 
 ## Step 5: tests
 
-- `testsuite/traintracks/test_labels.cpp`: label tables for n=3..5
+- `testsuite/traintracks/test_numbering.cpp`: numbering tables for n=3..5
   fixtures; counts equal `total_prongs()` and `edges()`; tails and heads are
-  valid prong labels; labels of a copy equal the original's; labels are
-  invariant under `normalise()` of an already-normalised track.
+  valid prong numbers; the numbering of a copy equals the original's; the
+  numbering is invariant under `normalise()` of an already-normalised
+  track; edge order agrees with the order `weights()` uses.
 - `testsuite/traintracks/test_fold_map_paths.cpp`: for every vertex and
   fold of `n=3,trk=0` and `n=4,trk=1`, the one-step word is a continuous
-  path in canonical labels and abelianises to `fold_transition_matrix`.
+  path in canonical numbers and abelianises to `fold_transition_matrix`.
   Random paths (generator pattern from `tests/test_ttmap_from_path.cpp`,
   including vertices with nontrivial `cyclic_symmetry()`) compose to words
   that are continuous for three iterates and abelianise to
@@ -294,7 +306,7 @@ O(L (n + ninf)) per candidate.
 
 ## Step 6: documentation and close-out
 
-- `CODE_STRUCTURE.md`: subsections for labels, fold_map, gates; the "one
+- `CODE_STRUCTURE.md`: subsections for numbering, fold_map, gates; the "one
   fold through the stack" walkthrough now records the target side and
   `record_pA` is gated.
 - `testsuite/COVERAGE.md`, `TESTING.md`, `AGENTS.md` repository map,
@@ -309,13 +321,37 @@ and 2 land together with the updated word expectations, since they change
 the infinitesimal letters of every stored map.  Step 4 is the only
 user-visible behaviour change and goes last, with its test.
 
+## Follow-ups (flagged, not part of this work)
+
+- Consolidate the four copies of the monogon-0 DFS.  After the gate test
+  is in and validated, reimplement `recursive_get_weights` /
+  `recursive_set_weights` as a loop over edge numbers and
+  `fold_cusp_location` / `recursive_find_cusp` as an enumeration of cusps
+  in prong-number order, both on top of `ttnumbering`.  That retires two of
+  the three existing walks and leaves two with distinct jobs: the coding
+  (identity and normal form, runs in both directions) and the numbering
+  (index).  About 100 existing lines in `lib/traintracks/traintrack.cpp`.
+  Regression guards: the exact-matrix tests and the slow strata-scan
+  comparison, since edge order and cusp order are load-bearing everywhere.
+- Derive the transition matrix from the fold record.
+  `fold_transition_matrix` folds `n` copies of the track with unit weights,
+  and `fold_traintrack_map` calls it, so building a graph costs `n+1` folds
+  per branch.  After Step 2 the fold record knows the permutation and the
+  `+1` entry directly; one fold per branch suffices, and the old routine
+  becomes a test oracle only.  An `n`-fold speed-up of `ttfoldgraph`
+  construction, relevant to issue #14 (large graphs).
+
 ## Risks
 
 - Gates finer than prongs at unpunctured multigons make the BH condition
   stricter than "all sides realised".  The controls do not exercise this,
   so the `ttauto_min_example` and strata-scan sweeps are the real guard
   against over-rejection.
-- Automorphic vertices: the canonical-label argument removes the transport
-  step, but `test_fold_map_paths` must include such vertices to prove it.
+- Automorphic vertices: the canonical-numbering argument removes the
+  transport step, but `test_fold_map_paths` must include such vertices to
+  prove it.
+- Redundancy: a fourth copy of the monogon-0 DFS until the follow-up
+  consolidation lands; the four must be kept in step, and
+  `test_numbering.cpp` checks the edge order against `weights()`.
 - Published numbers may change (Step 5 diff).  That is the point of the
   exercise, but it needs a note in the paper.

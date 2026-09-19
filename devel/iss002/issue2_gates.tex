@@ -953,8 +953,9 @@ strata scan recorded under \code{examples/} must be re-run and diffed.
 The implementation plan in this directory turns the above into six steps:
 \begin{enumerate}
   \item make the test suite real (its asserts are currently compiled out);
-  \item canonical prong labels and orientations, a struct
-    \code{ttlabels} in the coding module;
+  \item canonical prong numbers and orientations, a struct
+    \code{ttnumbering} in the coding module (``label'' is already the
+    puncture label of a multigon in the code);
   \item a correct one-fold map, module \code{fold\_map};
   \item a gate module composing derivative data, module \code{gates};
   \item a call in \code{record\_pA} that rejects and counts disconnected
@@ -963,7 +964,12 @@ The implementation plan in this directory turns the above into six steps:
 \end{enumerate}
 All new code lives in the \code{traintracks} namespace because it concerns
 a single train-track map; the automaton layer only composes the per-branch
-data and asks the question.
+data and asks the question.  Two follow-ups are flagged there rather than
+done now: the numbering is a fourth copy of the depth-first walk that
+already produces the coding, the edge order and the cusp order, and the
+latter two could later be rebuilt on top of it; and once a fold records its
+own permutation, the transition matrix no longer needs the $n$ unit-weight
+folds that \code{fold\_transition\_matrix} performs today.
 
 \begin{thebibliography}{9}
 \bibitem{Bestvina1995} M.~Bestvina and M.~Handel, \emph{Train-tracks for
