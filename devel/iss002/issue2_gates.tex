@@ -851,7 +851,8 @@ has the same shape.
       &       &               &                & class with the same dilatation is still accepted \\
     6 & $4\,(2)$ & $1.61803$ & unpunctured 4-gon & matrix irreducible but not primitive \\
       &          &           &                   & (eigenvalues $\pm\varphi$) \\
-    6 & $4\,(2)$ & $1.93185$ & 3-edge monogon & a 5-puncture dilatation plus an idle puncture \\
+    6 & $4\,(2)$ & $1.93185$ & unpunctured 4-gon & likewise irreducible but not primitive \\
+      &          &           &                   & (polynomial in $x^2$, eigenvalues $\pm1.93185$) \\
     6 & $4\,(2)$ & $2.15372$ & 3-edge monogon & the $n=5$, $4\,(1)$ minimum plus an idle puncture \\
     6 & $3\,3\,(2)$ & $2.01536$ (3) & 3-edge monogon & the bad path of this note \\
     6 & $3\,3\,(2)$ & $2.54205$ (8) & 3-edge monogon & two length-8 extensions of the bad cycle \\
@@ -884,10 +885,21 @@ which is exactly what ``a pseudo-Anosov plus an idle puncture'' predicts.
 
 One observation falls out of the census: the search accepts an
 \emph{irreducible} matrix with $\lam>1$, not a \emph{primitive} one.
-The $1.61803$ class has an irreducible matrix with period two, eigenvalues
-$\pm\varphi$; the paper's own definition of a primitive closed path would
-exclude it without any gate test.  Requiring primitivity in the search is
-a one-line change left as a decision.
+The $1.61803$ and $1.93185$ classes have irreducible matrices of period
+two, eigenvalues $\pm\lam$; the paper's own definition of a primitive
+closed path would exclude them without any gate test.  Requiring
+primitivity in the search is a one-line change left as a decision.
+
+The census also settles a comparison with the earlier paper
+\cite{Lanneau2011b}, which found the minimum dilatation of each stratum by
+eliminating candidate polynomials with the Lefschetz formula.  With the
+gate test on, every $n=6$ row of the strata scan agrees with that paper's
+table (in particular $\delta(s_3)=1.88320$ where the automaton used to
+report $1.61803$), and every $n=7$ row agrees except $s_{12}$, where the
+paper's starred value $2.21497$ came from the automaton at search length 8
+and is superseded by $2.02598$ at length 10.  The two imprimitive classes
+were never candidates there: the paper enumerates reciprocal polynomials
+with a Perron root, and a polynomial in $x^2$ has none.
 
 %======================================================================
 \section{A word-free formulation}
@@ -1043,6 +1055,10 @@ folds that \code{fold\_transition\_matrix} performs today.
 \bibitem{HallTrain} T.~Hall, \emph{Trains: a C++ program for computing
   train tracks of surface homeomorphisms},
   \url{http://www.liv.ac.uk/~tobyhall/T_Hall.html}.
+\bibitem{Lanneau2011b} E.~Lanneau and J.-L. Thiffeault, \emph{On the
+  minimum dilatation of braids on the punctured disc}, Geom. Dedicata
+  \textbf{152} (2011), 165--182; source \code{braids.tex} in this
+  directory.
 \bibitem{Lanneau2011} E.~Lanneau and J.-L. Thiffeault, \emph{Enumerating
   pseudo-Anosov homeomorphisms of punctured discs}, manuscript
   (\code{pubs/ttauto paper/ttauto.tex}).

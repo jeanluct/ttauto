@@ -37,12 +37,23 @@
 | 7 | 1. 1. 1. 1. 1. 1. 3 3 3 (1) | 28 | 0 | 2.17113 | 8 | 8 | 8 |
 
 > Struck-through rows: values before the Bestvina-Handel gate test was
-> added to the search (2026-09-19, issue #2).  The classes with dilatation
-> 1.61803 (stratum 3) and 2.01536 (stratum 5) are reducible: each is a
-> lower-puncture pseudo-Anosov plus an idle puncture, and the 1.61803
-> matrix is not even primitive.  The search length for stratum 5 was raised
-> from 6 to 8 at the same time; at length 8 the gate test also rejects a
-> class with dilatation 2.54205 whose paths extend the 2.01536 cycle.  See
+> added to the search (2026-09-19, issue #2).  The 2.01536 class of
+> stratum 5 is a 5-puncture pseudo-Anosov plus an idle puncture, hence
+> reducible.  The 1.61803 class of stratum 3 (and a 1.93185 class in the
+> same stratum) has a characteristic polynomial in x^2, so its transition
+> matrix is irreducible but not primitive (eigenvalues +-lambda); such a
+> polynomial has no Perron root and was never a candidate in the
+> Lefschetz-based enumeration of `devel/iss002/braids.tex` (Lanneau and
+> Thiffeault, "On the minimum dilatation of braids on the punctured disc",
+> Geom. Dedicata 152, 2011), whereas ttauto's
+> irreducibility test admitted it.  The gate test rejects all of these.
+> The search length for stratum 5 was raised from 6 to 8 at the same time;
+> at length 8 the gate test also rejects a class with dilatation 2.54205
+> whose paths extend the 2.01536 cycle.
+>
+> With these corrections every row of this table agrees with the
+> per-stratum table of `braids.tex` for six punctures (s_1..s_7: 1.88320,
+> 1.83929, 1.88320, 2.08102, 2.08102, 1.88320, 2.17113).  See
 > `devel/iss002/`.
 
 ## 7 Punctures
@@ -70,3 +81,10 @@
 > search length 8: the length was raised to 10 on 2026-09-19 after Lizi Guo
 > found the lower-dilatation pseudo-Anosov 2.02598 at length 10; the gate
 > test rejects nothing on this stratum.
+>
+> Comparison with the seven-puncture table of `devel/iss002/braids.tex`:
+> every row agrees (s_1..s_11: 1.55603, 1.46557, 1.46557, 1.55603, 2.04249,
+> 1.61094, 2.47541, 1.80979, 1.75488, 1.61094, 2.04249) except s_12, where
+> the paper's starred value 2.21497 came from the automaton at search
+> length 8 and is superseded by 2.02598 at length 10.  That braid should be
+> confirmed with Trains before the paper's table is corrected.

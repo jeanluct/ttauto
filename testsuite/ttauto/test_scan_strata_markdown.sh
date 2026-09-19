@@ -74,7 +74,7 @@ fi
 # struck-through table rows (old values, `| ~~...~~ |`) and blockquote
 # notes (`> ...`).  Ignore them, and squeeze the blank lines they leave.
 strip_annotations() {
-  grep -v -E '^\| ~~|^> ' "$1" | cat -s
+  grep -v -E '^\| ~~|^>' "$1" | cat -s
 }
 if ! diff -u <(strip_annotations "${BASELINE_MD}") \
              <(strip_annotations "${generated_md}") >/dev/null; then

@@ -339,17 +339,23 @@ Outcome of Step 4 (2026-09-19):
   | n | stratum | rejected lambda | paths | interpretation |
   |--:|--:|--:|--:|---|
   | 4 | 1 `(2)` | 2.61803, `(x-1)(x^2-3x+1)` | 3 | 3-braid sigma1 sigma2^-1 plus an idle puncture; a genuine class with the same dilatation remains accepted |
-  | 6 | 3 `4(2)` | 1.61803, `-(x^2-1)(x^4-3x^2+1)` | 141 (3 classes) | matrix irreducible but not primitive |
-  | 6 | 3 `4(2)` | 1.93185 | | 5-puncture dilatation plus an idle puncture |
-  | 6 | 3 `4(2)` | 2.15372 | | the n=5 stratum 4(1) minimum plus an idle puncture |
+  | 6 | 3 `4(2)` | 1.61803, `-(x^2-1)(x^4-3x^2+1)` | 141 (3 classes) | matrix irreducible but not primitive (eigenvalues +-phi); disconnected at the unpunctured 4-gon |
+  | 6 | 3 `4(2)` | 1.93185, `-(x^2-1)(x^4-4x^2+1)` | | same: polynomial in x^2, imprimitive, disconnected at the unpunctured 4-gon |
+  | 6 | 3 `4(2)` | 2.15372 | | the n=5 stratum 4(1) minimum plus an idle puncture (3-edge monogon) |
   | 6 | 5 `3 3(2)` | 2.01536 | 3 | the known bad path (n=5 stratum 3 3(1) minimum plus an idle puncture) |
   | 6 | 5 `3 3(2)` | 2.54205 | 8 | two length-8 extensions of the bad cycle (search length raised to 8) |
   | 7 | 7 `3 4(2)` | 1.88320 | 6 | the n=6 stratum (4) minimum plus an idle puncture |
 
   Seven classes, 161 paths, none with an accepted representative.  Every
   rejection is at a prong of a multi-edge punctured monogon split into
-  two main gates, except the imprimitive one, which is disconnected at an
-  unpunctured 4-gon.  On the n=5 first stratum, 0 of the 726 primitive
+  two main gates, except the two imprimitive ones, which are disconnected
+  at an unpunctured 4-gon.  Cross-check with `braids.tex` (in this
+  directory): with the gate test on, every n=6 row of the scan table
+  agrees with the paper's per-stratum table, and every n=7 row except
+  s12, where the paper's starred 2.21497 is superseded by 2.02598 at
+  search length 10.  The imprimitive classes were never candidates in the
+  paper: its enumeration requires a Perron root, and a polynomial in x^2
+  has +-lambda.  On the n=5 first stratum, 0 of the 726 primitive
   closed paths of length <= 5 are disconnected.  So the bad path was NOT
   the only spurious pA, but the mechanism is always the same one.
 - Consequence for the scan baseline `examples/ttauto_scan_strata.md`
