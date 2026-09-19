@@ -30,12 +30,16 @@
 
 namespace traintracks {
 
-// Unified generator labeling for train-track maps.
+// Generator index arithmetic for train-track maps.
 //
 // Main edges are numbered 1..nmain.
-// Infinitesimal edges are numbered nmain+1..nmain+ninf.
-// (Use "peripheral" specifically for edges around monogons.)
+// Sides (infinitesimal edges of unpunctured multigons, peripheral loops of
+// punctured ones) are numbered nmain+1..nmain+ninf, where the side index
+// is the canonical prong number of ttnumbering (coding.hpp): side q runs
+// from prong q to the next prong of its multigon.
 // Orientation is encoded by sign (negative means inverse orientation).
+// ttnumbering gives the geometric meaning of each letter (tail/head
+// prongs); this helper only does the range arithmetic.
 
 struct ttmap_labeler
 {

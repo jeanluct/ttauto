@@ -33,6 +33,7 @@
 #include <jlt/vector.hpp>
 #include "traintracks/mathmatrix_permplus1.hpp"
 #include "traintracks/map_labels.hpp"
+#include "traintracks/fold_map.hpp"
 
 namespace traintracks {
 
@@ -105,57 +106,23 @@ inline void check_fold_map_main_transition(const TrTr& tt0, const int f,
 }
 
 
-// Build one-fold train-track map on main and infinitesimal generators.
+// Build the one-fold train-track map on main and side (infinitesimal or
+// peripheral) generators, in the canonical numberings of tt0 and of the
+// folded track.  See fold_map.hpp for the conventions; the fold is
+// performed on a copy of tt0.  Composition convention, as for
+// freeauto<T>::operator*=: applying f1 then f2 is AM(f1) * AM(f2).
 template<class TrTr>
 jlt::freeauto<int> fold_traintrack_map(const TrTr& tt0, const int f)
 {
-  // Conventions:
-  // - We represent one fold by AM(f).
-  // - Applying f1 then f2 corresponds to right-composition in freeauto:
-  //     AM(f2 followed by f1) = AM(f1) * AM(f2).
-  // This matches freeauto<T>::operator*= semantics.
-
-  const int ninf = tt0.total_prongs();
-  const int n = tt0.edges();
-  const ttmap_labeler labels(n,ninf);
-  jlt::freeauto<int> AM(labels.num_generators());
-
-  // Need to find two main edges and one infinitesimal edge.
-  // main edge a: folding from
-  // main edge b: folding onto
-  // infinitesimal edge: in between
-
-  // The cusp should give us the in-between edge.
-
-  mathmatrix_permplus1 dec = fold_transition_matrix(tt0,f);
-
-  // Copy permutation over to train track map (main generators only).
-  for (int i = 0; i < n; ++i)
-    AM[labels.main_gen(i)] = jlt::freeword<int>({labels.main_gen(dec.column_perm()[i])});
-
-  if (dec.is_perm()) return AM;
-
-  // Now deal with the folded edges.
-  int e1 = labels.main_gen(dec.plus1_col());
-  int e21 = labels.main_gen(dec.column_perm()[dec.plus1_col()]);
-  int e22 = labels.main_gen(dec.plus1_row());
-
-  // One main generator flips orientation under a non-permutation fold.
-  AM[labels.main_gen(dec.row_perm()[dec.plus1_row()])] = {-e22};
-
-  // Infinitesimal edge chosen from fold cusp geometry.
-  int infinitesimal = tt0.fold_infinitesimal_generator(f,n);
-
-  // Fold direction determines ordering around the inserted infinitesimal edge.
-  if (f % 2 == 0)
-    AM[e1] = {e21,infinitesimal,e22}; // fold clockwise
-  else
-    AM[e1] = {e22,infinitesimal,e21}; // fold counterclockwise
+  TrTr tt(tt0);
+  fold_map_data fm;
+  if (!tt.fold_with_map(f,fm))
+    return identity_traintrack_map(tt0.edges(),tt0.total_prongs());
 
   // Main-edge transition consistency check (debug mode only).
-  if (TrTr::debug) check_fold_map_main_transition(tt0,f,AM);
+  if (TrTr::debug) check_fold_map_main_transition(tt0,f,fm.to_freeauto());
 
-  return AM;
+  return fm.to_freeauto();
 }
 
 

@@ -72,9 +72,9 @@ For the same `tt` and `f`, the code builds two algebraic objects:
 - `fold_transition_matrix(tt, f)`:
   - gives the main-edge transition matrix for that one fold,
   - represented compactly as `mathmatrix_permplus1`.
-- `fold_traintrack_map(tt, f)`:
-  - gives the train-track map on generators (main + infinitesimal),
-  - inserts the selected infinitesimal generator in the folded edge image, with ordering determined by fold direction.
+- `fold_traintrack_map(tt, f)` (via `traintrack::fold_with_map`, `include/traintracks/fold_map.hpp`):
+  - gives the train-track map on generators (main edges + sides), in the canonical numbering (`ttnumbering`, `include/traintracks/coding.hpp`) of the track before and after the fold,
+  - the moved edge's image is the three-letter path `moved copy . side . onto edge` (or reversed), where the side is the side of the *target* multigon traversed between the two target prongs; every other edge maps to its signed new number and every side to its new prong number.
 
 Consistency rule: main-edge counts extracted from the map must agree with the transition matrix (`check_fold_map_main_transition` and test coverage in `tests/test_ttmap.cpp`).
 
@@ -175,7 +175,8 @@ Key public responsibilities:
 - Perform folds:
   - `fold(int f)`: apply fold by global fold index in current cusp ordering.
   - `fold_cusp_location(...)`: map fold index to concrete `(multigon, prong, cusp-edge-slot)`.
-  - `fold_infinitesimal_index(...)` and `fold_infinitesimal_generator(...)`: connect fold geometry to infinitesimal-generator labeling used in maps.
+  - `fold_with_map(f, fm)`: fold and fill a `fold_map_data` record (moved/onto edges, target prongs, side letter, edge and prong images, numberings before and after).
+  - `numbering()`: canonical prong/edge numbering with orientations (`ttnumbering`), rooted at monogon 0 like `weights()` and the coding.
 - Integrate with matrix/map layer:
   - `fold_transition_matrix(int f)`.
   - `fold_traintrack_map(int f)`.
@@ -194,6 +195,17 @@ Coding implementation note:
 
 - Canonical coding logic now lives in `include/traintracks/coding.hpp` and
   `lib/traintracks/coding.cpp` (`traintracks::detail::coding_engine`).
+- The same module provides `ttnumbering` and `coding_engine::numbering`, the
+  canonical numbering of prongs and edges (with orientations) produced by
+  the same depth-first walk as the coding and `weights()`.  Side `q` runs
+  from prong `q` to the next prong of its multigon.  "Number" is used, not
+  "label", because `label` is the puncture label of a multigon.
+- `include/traintracks/fold_map.hpp` / `lib/traintracks/fold_map.cpp`:
+  `fold_map_data` and `traintrack::fold_with_map`, the record of one fold in
+  canonical numbering from which the train-track map is built.  Prongs are
+  followed through `normalise()` by the set of edge objects attached to
+  them (edge objects persist; multigon objects and edge ending indices do
+  not).
 - `traintrack::{coding, normalise, cyclic_symmetry, print_coding}` delegate to
   that coding module.
 
@@ -246,7 +258,7 @@ This file is the bridge between geometric folds and algebraic representations.
 Core functions:
 
 - `fold_transition_matrix(const TrTr&, int f)`: computes one-fold main-edge transition matrix.
-- `fold_traintrack_map(const TrTr&, int f)`: computes one-fold train-track map including infinitesimal generators.
+- `fold_traintrack_map(const TrTr&, int f)`: one-fold train-track map including side generators, built from `fold_with_map` on a copy (see `fold_map.hpp`).
 - `transition_matrix_from_map(const TrTr&, const jlt::freeauto<int>&)`: projects map back to main-edge transition matrix.
 - `check_fold_map_main_transition(...)`: consistency assertion helper.
 

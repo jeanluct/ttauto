@@ -34,6 +34,7 @@
 #include "traintracks/map.hpp"
 #include "traintracks/mathmatrix_permplus1.hpp"
 #include "traintracks/coding.hpp"
+#include "traintracks/fold_map.hpp"
 
 
 namespace traintracks {
@@ -195,14 +196,14 @@ public:
   //  f odd  = fold counterclockwise
   bool fold(const int f);
 
-  // Return the infinitesimal generator index (0-based)
-  // associated with fold index f in the current cusp ordering.
-  int fold_infinitesimal_index(const int f) const;
+  // Fold f and record what happened to every edge and prong, in the
+  // canonical numberings before and after (see fold_map.hpp).  Returns
+  // false, leaving the track and fm unchanged, if the fold is illegal.
+  bool fold_with_map(const int f, fold_map_data& fm);
 
-  // Return infinitesimal generator for fold index f, given the
-  // main-generator count nmain.
-  // Orientation is fixed by the global infinitesimal-loop convention.
-  int fold_infinitesimal_generator(const int f, const int nmain) const;
+  // Canonical numbering of prongs and edges (see coding.hpp).  Requires a
+  // normalised track; rooted at monogon 0 like weights() and the coding.
+  ttnumbering numbering() const;
 
   // Return cusp location for fold index f in the current cusp ordering.
   // Output:
@@ -219,12 +220,14 @@ public:
     return M;
   }
 
-  // Apply fold f and return its train-track map.
+  // Apply fold f and return its train-track map (identity if the fold
+  // is illegal, in which case the track is unchanged).
   jlt::freeauto<int> fold_traintrack_map(const int f)
   {
-    jlt::freeauto<int> AM(traintracks::fold_traintrack_map(*this,f));
-    fold(f);
-    return AM;
+    fold_map_data fm;
+    if (!fold_with_map(f,fm))
+      return identity_traintrack_map(edges(),total_prongs());
+    return fm.to_freeauto();
   }
 
   // Return vector of edge weights.

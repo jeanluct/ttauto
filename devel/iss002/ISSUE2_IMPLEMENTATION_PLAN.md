@@ -1,10 +1,10 @@
 # Issue #2: implementation plan for the gate test
 
-Status: plan approved 2026-09-19; Step 0 done the same day (see its
-"Outcome" below).  Supersedes `ISSUE2_GATES_PLAN.md`.  The mathematics and
-the worked example are in `issue2_gates.tex` (built to `issue2_gates.pdf`)
-in this directory; the scratch diagnostic that established the result is
-`gates_check.cpp`.
+Status: plan approved 2026-09-19; Steps 0, 1 and 2 done the same day (see
+the "Outcome" notes below).  Supersedes `ISSUE2_GATES_PLAN.md`.  The
+mathematics and the worked example are in `issue2_gates.tex` (built to
+`issue2_gates.pdf`) in this directory; the scratch diagnostic that
+established the result is `gates_check.cpp`.
 
 ## Summary of the problem
 
@@ -199,6 +199,44 @@ header's "global infinitesimal-loop convention" is false).
   `testsuite/traintracks/test_map_consistency.cpp` and
   `tests/test_ttmap.cpp` in the same commit.
 - Regression kept: the abelianisation equals `fold_transition_matrix`.
+
+Outcome of Steps 1 and 2 (2026-09-19):
+
+- `ttnumbering` and `coding_engine::numbering(tt, mono)` live in
+  `coding.hpp/.cpp`, with `traintrack::numbering()` as the monogon-0
+  wrapper; `ttnumbering` also carries `edge_ptr`, the identity of the edge
+  objects, which `fold_with_map` uses to follow edges through the fold.
+- `fold_map_data` and `traintrack::fold_with_map` are in
+  `fold_map.hpp/.cpp`.  The fallback correspondence was implemented (match
+  prongs after `normalise()` by the set of edge objects attached, plus
+  multigon type and the multigon's edge set), not the pre-normalise
+  variant: it needs no change to `fold(multigon&,...)` and the signature is
+  unambiguous on every track tested.  `fold_traintrack_map` (free template
+  and member) now builds the map from the record; a fold that cannot be
+  performed yields the identity map, as before.
+- `fold_infinitesimal_index/generator` were removed (no library callers
+  remained); `map_labels.hpp` keeps the range arithmetic and says a side
+  index is a canonical prong number.
+- New tests: `test_numbering.cpp` (structure, agreement with the
+  `weights()` order, copy and re-normalisation invariance, every one-fold
+  neighbour of every n=3..5 stratum) and `test_fold_map_paths.cpp` (every
+  branch of the n=3, 4 and four n=5 graphs: words continuous in the
+  target's numbering, tails and heads mapped correctly, prong images a
+  type-preserving bijection, exactly one side letter, matrix agreement;
+  random paths and iterated closed paths likewise).
+  `test_map_consistency.cpp` rewritten around the fold record with the new
+  hand-checked n=3 words (`1 -> 1 -4 2`, path `[1,0]`:
+  `2 -> 1 -4 2 -5 -2`); `tests/test_ttmap.cpp` rewritten as its printing
+  companion.  All seven fast tests and the slow strata scan pass, so the
+  graph's matrices are unchanged.
+- Cross-check on the bad cycle: the library's composed map is continuous
+  for three iterates, abelianises to the path matrix, keeps the fixed
+  monogon's loop fixed and permutes the other five loops in a 5-cycle,
+  matching `gates_check.cpp` up to the (now canonical) numbering and
+  orientation conventions.
+- Consequence for Step 5: `test_fold_map_paths.cpp` already covers the
+  planned continuity and endpoint checks; the remaining test work is
+  `test_gates.cpp` and `test_ttauto_gates.cpp`.
 
 ## Step 3: gates module (`traintracks`)
 

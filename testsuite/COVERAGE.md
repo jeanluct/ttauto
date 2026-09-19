@@ -26,12 +26,23 @@ This file maps public headers to deterministic CTest programs in `testsuite/`.
   - Coverage focus:
     - representative train-track list generation for deterministic fixtures
 
-- `include/traintracks/map.hpp`
-  - Primary: `testsuite/traintracks/test_map_consistency.cpp`
+- `include/traintracks/coding.hpp` (`ttnumbering`)
+  - Primary: `testsuite/traintracks/test_numbering.cpp`
   - Coverage focus:
-    - one-step fold map/matrix consistency
-    - path-level map/matrix consistency
-    - transition matrix reconstruction from train-track map
+    - prong and edge numbering is a bijection consistent with the track
+    - edge order agrees with `weights()`
+    - invariance under copy and re-normalisation
+
+- `include/traintracks/fold_map.hpp`, `include/traintracks/map.hpp`
+  - Primary: `testsuite/traintracks/test_map_consistency.cpp`,
+    `testsuite/traintracks/test_fold_map_paths.cpp`
+  - Coverage focus:
+    - one-step fold map/matrix consistency; side letter on the target multigon
+    - hand-checked one-step and composed words for the n=3 example
+    - every one-step and composed word is a continuous edge path in the
+      canonical numbering, maps tails to tails and heads to heads, and
+      abelianises to the transition matrix (all branches of the n=3, 4, 5
+      graphs, random paths, iterated closed paths)
 
 - `include/traintracks/map_labels.hpp`
   - Primary: `testsuite/traintracks/test_map_consistency.cpp`

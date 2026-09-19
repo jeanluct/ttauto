@@ -198,8 +198,7 @@ int main(int argc, char** argv)
                 << ": edge " << labA[E0]+1 << " folded onto edge " << labA[E1]+1
                 << " at " << (M(tt,mc).punctured() ? "punctured " : "unpunctured ") << M(tt,mc).prongs() << "-gon " << mc
                 << " (" << M(tt,mc).edges(pc) << " edges at prong); target " << (M(tt,mt).punctured() ? "punctured " : "unpunctured ") << k << "-gon " << mt
-                << ", side prong " << t_pr << " -> " << t2_pr
-                << "; code's inf. gen. = multigon " << from_pidx(tt,tt.fold_infinitesimal_generator(f,n)-n-1).first << "\n";
+                << ", side prong " << t_pr << " -> " << t2_pr << "\n";
 
       // Predicted post-fold slot contents (edge objects) for every pre-fold prong.
       // Pre-fold endings of every edge as (m,p), for orientation bookkeeping.

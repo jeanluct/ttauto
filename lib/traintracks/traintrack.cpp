@@ -417,29 +417,6 @@ void traintrack::fold_cusp_location(const int f, multigon*& mmc, int& pc, int& e
     }
 }
 
-// Return zero-based infinitesimal edge index selected by fold f.
-int traintrack::fold_infinitesimal_index(const int f) const
-{
-  multigon* mmc = 0;
-  int pc = -1, ec = -1;
-  fold_cusp_location(f,mmc,pc,ec);
-
-  int mi = multigon_index(mmc);
-  return multigon_prong_index(mi,pc);
-}
-
-// Return signed-generator label for fold f after nmain main generators.
-int traintrack::fold_infinitesimal_generator(const int f, const int nmain) const
-{
-  multigon* mmc = 0;
-  int pc = -1, ec = -1;
-  fold_cusp_location(f,mmc,pc,ec);
-
-  const int mi = multigon_index(mmc);
-  const int infix = multigon_prong_index(mi,pc);
-  return nmain + infix + 1;
-}
-
 // Depth-first cusp locator used by fold() and fold_cusp_location().
 bool traintrack::recursive_find_cusp(multigon& mm,
 				     const int pin, const int ein,
