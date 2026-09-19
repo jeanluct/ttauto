@@ -959,9 +959,14 @@ the depth-first traversal from monogon~0 (\code{recursive\_get\_weights},
 the same walk as the coding) meets them.  Monogon~0 is chosen by
 \code{minimise\_coding} as the uncusped monogon giving the
 lexicographically smallest coding.  Two normalised copies of isotopic
-tracks therefore carry the same edge labels, unless the track has a
-nontrivial automorphism, in which case the labels agree up to that
-automorphism.
+tracks therefore carry the same edge labels.  This holds even when the
+track has a nontrivial automorphism: the labels are a function of the
+coding alone, and a cyclic symmetry, which maps one minimising monogon to
+another, maps the numbering to itself.  (Checked on every vertex and fold
+result of the $n=4$, $5$, $6$ automata used in the tests, 934 fold results
+and 22 cyclically symmetric vertices, in \code{test\_numbering}; the
+first version of this note said ``up to that automorphism'', which is
+true but weaker than what actually happens.)
 
 \subsection*{Prong labels are not, yet}
 Sides are currently labelled by the position of their multigon in
@@ -987,13 +992,20 @@ them, which \emph{is} invariant.
 
 \subsection*{Automorphic vertices}
 \code{ttfoldgraph::add\_vertex} identifies a freshly folded track with a
-stored vertex by \code{operator==}, i.e.\ equality of codings.  When the
-track has an automorphism the fold result and the stored object may be
-labelled differently, by that automorphism.  The automaton then composes
-the stored transition matrix of the next branch as if the labels agreed;
-the product is still the matrix of a homeomorphism (the path with the
-symmetry inserted), so nothing is wrong for matrices, but a word-level map
-must make the same identification.  Vertex~88 of the bad cycle is such a
+stored vertex by \code{operator==}, i.e.\ equality of codings.  The fold
+result and the stored object are different C++ objects whose multigons
+may sit at different positions in \code{mgv}, but their canonical
+numberings coincide exactly, so identifying them ``by number'' is the
+identity on labels and an isomorphism of labelled tracks.  The composed
+matrix and the composed derivative data along a path therefore describe
+the same homeomorphism: the folds, closed up by that identification.
+(When the final track has a cyclic symmetry, closing up by the symmetry
+instead gives a different mapping class; the automaton has never
+enumerated those separately, and the ttauto paper argues that folding at
+symmetry-related cusps already produces them.  The gate test inherits this
+convention and does not change it.)  The point of the canonical numbering
+is that a word-level map must make the same identification as the matrix
+does, and now it does so automatically.  Vertex~88 of the bad cycle is such a
 vertex: folding a continuously updated copy along the cycle gave a
 different (also legitimate) composite matrix from the automaton's, until
 the scratch program was changed to start each step from the stored object

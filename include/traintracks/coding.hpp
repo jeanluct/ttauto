@@ -121,8 +121,20 @@ struct ttnumbering
   // main letters (its sides are infinitesimal edges, not directions).
   std::vector<int> directions_at_prong(const int q) const;
 
+  // Full equality, including the bookkeeping that ties numbers back to
+  // this object's mgv positions and raw prong indices (start_monogon,
+  // prong[q].multigon, prong[q].prong, prong_number).  Meant for copies
+  // of one track; two isotopic tracks generally compare unequal here.
   bool operator==(const ttnumbering& o) const;
   bool operator!=(const ttnumbering& o) const { return !operator==(o); }
+
+  // Equality of the canonical part only: edge tails and heads, prong
+  // letters, cusps, and each prong's multigon size and puncturedness.
+  // This is what a train-track map and the gate test read, and it is a
+  // function of the coding alone: two normalised tracks with the same
+  // coding have the same labels, even when the track has a nontrivial
+  // automorphism (the automorphism maps the numbering to itself).
+  bool same_labels(const ttnumbering& o) const;
 
   std::ostream& print(std::ostream& strm) const;
 };

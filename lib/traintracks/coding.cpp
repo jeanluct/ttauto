@@ -505,6 +505,18 @@ bool ttnumbering::operator==(const ttnumbering& o) const
           prong_letters == o.prong_letters && cusp == o.cusp);
 }
 
+bool ttnumbering::same_labels(const ttnumbering& o) const
+{
+  if (prong.size() != o.prong.size()) return false;
+  for (std::size_t q = 0; q < prong.size(); ++q)
+    {
+      if (prong[q].nprongs != o.prong[q].nprongs ||
+          prong[q].punctured != o.prong[q].punctured) return false;
+    }
+  return (edge_tail == o.edge_tail && edge_head == o.edge_head &&
+          prong_letters == o.prong_letters && cusp == o.cusp);
+}
+
 std::ostream& ttnumbering::print(std::ostream& strm) const
 {
   strm << "prongs (number: multigon,prong; k; punctured):\n";

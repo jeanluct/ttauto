@@ -32,6 +32,7 @@
 #include "traintracks/build.hpp"
 #include "traintracks/coding.hpp"
 #include "traintracks/traintrack.hpp"
+#include "ttauto/ttfoldgraph.hpp"
 
 using traintracks::traintrack;
 using traintracks::ttnumbering;
@@ -220,6 +221,61 @@ static void check_against_oracles(const traintrack& tt, const char* what)
     }
 }
 
+// The labels are a function of the coding.  For every vertex of an
+// automaton and every legal fold from it: the fold result carries the same
+// labels as the track rebuilt from its coding and as the stored target
+// vertex (this is what lets ttfoldgraph compose one-step maps and the gate
+// accumulator across vertices without a transport step); and at a
+// cyclically symmetric vertex, the numbering started from any of the
+// minimising monogons has the same labels, exactly order() of them.
+static void check_labels_from_coding(const int n, const int trk,
+                                     int& nfolds, int& ncyclic)
+{
+  jlt::vector<traintrack> ttv = traintracks::build_traintrack_list(n);
+  ttauto::ttfoldgraph<traintrack> ttg(ttv[trk]);
+  for (int v = 0; v < ttg.vertices(); ++v)
+    {
+      const traintrack& tt = ttg.traintrack(v);
+      const ttnumbering N0 = tt.numbering();
+      CHECK(N0.same_labels(N0));
+      CHECK(N0 == N0);
+
+      // Alternative start monogons: the same labels iff the coding from
+      // there is minimal too, i.e. exactly cyclic_symmetry().order() of
+      // the uncusped monogons give the same labels.
+      traintrack tsym(tt);
+      const int order = tsym.cyclic_symmetry().order();
+      int nsame = 0;
+      for (int m = 0; m < tt.multigons(); ++m)
+        {
+          if (tt.Multigon(m).edges() != 1) continue;
+          const ttnumbering Nm = traintracks::detail::coding_engine::numbering(tt,m);
+          if (Nm.same_labels(N0)) ++nsame;
+          if (m != 0 && Nm.same_labels(N0)) CHECK(Nm != N0);  // bookkeeping differs
+        }
+      CHECK_MSG(nsame == order, "n=" << n << " trk=" << trk << " v=" << v
+                << ": " << nsame << " starts share the labels, order " << order);
+      if (order > 1) ++ncyclic;
+
+      for (int f = 0; f < tt.foldings(); ++f)
+        {
+          traintrack t0(tt);
+          if (!t0.fold(f)) continue;
+          ++nfolds;
+          const ttnumbering Nf = t0.numbering();
+          traintrack tcode(t0.coding());
+          CHECK_MSG(tcode.numbering().same_labels(Nf),
+                    "fold result vs rebuilt from coding, n=" << n << " v=" << v << " f=" << f);
+          int target = -1;
+          for (int w = 0; w < ttg.vertices() && target < 0; ++w)
+            if (ttg.traintrack(w) == t0) target = w;
+          CHECK(target >= 0);
+          CHECK_MSG(ttg.traintrack(target).numbering().same_labels(Nf),
+                    "fold result vs stored vertex, n=" << n << " v=" << v << " f=" << f);
+        }
+    }
+}
+
 int main()
 {
   int count = 0;
@@ -244,6 +300,17 @@ int main()
         }
     }
   CHECK(count > 0);
-  std::cout << "test_numbering: OK (" << count << " folded tracks checked)\n";
+
+  int nfolds = 0, ncyclic = 0;
+  check_labels_from_coding(4,0,nfolds,ncyclic);
+  check_labels_from_coding(5,0,nfolds,ncyclic);
+  check_labels_from_coding(6,2,nfolds,ncyclic);
+  check_labels_from_coding(6,4,nfolds,ncyclic);
+  CHECK(nfolds > 0);
+  CHECK_MSG(ncyclic > 0, "no cyclically symmetric vertex visited");
+
+  std::cout << "test_numbering: OK (" << count << " folded tracks checked; "
+            << nfolds << " fold results carry the labels of their coding, "
+            << ncyclic << " cyclically symmetric vertices)\n";
   return 0;
 }

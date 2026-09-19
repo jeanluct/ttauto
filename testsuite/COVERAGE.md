@@ -75,6 +75,11 @@ added lines that the census, not the testsuite, exercises.
     - prong and edge numbering is a bijection consistent with the track
     - edge order agrees with `weights()`
     - invariance under copy and re-normalisation
+    - labels are a function of the coding (`same_labels`): every fold
+      result of the n=4 s1, n=5 s1, n=6 s3 and s5 automata matches the
+      track rebuilt from its coding and the stored target vertex; at
+      cyclically symmetric vertices exactly `cyclic_symmetry().order()`
+      start monogons give the same labels
 
 - `include/traintracks/fold_map.hpp`, `include/traintracks/map.hpp`
   - Primary: `testsuite/traintracks/test_map_consistency.cpp`,

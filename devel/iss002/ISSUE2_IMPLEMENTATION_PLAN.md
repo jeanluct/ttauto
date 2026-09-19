@@ -519,7 +519,17 @@ original four items are kept with their outcome.
   reflection symmetric vertices, and every branch at them passes the
   continuity, endpoint and abelianisation checks.  The earlier comment
   that the n=5 strata contain cyclically symmetric vertices was wrong;
-  they only contain reflection symmetric ones.
+  they only contain reflection symmetric ones.  Those checks are
+  automorphism-invariant, so `test_numbering` (2026-09-19, later the same
+  day) pins the actual claim with `ttnumbering::same_labels`: over the
+  n=4 s1, n=5 s1, n=6 s3 and s5 automata, every fold result carries the
+  same labels as the track rebuilt from its coding and as the stored
+  target vertex, and at every cyclically symmetric vertex exactly
+  `cyclic_symmetry().order()` start monogons give the same labels.  The
+  labels are a function of the coding; the identification by number is the
+  identity on labels, not merely an isomorphism up to the automorphism.
+  `ttnumbering::operator==` also compares `mgv` bookkeeping and is only
+  for copies of one object.
 - Redundancy (resolved): the numbering was briefly a fourth copy of the
   monogon-0 DFS; the weights and cusp walks now read it, and
   `test_numbering.cpp` keeps the old walks as oracles.
