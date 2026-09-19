@@ -37,7 +37,7 @@ class multigon;
 class edge
 {
   static constexpr int debug = 0;
-  static const int nends = 2;	// An edge has two ends.
+  static constexpr int nends = 2;	// An edge has two ends (inline: odr-used).
 
 public:
   typedef jlt::vector<multigon*>	mgpVec;

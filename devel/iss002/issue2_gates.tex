@@ -1014,6 +1014,13 @@ The implementation plan therefore adds two broad sweeps as guards against
 over-rejection: every class found by \code{ttauto\_min\_example} for
 $n=3,\dots,5$ (which reproduce literature minima) must pass, and the
 strata scan recorded under \code{examples/} must be re-run and diffed.
+Both were done (Section~\ref{sec:census}).  In addition the census now
+counts, over the stored representatives of every accepted class on every
+stratum for $n=3,\dots,7$, those with a refined prong at an unpunctured
+multigon: none of the $113$ representatives has one, nor does any of the
+$726$ primitive connected closed paths of length at most~$5$ in the
+$n=5$ first-stratum automaton.  On these strata the stricter condition
+never bites; every rejection so far is a refined prong at a puncture.
 
 %======================================================================
 \section{Where this goes}

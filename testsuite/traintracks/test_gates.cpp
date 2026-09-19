@@ -158,6 +158,16 @@ static std::vector<std::vector<int> > branches_for(const ttgraph& ttg,
   return found;
 }
 
+// True if some unpunctured multigon has more gates than prongs, i.e. the
+// derivative splits a prong into several gates.
+static bool has_refined_unpunctured(const gate_analysis& ga, const ttnumbering& N)
+{
+  for (const auto& v : ga.vertices)
+    if (v.prong < 0 && (int)v.gates.size() > N.prong[N.prong_number[v.multigon][0]].nprongs)
+      return true;
+  return false;
+}
+
 int main()
 {
   // The 90-vertex main subautomaton of stratum 3,3(2) for n=6.
@@ -240,9 +250,7 @@ int main()
           CHECK(ga.shapes_ok);
           const ttnumbering N = ttg.traintrack(c.cyc[0]).numbering();
           check_puncture_corollary(ga,N);
-          for (const auto& v : ga.vertices)
-            if (v.prong < 0 && (int)v.gates.size() > N.prong[N.prong_number[v.multigon][0]].nprongs)
-              refined_unpunctured = true;
+          if (has_refined_unpunctured(ga,N)) refined_unpunctured = true;
         }
     std::cout << (refined_unpunctured
                   ? "A control exhibits a refined prong at an unpunctured multigon.\n"
@@ -255,7 +263,7 @@ int main()
   {
     jlt::vector<traintrack> ttv5 = traintracks::build_traintrack_list(5);
     ttgraph g5(ttv5[0]);
-    int nclosed = 0, nconnected = 0;
+    int nclosed = 0, nconnected = 0, naccepted = 0, nrefined = 0;
     std::vector<int> br;
     std::function<void(int,int,int)> rec = [&](int v0, int v, int depth) {
       if (depth > 0 && v == v0)
@@ -268,6 +276,13 @@ int main()
           if (ga.connected) ++nconnected;
           if (primitive && ga.connected) CHECK(ga.shapes_ok);
           if (primitive && ga.connected) check_puncture_corollary(ga,g5.traintrack(v0).numbering());
+          if (primitive && ga.connected)
+            {
+              // Risk 1 of the plan: does the D-refinement of prongs at an
+              // unpunctured multigon ever bite on an accepted path?
+              ++naccepted;
+              if (has_refined_unpunctured(ga,g5.traintrack(v0).numbering())) ++nrefined;
+            }
         }
       if (depth == 5) return;
       for (int b = 0; b < g5.foldings(v); ++b)
@@ -279,8 +294,11 @@ int main()
     };
     for (int v0 = 0; v0 < g5.vertices(); ++v0) rec(v0,v0,0);
     CHECK(nclosed > 0);
+    CHECK(naccepted > 0);
     std::cout << "n=5 sweep: " << nclosed << " closed paths, " << nconnected
-              << " with connected gates\n";
+              << " with connected gates, " << naccepted
+              << " primitive and connected, of which " << nrefined
+              << " have a refined prong at an unpunctured multigon\n";
   }
 
   std::cout << "test_gates: OK\n";

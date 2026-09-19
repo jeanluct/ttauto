@@ -119,8 +119,11 @@ the gate test in `ttauto::record_pA` (default on,
 `devel/iss002/issue2_gates.tex` (or its PDF) for the mathematics and
 `devel/iss002/ISSUE2_IMPLEMENTATION_PLAN.md` for what was done and what
 remains (follow-ups).  `tests/ttauto_gate_census` lists every rejected
-class across strata; six classes for n=3..7, all "lower-puncture pA plus
-an idle puncture" or an imprimitive matrix.  Older material in
+class across strata: for n=3..7 the gate test rejects five classes, all
+"lower-puncture pA plus an idle puncture", and the primitivity
+requirement removes two more with imprimitive matrices.  Test coverage
+(86% of library lines, measured 2026-09-19) and how to re-measure it are
+in `testsuite/COVERAGE.md` and `TESTING.md`.  Older material in
 `devel/iss002/`:
 
 - `ISSUE2_BAD_PA_SUMMARY.md`: the evidence, current status, work log.

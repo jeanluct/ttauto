@@ -103,12 +103,26 @@ static void check_endpoints_map(const freeauto<int>& AM, const ttnumbering& Nfro
     }
 }
 
+static int ncyclic_vertices = 0, nreflect_vertices = 0;
+
 static void check_graph(const int n, const int trk, std::mt19937& rng,
                         const int npaths, const int maxlen, int& nbranches)
 {
   jlt::vector<traintrack> ttv = traintracks::build_traintrack_list(n);
   ttfoldgraph<traintrack> ttg(ttv[trk]);
   const int nmain = ttg.edges();
+
+  // Automorphic vertices (nontrivial cyclic symmetry, or a reflection
+  // symmetric track) are where the graph's identification of a fold
+  // result with a stored vertex could differ from the fold's own
+  // labelling; the canonical numbering makes that identification an
+  // isomorphism, and the checks below exercise every branch at them.
+  for (int v = 0; v < ttg.vertices(); ++v)
+    {
+      traintrack tt(ttg.traintrack(v));
+      if (tt.is_cyclically_symmetric() > 0) ++ncyclic_vertices;
+      if (tt.is_reflection_symmetric()) ++nreflect_vertices;
+    }
 
   // Every fold index at every vertex: the record's matrix equals the
   // unit-weight oracle (including illegal folds, which give the identity).
@@ -177,10 +191,19 @@ int main()
   std::mt19937 rng(20260919);
   int nbranches = 0;
   check_graph(3,0,rng,40,6,nbranches);
+  // n=4, stratum 1 has two vertices with cyclic symmetry.
+  check_graph(4,0,rng,40,8,nbranches);
   check_graph(4,1,rng,40,8,nbranches);
-  // n=5: several strata, including tracks with cyclic symmetry.
+  // n=5: every stratum (reflection symmetric vertices only).
   for (int trk = 0; trk < 4; ++trk) check_graph(5,trk,rng,25,8,nbranches);
+  // n=6, stratum 3,3(2): 110 vertices, ten with cyclic symmetry (the
+  // automaton of the issue-2 bad path).
+  check_graph(6,4,rng,20,8,nbranches);
   CHECK(nbranches > 0);
-  std::cout << "test_fold_map_paths: OK (" << nbranches << " branches checked)\n";
+  CHECK_MSG(ncyclic_vertices > 0, "no cyclically symmetric vertex visited");
+  CHECK_MSG(nreflect_vertices > 0, "no reflection symmetric vertex visited");
+  std::cout << "test_fold_map_paths: OK (" << nbranches << " branches checked; "
+            << ncyclic_vertices << " cyclically symmetric and "
+            << nreflect_vertices << " reflection symmetric vertices)\n";
   return 0;
 }

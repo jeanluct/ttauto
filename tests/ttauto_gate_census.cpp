@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 
   int total_rejected_classes = 0, total_rejected_paths = 0, total_partial = 0;
   long long total_candidates = 0;
-  int total_classes = 0;
+  int total_classes = 0, total_accepted_reps = 0, total_refined = 0;
   std::vector<std::string> summary;
 
   for (int n = nmin; n <= nmax; ++n)
@@ -121,6 +121,28 @@ int main(int argc, char** argv)
           total_candidates += tta.gate_candidates();
           total_classes += acc.size() + rej.size();
 
+          // Risk 1 of the plan: among the stored representatives of the
+          // accepted classes, how many have a gate partition at an
+          // unpunctured multigon finer than its prongs?
+          int nrep = 0, nrefined = 0;
+          for (auto it = acc.begin(); it != acc.end(); ++it)
+            for (const auto& pm : it->second.paths())
+              {
+                ++nrep;
+                const traintracks::gate_analysis ga = pm.first.gates();
+                const traintracks::ttnumbering N =
+                  ttg.traintrack(pm.first.initial_vertex()).numbering();
+                for (const auto& v : ga.vertices)
+                  if (v.prong < 0 &&
+                      (int)v.gates.size() > N.prong[N.prong_number[v.multigon][0]].nprongs)
+                    { ++nrefined; break; }
+              }
+          std::cout << "   accepted representatives " << nrep
+                    << ", with a refined prong at an unpunctured multigon: "
+                    << nrefined << "\n";
+          total_accepted_reps += nrep;
+          total_refined += nrefined;
+
           for (auto it = rej.begin(); it != rej.end(); ++it)
             {
               const bool partial = (acc.find(it->first) != acc.end());
@@ -153,6 +175,8 @@ int main(int argc, char** argv)
               << std::setprecision(6);
   std::cout << "\n";
   for (const std::string& s : summary) std::cout << "  " << s << "\n";
+  std::cout << "accepted representatives with a refined prong at an unpunctured multigon: "
+            << total_refined << " of " << total_accepted_reps << "\n";
 
   // n=5 first stratum: primitive but disconnected closed paths of length <= 5.
   {

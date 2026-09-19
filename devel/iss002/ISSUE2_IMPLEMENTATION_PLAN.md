@@ -500,15 +500,83 @@ user-visible behaviour change and goes last, with its test.
 
 ## Risks
 
+Rewritten 2026-09-19 after the coverage-and-risks pass (see below); the
+original four items are kept with their outcome.
+
 - Gates finer than prongs at unpunctured multigons make the BH condition
-  stricter than "all sides realised".  The controls do not exercise this,
-  so the `ttauto_min_example` and strata-scan sweeps are the real guard
-  against over-rejection.
-- Automorphic vertices: the canonical-numbering argument removes the
-  transport step, but `test_fold_map_paths` must include such vertices to
-  prove it.
+  stricter than "all sides realised".  **Measured, never bites so far**: of
+  the 113 stored representatives of every accepted class on every stratum
+  for n=3..7 (census) and of the 726 primitive connected closed paths of
+  length <= 5 in the n=5 first-stratum automaton (`test_gates`), none has
+  a refined prong at an unpunctured multigon.  Every rejection so far is a
+  refined prong at a puncture (Corollary "puncture" of the note).  The
+  census prints the count, so a stratum where the stricter condition
+  starts to bite will show up; those paths are the ones to confirm with
+  Trains.
+- Automorphic vertices.  **Verified**: `test_fold_map_paths` now asserts
+  that the graphs it walks contain vertices with nontrivial cyclic symmetry
+  (n=4 stratum 1: 2 of 4 vertices; n=6 stratum 3,3(2): 10 of 110) and
+  reflection symmetric vertices, and every branch at them passes the
+  continuity, endpoint and abelianisation checks.  The earlier comment
+  that the n=5 strata contain cyclically symmetric vertices was wrong;
+  they only contain reflection symmetric ones.
 - Redundancy (resolved): the numbering was briefly a fourth copy of the
   monogon-0 DFS; the weights and cusp walks now read it, and
   `test_numbering.cpp` keeps the old walks as oracles.
-- Published numbers may change (Step 5 diff).  That is the point of the
-  exercise, but it needs a note in the paper.
+- Published numbers changed (four entries of the ttauto paper, one of the
+  braids paper appendix); recorded in `pubs/braids/ERRATA.md` and pending
+  for the ttauto paper.
+- Norm-bounded search mode (new).  It is the mode the literature
+  comparison (`ttauto_min_example`) relies on and it had no test.  **Now
+  covered** by `testsuite/ttauto/test_min_dilatations.cpp`: n=3, 4, 5
+  minima with polynomials, and the n=4 stratum-1 reducible candidate
+  ((x-1)(x^2-3x+1), dilatation 2.61803) that only the gate test removes.
+- Dependency bugs (new).  The `is_primitive` off-by-one in jlt showed that
+  the acceptance chain trusts jlt for irreducibility, primitivity, the
+  characteristic polynomial and the Perron root.  **Partly covered**:
+  `test_ttauto_search` checks every stored representative's class
+  polynomial against an independent principal-minors expansion and its
+  dilatation against power iteration on the matrix; `is_reducible` was
+  brute-force checked once (24022 matrices); `is_primitive` has Wielandt
+  tests in jlt.  Not covered: jlt's own `polynomial` arithmetic beyond
+  evaluation.
+- Debug builds (new, found by the coverage build): `edge::nends` was a
+  non-inline `static const int` and the testsuite did not link at `-O0`.
+  Fixed (`static constexpr`).  The testsuite now builds and passes in
+  Debug as well as Release; nothing in CI enforces that.
+
+## Coverage and risks pass (done 2026-09-19)
+
+Outcome of the pass proposed the same day.  One commit; library changes
+limited to the `edge::nends` fix and a read-only `pAclass::paths()`
+accessor.
+
+- Measured line coverage before and after with gcov (table at the top of
+  `testsuite/COVERAGE.md`; procedure in `TESTING.md`): 80% -> 86% of the
+  2416 instrumented library lines; `traintrack.cpp` 64% -> 88%,
+  `multigon.cpp` 60% -> 74%, `ttauto.hpp` 78% -> 89%.  What remains is
+  mostly fail-fast exits, diagnostic printers, the broken string
+  constructor and builders the automaton does not use.
+- `test_traintrack_core`: every stratum for n=3..5 and every one-fold
+  neighbour (29 tracks); idempotent normalisation on coding and numbering,
+  coding round trip, mirror image from the reversed coding, labels,
+  `pure_braid`, printers, `print_coding` parsed back.  The string
+  constructor is documented as broken instead of tested.
+- `test_mathmatrix_permplus1`: 88 one-fold matrices of the n=4 and n=5
+  automata against the unit-weight oracle, dense round trip, `order()` by
+  dense powers, products both sides, printers.
+- `test_folding_path_and_badwords`: badwords content (each entry is the
+  square of a pattern-idempotent closed path; the length-1 layer is
+  complete; the table is deterministic, 524 bad words) and the path
+  algebra (`subpath`, `operator*`, `ending_equals`, `cycle_path`).
+- `test_ttauto_search`: exact eight classes on n=5 stratum 1 at length 8
+  with polynomials and lengths, 3555 candidates, 0 rejected, oracles on
+  all 26 representatives.
+- New `test_min_dilatations` (norm-bounded mode), see Risks.
+- `test_fold_map_paths` walks n=4 stratum 1 and n=6 stratum 5 as well and
+  asserts automorphic vertices are present (12 cyclic, 24 reflection).
+- `test_gates` and the census count refined prongs at unpunctured
+  multigons among accepted paths: 0 of 726 and 0 of 113.
+- Oracles added to `testsuite/oracles.hpp`: `charpoly_by_minors` (Bareiss
+  principal minors) and `power_iteration_radius`.
+- Census timing with the extra statistic: 8.7 s for n=3..7 (was 7.4 s).

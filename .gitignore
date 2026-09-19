@@ -41,3 +41,6 @@ devel/**/*.synctex.gz
 # Built PDF of the issue-2 note (rebuild with latexmk -pdf)
 devel/iss002/issue2_gates.pdf
 tests/ttauto_gate_census
+
+# Coverage build directory (see TESTING.md)
+build-cov/
