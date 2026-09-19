@@ -391,7 +391,7 @@ Important internal flow:
 - `descend_graph()`: one DFS step; applies pruning, checks closure, and handles backtracking.
 - `check_all_norms()`: matrix-based lower-bound pruning checks.
 - `record_pA()`: apply the dilatation window and the gate test, then insert/update the result class keyed by characteristic polynomial (`add_current_path`).
-- `check_gates(bool)`: enable/disable the gate test (default on); `rejected_pA_list()`, `gate_rejected()` expose the rejections.
+- `check_gates(bool)`: enable/disable the gate test (default on); `rejected_pA_list()`, `gate_candidates()`, `gate_rejected()` and `gate_rejection_rate()` expose the rejections (cumulative over the search); the statistics block prints "Gate test = R rejected of C candidates (P%)".
 
 Purpose: this is the main "engine" of the repository.
 

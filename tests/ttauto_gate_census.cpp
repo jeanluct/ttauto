@@ -79,6 +79,8 @@ int main(int argc, char** argv)
   std::cout.setf(std::ios::showpoint);
 
   int total_rejected_classes = 0, total_rejected_paths = 0, total_partial = 0;
+  long long total_candidates = 0;
+  int total_classes = 0;
   std::vector<std::string> summary;
 
   for (int n = nmin; n <= nmax; ++n)
@@ -108,8 +110,16 @@ int main(int argc, char** argv)
           std::cout << "), main subautomaton " << ttg.vertices()
                     << " vertices, path length <= " << len << ": "
                     << acc.size() << " classes accepted, "
-                    << rej.size() << " classes rejected ("
-                    << tta.gate_rejected() << " paths)\n";
+                    << rej.size() << " classes rejected; gate test rejected "
+                    << tta.gate_rejected() << " of " << tta.gate_candidates()
+                    << " candidate paths";
+          if (tta.gate_candidates() > 0)
+            std::cout << " (" << std::setprecision(3)
+                      << 100*tta.gate_rejection_rate() << "%)"
+                      << std::setprecision(6);
+          std::cout << "\n";
+          total_candidates += tta.gate_candidates();
+          total_classes += acc.size() + rej.size();
 
           for (auto it = rej.begin(); it != rej.end(); ++it)
             {
@@ -133,9 +143,15 @@ int main(int argc, char** argv)
     }
 
   std::cout << "\n==== Census summary (n=" << nmin << ".." << nmax << ")\n"
-            << "rejected classes: " << total_rejected_classes
+            << "rejected classes: " << total_rejected_classes << " of " << total_classes
             << ", of which with some accepted representative: " << total_partial
-            << "; rejected paths: " << total_rejected_paths << "\n";
+            << "; rejected paths: " << total_rejected_paths << " of "
+            << total_candidates << " candidates";
+  if (total_candidates > 0)
+    std::cout << " (" << std::setprecision(3)
+              << 100.0*total_rejected_paths/total_candidates << "%)"
+              << std::setprecision(6);
+  std::cout << "\n";
   for (const std::string& s : summary) std::cout << "  " << s << "\n";
 
   // n=5 first stratum: primitive but disconnected closed paths of length <= 5.

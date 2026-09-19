@@ -153,9 +153,11 @@ private:
   llint symmetricnormexceeded;	// Total times exceeded matrix symmetric norm?
 #endif
   llint badwordsomitted;	// Total times we omitted bad words?
-  llint gaterejected;		// Candidates rejected by the gate test,
+  llint gatecandidates;		// Candidates reaching the gate test (closed,
+				// irreducible, inside the dilatation window),
 				// cumulative over the whole search (the
 				// other counters are per initial vertex).
+  llint gaterejected;		// Of those, rejected by the gate test.
 
 public:
   // Contructor: given an initial configuration in a train track
@@ -179,6 +181,7 @@ public:
       max_paths_print(3),
       print_every(2000000),
       pAfile(0),
+      gatecandidates(0),
       gaterejected(0)
   {
     eliminate_pairs();
@@ -325,7 +328,15 @@ public:
   // Candidates that passed the matrix test but failed the gate test.
   const pAlist& rejected_pA_list() const { return rejl; }
 
+  // Gate-test statistics, cumulative over the whole search: candidates
+  // that reached the test (closed path, irreducible matrix, dilatation in
+  // the window), those rejected, and the rejection rate.
+  llint gate_candidates() const { return gatecandidates; }
   llint gate_rejected() const { return gaterejected; }
+  double gate_rejection_rate() const
+  {
+    return (gatecandidates > 0 ? (double)gaterejected/gatecandidates : 0.0);
+  }
 
   std::ostream& print_pA_list(std::ostream& strm = std::cout) const;
 
@@ -497,6 +508,7 @@ void ttauto<TrTr>::search(const int tt00)
   using std::cout;
   using std::endl;
 
+  gatecandidates = 0;
   gaterejected = 0;
   rejl.clear();
 
@@ -693,7 +705,14 @@ bool ttauto<TrTr>::find_pAs()
   cout << "Closed paths       = " << closed << endl;
   cout << "Irreducible paths  = " << irreducible << endl;
   if (do_check_gates)
-    cout << "Rejected by gates  = " << gaterejected << " (cumulative)" << endl;
+    {
+      cout << "Gate test          = " << gaterejected << " rejected of "
+	   << gatecandidates << " candidates";
+      if (gatecandidates > 0)
+	cout << " (" << std::setprecision(3) << 100*gate_rejection_rate()
+	     << "%)" << std::setprecision(prec);
+      cout << " (cumulative)" << endl;
+    }
 #if 0 /* This is redundant.  We don't yet know if it's really pA. */
   cout << "pseudoAnosov paths = " << pseudoAnosov << endl;
 #endif
@@ -1028,6 +1047,7 @@ inline void ttauto<TrTr>::record_pA()
 
   // Bestvina-Handel gate test: an irreducible matrix is not sufficient
   // (issue #2).  Rejected candidates go to a separate list.
+  ++gatecandidates;
   if (do_check_gates && !p.gates().connected)
     {
       ++gaterejected;

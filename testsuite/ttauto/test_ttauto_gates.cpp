@@ -89,6 +89,10 @@ int main()
   CHECK(!has_dilatation(on.pA_list(),lambda_bad));
   CHECK(has_dilatation(on.rejected_pA_list(),lambda_bad));
   CHECK(on.gate_rejected() > 0);
+  // The same candidates reach the gate test whether or not it is applied.
+  CHECK(on.gate_candidates() == off.gate_candidates());
+  CHECK(on.gate_candidates() > on.gate_rejected());
+  CHECK(on.gate_rejection_rate() > 0.0 && on.gate_rejection_rate() < 1.0);
 
   // Every other class is unchanged, and nothing else was rejected.
   std::set<std::string> poff = polys(off.pA_list()), pon = polys(on.pA_list());
@@ -100,7 +104,8 @@ int main()
 
   std::cout << "\ntest_ttauto_gates: classes with gates off " << poff.size()
             << ", with gates on " << pon.size() << ", rejected " << prej.size()
-            << " (" << on.gate_rejected() << " paths)\n";
+            << " (" << on.gate_rejected() << " of " << on.gate_candidates()
+            << " candidate paths, " << 100*on.gate_rejection_rate() << "%)\n";
   std::cout << "Rejected classes:\n";
   on.print_rejected_pA_list(std::cout);
   std::cout << "test_ttauto_gates: OK\n";

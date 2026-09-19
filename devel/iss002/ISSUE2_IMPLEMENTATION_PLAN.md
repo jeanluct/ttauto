@@ -346,6 +346,15 @@ Outcome of Step 4 (2026-09-19):
   | 6 | 5 `3 3(2)` | 2.54205 | 8 | two length-8 extensions of the bad cycle (search length raised to 8) |
   | 7 | 7 `3 4(2)` | 1.88320 | 6 | the n=6 stratum (4) minimum plus an idle puncture |
 
+  Rejection rate (candidates = closed paths with irreducible matrix inside
+  the dilatation window, counted by `gate_candidates()`): 161 of 11142
+  candidate paths over n=3..7 (1.44%), 7 of 95 classes.  Per stratum the
+  rate is 0 except n=4 stratum 1 (3 of 47, 6.4%), n=6 stratum 3 (141 of
+  266, 53%, the two imprimitive classes dominate), n=6 stratum 5 (11 of
+  7401, 0.15%) and n=7 stratum 7 (6 of 2208, 0.27%).  The search prints
+  the same figure in its statistics block and exposes it through
+  `gate_candidates()`, `gate_rejected()` and `gate_rejection_rate()`.
+
   Seven classes, 161 paths, none with an accepted representative.  Every
   rejection is at a prong of a multi-edge punctured monogon split into
   two main gates, except the two imprimitive ones, which are disconnected
