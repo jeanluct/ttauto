@@ -61,8 +61,12 @@
 | 9 | 1. 1. 1. 1. 1. 1. 1. 4 4 (1) | 12 | 0 | 1.75488 | 4 | 4 | 4 |
 | 10 | 1. 1. 1. 1. 1. 1. 1. 3 3 3 (2) | 393 | 75 | 1.61094 | 4 | 4 | 4 |
 | 11 | 1. 1. 1. 1. 1. 1. 1. 3 3 4 (1) | 108 | 0 | 2.04249 | 8 | 8 | 8 |
-| 12 | 1. 1. 1. 1. 1. 1. 1. 3 3 3 3 (1) | 90 | 0 | 2.21497 | 8 | 8 | 8 |
+| 12 | 1. 1. 1. 1. 1. 1. 1. 3 3 3 3 (1) | 90 | 0 | 2.02598 | 10 | **8** | 10 |
+| ~~12~~ | ~~1. 1. 1. 1. 1. 1. 1. 3 3 3 3 (1)~~ | ~~90~~ | ~~0~~ | ~~2.21497~~ | ~~8~~ | ~~8~~ | ~~8~~ |
 
-> Struck-through row: value before the gate test (2026-09-19, issue #2).
-> The 1.88320 class of stratum 7 is the n=6 stratum (4) minimum plus an
-> idle puncture, hence reducible.  See `devel/iss002/`.
+> Struck-through rows: stratum 7, value before the gate test (2026-09-19,
+> issue #2): the 1.88320 class is the n=6 stratum (4) minimum plus an idle
+> puncture, hence reducible, see `devel/iss002/`.  Stratum 12, value at
+> search length 8: the length was raised to 10 on 2026-09-19 after Lizi Guo
+> found the lower-dilatation pseudo-Anosov 2.02598 at length 10; the gate
+> test rejects nothing on this stratum.

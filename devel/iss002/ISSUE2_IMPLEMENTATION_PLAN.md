@@ -1,10 +1,10 @@
 # Issue #2: implementation plan for the gate test
 
 Status: plan approved 2026-09-19; Steps 0 to 4 and the census of Step 5
-done the same day (see the "Outcome" notes below).  Supersedes `ISSUE2_GATES_PLAN.md`.  The
-mathematics and the worked example are in `issue2_gates.tex` (built to
-`issue2_gates.pdf`) in this directory; the scratch diagnostic that
-established the result is `gates_check.cpp`.
+done the same day (see the "Outcome" notes below).  Supersedes
+`ISSUE2_GATES_PLAN.md`.  The mathematics and the worked example are in
+`issue2_gates.tex` (built to `issue2_gates.pdf`) in this directory; the
+scratch diagnostic that established the result is `gates_check.cpp`.
 
 ## Summary of the problem
 
@@ -358,7 +358,10 @@ Outcome of Step 4 (2026-09-19):
   n=6 stratum 3: 1.61803 -> 1.88320; n=6 stratum 5: 2.01536 -> 2.08102
   (search length for this stratum raised from 6 to 8 in the scan script,
   user decision; at length 6 it would read 2.45317); n=7 stratum 7:
-  1.88320 -> 2.47541.  The paper's table row for n=6
+  1.88320 -> 2.47541.  Separately, the search length for n=7 stratum 12
+  was raised from 8 to 10 (Lizi Guo found a lower-dilatation pA there):
+  the row's minimum becomes 2.02598 at length 10, with nothing rejected by
+  the gate test on that stratum.  The paper's table row for n=6
   stratum 3 (`ttauto.tex` ~1395, `1.61803`) is one of the entries the
   paper itself marks as below the systole (`\chkabs`); the gate test now
   explains it.
