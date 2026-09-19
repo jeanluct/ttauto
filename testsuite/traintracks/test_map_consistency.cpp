@@ -22,63 +22,102 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
+// One-fold train-track maps: agreement with the transition matrix, the
+// side letter lives on the target multigon, and hand-checked words for the
+// n=3 example (see devel/iss002/issue2_gates.tex, Section 4).
+
 #include <algorithm>
-#include <cassert>
 #include <cstdlib>
 #include <jlt/freeauto.hpp>
 #include <jlt/stlio.hpp>
+#include "check.hpp"
+#include "oracles.hpp"
 #include "traintracks/build.hpp"
+#include "traintracks/fold_map.hpp"
 #include "traintracks/map.hpp"
-#include "traintracks/map_labels.hpp"
 #include "traintracks/traintrack.hpp"
 #include "ttauto/folding_path.hpp"
 #include "ttauto/ttfoldgraph.hpp"
 
 
+// Fold index (in traintrack::fold numbering) realising branch b at a vertex.
+static int fold_index_of_branch(const traintracks::traintrack& tt, const int b)
+{
+  const jlt::mathmatrix<int> id = jlt::identity_matrix<int>(tt.edges());
+  int nb = 0;
+  for (int f = 0; f < tt.foldings(); ++f)
+    {
+      traintracks::traintrack t2(tt);
+      jlt::freeauto<int> AM = t2.fold_traintrack_map(f);
+      if (traintracks::transition_matrix_from_map(tt,AM) == id) continue;
+      if (nb == b) return f;
+      ++nb;
+    }
+  return -1;
+}
+
 static void check_vertex_fold_consistency(const ttauto::ttfoldgraph<traintracks::traintrack>& ttg,
                                           const int vertex)
 {
+  using traintracks::fold_map_data;
   using traintracks::mathmatrix_permplus1;
+  using traintracks::traintrack;
   using traintracks::transition_matrix_from_map;
-  using traintracks::ttmap_labeler;
+  using traintracks::ttnumbering;
 
-  // For each outgoing fold at this vertex, ensure the fold-level
-  // train-track map and transition matrix agree on main-edge action.
-  for (int f = 0; f < ttg.foldings(vertex); ++f)
+  const traintrack& ttv = ttg.traintrack(vertex);
+  const int nmain = ttv.edges();
+
+  for (int b = 0; b < ttg.foldings(vertex); ++b)
     {
-      const traintracks::traintrack& ttvf = ttg.traintrack(vertex);
-      const ttmap_labeler labels(ttvf.edges(),ttvf.total_prongs());
-      const jlt::freeauto<int> AMstep = ttg.traintrack_map(vertex,f);
-      const mathmatrix_permplus1 PM = ttg.transition_matrix(vertex,f);
+      const jlt::freeauto<int> AMstep = ttg.traintrack_map(vertex,b);
+      const mathmatrix_permplus1 PM = ttg.transition_matrix(vertex,b);
 
-      assert(transition_matrix_from_map(ttvf,AMstep) == PM.full());
+      // Main-edge action agrees with the transition matrix.
+      CHECK(transition_matrix_from_map(ttv,AMstep) == PM.full());
+      // Branches are real folds, never permutations.
+      CHECK(!PM.is_perm());
 
-      // In non-permutation folds, exactly one positively oriented selected
-      // infinitesimal generator should be injected into main-edge images.
-      const int infg = std::abs(ttvf.fold_infinitesimal_generator(f,labels.nmain));
-      int ninf = 0;
-      int nneg = 0;
-      int npos = 0;
+      // Redo the fold on a copy to get the fold record.
+      const int f = fold_index_of_branch(ttv,b);
+      CHECK(f >= 0);
+      traintrack t2(ttv);
+      fold_map_data fm;
+      CHECK(t2.fold_with_map(f,fm));
+      CHECK(t2 == ttg.traintrack(ttg.target_vertex(vertex,b)));
+      const ttnumbering& A = fm.after;
 
-      for (int g = 1; g <= labels.nmain; ++g)
-        {
-          for (auto img : AMstep.get_action(g))
-            {
-              if (img == -infg) { ++ninf; ++nneg; }
-              else if (img == infg) { ++ninf; ++npos; }
-            }
-        }
+      // The stored map is the fold record's map.
+      const jlt::freeauto<int> AMfm = fm.to_freeauto();
+      for (int g = 1; g <= nmain + fm.nsides; ++g)
+        CHECK(AMstep[g] == AMfm[g]);
 
-      if (PM.is_perm())
-        {
-          assert(ninf == 0);
-        }
-      else
-        {
-          assert(ninf == 1);
-          assert(npos == 1);
-          assert(nneg == 0);
-        }
+      // The record's matrix equals the unit-weight oracle (n folds), the
+      // stored matrix, and the map's abelianisation.
+      const jlt::mathmatrix<int> oracle = oracles::unit_weight_transition_matrix(ttv,f);
+      CHECK(fm.transition_matrix_dense() == oracle);
+      CHECK(fm.transition_matrix().full() == oracle);
+      CHECK(PM.full() == oracle);
+      CHECK(traintracks::fold_transition_matrix(ttv,f).full() == oracle);
+
+      // Exactly one side letter appears in the main-edge images, in the
+      // image of the moved edge, and it is a side of the target multigon:
+      // it joins the two target prongs.
+      int nsideletters = 0;
+      for (int g = 1; g <= nmain; ++g)
+        for (auto x : AMstep.get_action(g))
+          if (A.is_side(x)) { ++nsideletters; CHECK(g == fm.moved + 1); CHECK(x == fm.side); }
+      CHECK(nsideletters == 1);
+      const int qa = A.tail_of(fm.side), qb = A.head_of(fm.side);
+      CHECK(A.prong[qa].multigon == A.prong[fm.target_from].multigon);
+      CHECK((qa == fm.target_from && qb == fm.target_to) ||
+            (qa == fm.target_to && qb == fm.target_from));
+      // The moved edge's image is a continuous path.
+      CHECK(fm.moved_word.size() == 3);
+      CHECK(A.head_of(fm.moved_word[0]) == A.tail_of(fm.moved_word[1]));
+      CHECK(A.head_of(fm.moved_word[1]) == A.tail_of(fm.moved_word[2]));
+      // Which copy comes first matches the record.
+      CHECK((std::abs(fm.moved_word[0]) == std::abs(fm.edge_image[fm.moved])) == fm.moved_first);
     }
 }
 
@@ -97,51 +136,57 @@ int main()
   typedef jlt::vector<traintrack> ttVec;
 
   {
-    // Small hand-checked scenario used in issue #3 development.
+    // n=3: three punctured monogons, one of them (prong 1) carrying the two
+    // edges 1: 0->1 and 2: 1->2 with a cusp between them.  The automaton has
+    // a single vertex with two branches.
     const int n = 3;
     const int trk = 0;
     ttVec ttv = build_traintrack_list(n);
     ttgraph ttg(ttv[trk]);
+    CHECK(ttg.vertices() == 1);
+    CHECK(ttg.foldings(0) == 2);
 
     for (int f = 0; f < ttv[trk].foldings(); ++f)
       {
-        // Cusp-to-infinitesimal mapping must resolve to in-range indices.
-        [[maybe_unused]] const int infix = ttv[trk].fold_infinitesimal_index(f);
-        assert(infix >= 0);
-        assert(infix < ttv[trk].total_prongs());
-
         traintracks::multigon* mmc = 0;
         int pc = -1, ec = -1;
         ttv[trk].fold_cusp_location(f,mmc,pc,ec);
-        assert(mmc != 0);
-        assert(pc >= 0);
-        assert(ec >= 0);
+        CHECK(mmc != 0 && pc >= 0 && ec >= 0);
       }
 
     check_vertex_fold_consistency(ttg,0);
 
-    // Lock a known one-step map from the hand-worked example.
+    // Hand-checked words.  Branch 0 folds edge 1 onto edge 2: the end of
+    // edge 1 slides along edge 2 to the monogon at prong 2 and once around
+    // its puncture, which after renumbering is prong 1 (side letter 4).
+    // Old edge 1 (0->1, head at the cusp) becomes new edge 1 (0->1), then
+    // the loop at prong 1 traversed backwards, then new edge 2 (1->2).
+    // Old edge 2 is reversed by the renumbering.
+    const freeauto<int> AMf0 = ttg.traintrack_map(0,0);
+    CHECK((AMf0[1] == freeword<int>({1,-4,2})));
+    CHECK((AMf0[2] == freeword<int>({-2})));
+    CHECK((AMf0[3] == freeword<int>({3})));
+    CHECK((AMf0[4] == freeword<int>({5})));
+    CHECK((AMf0[5] == freeword<int>({4})));
+
+    // Branch 1 folds edge 2 onto edge 1, symmetrically.
     const freeauto<int> AMf1 = ttg.traintrack_map(0,1);
-    assert((AMf1[1] == freeword<int>({-1})));
-    assert((AMf1[2] == freeword<int>({1,5,2})));
+    CHECK((AMf1[1] == freeword<int>({-1})));
+    CHECK((AMf1[2] == freeword<int>({1,-4,2})));
+    CHECK((AMf1[3] == freeword<int>({4})));
+    CHECK((AMf1[4] == freeword<int>({3})));
+    CHECK((AMf1[5] == freeword<int>({5})));
 
-    const int v_after_f1 = ttg.target_vertex(0,1);
-    const freeauto<int> AMf0_after_f1 = ttg.traintrack_map(v_after_f1,0);
-    assert((AMf0_after_f1[1] == freeword<int>({1,5,2})));
-    assert((AMf0_after_f1[2] == freeword<int>({-2})));
-
-    // Lock composed map and matrix agreement for path [1,0].
+    // Composed map for the path [1,0]: a continuous path, and its
+    // abelianisation is the path's transition matrix.
     folding_path<traintrack> p(ttg,0);
     p.push_back(1);
     p.push_back(0);
-
     const jlt::mathmatrix<int> TMp = p.transition_matrix();
     const freeauto<int> AMp = p.traintrack_map();
-    const jlt::mathmatrix<int> TMfromAMp = transition_matrix_from_map(ttv[trk],AMp);
-
-    assert((AMp[1] == freeword<int>({-2,-5,-1})));
-    assert((AMp[2] == freeword<int>({1,5,2,5,-2})));
-    assert(TMp == TMfromAMp);
+    CHECK((AMp[1] == freeword<int>({-2,4,-1})));
+    CHECK((AMp[2] == freeword<int>({1,-4,2,-5,-2})));
+    CHECK(TMp == transition_matrix_from_map(ttv[trk],AMp));
   }
 
   {
@@ -151,22 +196,14 @@ int main()
     ttVec ttv = build_traintrack_list(n);
     ttgraph ttg(ttv[trk]);
 
-    const int max_vertices_to_check = std::min(3,ttg.vertices());
-    for (int v = 0; v < max_vertices_to_check; ++v)
-      {
-        check_vertex_fold_consistency(ttg,v);
-      }
+    for (int v = 0; v < ttg.vertices(); ++v)
+      check_vertex_fold_consistency(ttg,v);
 
     folding_path<traintrack> p2(ttg,0);
     p2.push_back(0);
     p2.push_back(1);
     p2.push_back(0);
-
-    const jlt::mathmatrix<int> TMp2 = p2.transition_matrix();
-    const freeauto<int> AMp2 = p2.traintrack_map();
-    const jlt::mathmatrix<int> TMfromAMp2 = transition_matrix_from_map(ttv[trk],AMp2);
-
-    assert(TMp2 == TMfromAMp2);
+    CHECK(p2.transition_matrix() == transition_matrix_from_map(ttv[trk],p2.traintrack_map()));
   }
 
   return 0;

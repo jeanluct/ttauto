@@ -28,3 +28,19 @@ devel/crossmingw.pyc
 lib/ttauto.lib
 examples/ttauto*.exe
 tests/test_*.exe
+
+# LaTeX build artefacts for notes under devel/
+devel/**/*.aux
+devel/**/*.log
+devel/**/*.out
+devel/**/*.toc
+devel/**/*.fdb_latexmk
+devel/**/*.fls
+devel/**/*.synctex.gz
+
+# Built PDF of the issue-2 note (rebuild with latexmk -pdf)
+devel/iss002/issue2_gates.pdf
+tests/ttauto_gate_census
+
+# Coverage build directory (see TESTING.md)
+build-cov/

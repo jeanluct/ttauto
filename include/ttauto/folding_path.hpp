@@ -32,6 +32,7 @@
 #include "ttauto/ttfoldgraph.hpp"
 #include "traintracks/util.hpp"
 #include "traintracks/map.hpp"
+#include "traintracks/gates.hpp"
 
 namespace ttauto {
 
@@ -114,6 +115,11 @@ public:
 
   // Cumulative train-track map along the full fold sequence.
   jlt::freeauto<int> traintrack_map() const;
+
+  // Bestvina-Handel gate test of the closed path (traintracks/gates.hpp):
+  // composes the derivative data of each branch without forming words and
+  // analyses it at the initial vertex.  The path must be closed.
+  traintracks::gate_analysis gates() const;
 
   // Return a subpath of length |nf|.
   // nf > 0 measure from initial vertex;
@@ -424,6 +430,34 @@ folding_path<TrTr>::traintrack_map() const
     }
 
   return AM;
+}
+
+template<class TrTr>
+traintracks::gate_analysis folding_path<TrTr>::gates() const
+{
+  if (!closed())
+    {
+      std::cerr << "Path is not closed in ttauto::folding_path::gates.\n";
+      std::exit(1);
+    }
+
+  traintracks::gate_accumulator acc;
+  int v = initial_vertex();
+  for (auto i = fp.begin(); i != fp.end(); ++i)
+    {
+      if (*i >= ttg->foldings(v))
+	{
+	  std::cerr << "Illegal folding " << *i << " at vertex " << v;
+	  std::cerr << " in ttauto::folding_path::gates.\n";
+	  std::exit(1);
+	}
+      const int vnext = ttg->target_vertex(v,*i);
+      acc.push_back(traintracks::fold_derivative(ttg->traintrack_map(v,*i),
+						 ttg->traintrack(vnext).numbering()));
+      v = vnext;
+    }
+
+  return acc.analyse(ttg->traintrack(initial_vertex()).numbering());
 }
 
 // Return a subpath of length |nf|.

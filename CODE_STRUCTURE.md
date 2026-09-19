@@ -70,13 +70,13 @@ This section gives a concrete mental model of how one fold is represented across
 For the same `tt` and `f`, the code builds two algebraic objects:
 
 - `fold_transition_matrix(tt, f)`:
-  - gives the main-edge transition matrix for that one fold,
-  - represented compactly as `mathmatrix_permplus1`.
-- `fold_traintrack_map(tt, f)`:
-  - gives the train-track map on generators (main + infinitesimal),
-  - inserts the selected infinitesimal generator in the folded edge image, with ordering determined by fold direction.
+  - gives the main-edge transition matrix for that one fold, read off the fold record (`fold_map_data::transition_matrix`: the edge permutation plus the extra entry for the moved edge running over `onto`),
+  - represented compactly as `mathmatrix_permplus1`; the original unit-weight construction (n folds) survives only as `oracles::unit_weight_transition_matrix` in `testsuite/oracles.hpp`.
+- `fold_traintrack_map(tt, f)` (via `traintrack::fold_with_map`, `include/traintracks/fold_map.hpp`):
+  - gives the train-track map on generators (main edges + sides), in the canonical numbering (`ttnumbering`, `include/traintracks/coding.hpp`) of the track before and after the fold,
+  - the moved edge's image is the three-letter path `moved copy . side . onto edge` (or reversed), where the side is the side of the *target* multigon traversed between the two target prongs; every other edge maps to its signed new number and every side to its new prong number.
 
-Consistency rule: main-edge counts extracted from the map must agree with the transition matrix (`check_fold_map_main_transition` and test coverage in `tests/test_ttmap.cpp`).
+Consistency rule: main-edge counts extracted from the map must agree with the transition matrix (`transition_matrix_from_map`; checked against the unit-weight oracle in `testsuite/traintracks/test_map_consistency.cpp` and `test_fold_map_paths.cpp`).
 
 ### Step D: Store as One Automaton Branch
 
@@ -107,8 +107,9 @@ This is why `folding_path` is the core DFS state in `ttauto`: it is both combina
 During DFS in `ttauto`:
 
 - pruning checks reject many partial paths early (norm bounds, badwords, depth limits, etc.),
-- closed paths that pass checks are converted into candidate records,
-- candidates are grouped into `pAclass` objects keyed by polynomial/dilatation.
+- closed paths with a primitive matrix (irreducible and aperiodic) and dilatation above 1 become candidates,
+- `record_pA` applies the dilatation window and then the Bestvina-Handel gate test (`folding_path::gates()`, `traintracks/gates.hpp`); candidates with a disconnected gate graph are reducible and go to `rejected_pA_list()`,
+- accepted candidates are grouped into `pAclass` objects keyed by polynomial/dilatation.
 
 In short: one fold becomes one graph edge with matrix+map payload; many edges compose into one candidate dynamical class.
 
@@ -175,7 +176,8 @@ Key public responsibilities:
 - Perform folds:
   - `fold(int f)`: apply fold by global fold index in current cusp ordering.
   - `fold_cusp_location(...)`: map fold index to concrete `(multigon, prong, cusp-edge-slot)`.
-  - `fold_infinitesimal_index(...)` and `fold_infinitesimal_generator(...)`: connect fold geometry to infinitesimal-generator labeling used in maps.
+  - `fold_with_map(f, fm)`: fold and fill a `fold_map_data` record (moved/onto edges, target prongs, side letter, edge and prong images, numberings before and after).
+  - `numbering()`: canonical prong/edge numbering with orientations (`ttnumbering`), rooted at monogon 0 like `weights()` and the coding.
 - Integrate with matrix/map layer:
   - `fold_transition_matrix(int f)`.
   - `fold_traintrack_map(int f)`.
@@ -187,13 +189,28 @@ Key public responsibilities:
 Important internal helpers (private):
 
 - `recursive_build`: reconstruct topology from coding blocks.
-- `recursive_find_cusp`: locate cusp by canonical ordering.
-- `recursive_get_weights` / `recursive_set_weights`: aligned weight traversal.
+- `weights()`, `fold(f)` and `fold_cusp_location(f)` no longer walk the
+  track themselves: they read the canonical numbering
+  (`coding_engine::numbering`, which records edge order, prong numbers and
+  the cusp order used by fold indices in one depth-first walk).  Only two
+  walks remain: the coding (normal form, both directions) and the
+  numbering (index).
 
 Coding implementation note:
 
 - Canonical coding logic now lives in `include/traintracks/coding.hpp` and
   `lib/traintracks/coding.cpp` (`traintracks::detail::coding_engine`).
+- The same module provides `ttnumbering` and `coding_engine::numbering`, the
+  canonical numbering of prongs and edges (with orientations) produced by
+  the same depth-first walk as the coding and `weights()`.  Side `q` runs
+  from prong `q` to the next prong of its multigon.  "Number" is used, not
+  "label", because `label` is the puncture label of a multigon.
+- `include/traintracks/fold_map.hpp` / `lib/traintracks/fold_map.cpp`:
+  `fold_map_data` and `traintrack::fold_with_map`, the record of one fold in
+  canonical numbering from which the train-track map is built.  Prongs are
+  followed through `normalise()` by the set of edge objects attached to
+  them (edge objects persist; multigon objects and edge ending indices do
+  not).
 - `traintrack::{coding, normalise, cyclic_symmetry, print_coding}` delegate to
   that coding module.
 
@@ -246,11 +263,33 @@ This file is the bridge between geometric folds and algebraic representations.
 Core functions:
 
 - `fold_transition_matrix(const TrTr&, int f)`: computes one-fold main-edge transition matrix.
-- `fold_traintrack_map(const TrTr&, int f)`: computes one-fold train-track map including infinitesimal generators.
+- `fold_traintrack_map(const TrTr&, int f)`: one-fold train-track map including side generators, built from `fold_with_map` on a copy (see `fold_map.hpp`).
 - `transition_matrix_from_map(const TrTr&, const jlt::freeauto<int>&)`: projects map back to main-edge transition matrix.
-- `check_fold_map_main_transition(...)`: consistency assertion helper.
 
 Why this matters: the automaton stores both matrix and map data per branch; these functions keep conventions synchronized.
+
+### `include/traintracks/gates.hpp` and `lib/traintracks/gates.cpp`
+
+The Bestvina-Handel gate test for a train-track map (issue #2; the
+mathematics is in `devel/iss002/issue2_gates.tex`).
+
+- `fold_derivative(AM, target_numbering)`: the derivative `D` (first letter
+  of each image) and the turns taken by the image words of the main edges,
+  read in the target track's numbering.  Works for one-step and composed
+  maps.
+- `gate_accumulator`: `push_back` one `fold_derivative` per branch of a
+  path; composes `D` and the realised turns (`T <- T_i U D_i(T)`) without
+  ever forming the composed words.  `analyse(N)` on a closed path closes the
+  turns under `D x D`, partitions the directions at each Bestvina-Handel
+  vertex (an unpunctured multigon, or one prong of a punctured multigon)
+  into gates by eventual coincidence under `D`, joins gates by realised
+  turns, and reports connectivity and the allowed infinitesimal-edge shape
+  per vertex (`gate_analysis`, `gate_vertex_report`).
+- `analyse_gates(N, AM)`: word-based version of the same test, for tests and
+  diagnostics.
+- Fail-fast on impossible data: a realised turn inside a gate, a turn
+  joining two vertices, a derivative that does not map directions to
+  directions.
 
 ### `include/traintracks/map_labels.hpp`
 
@@ -354,7 +393,8 @@ Important internal flow:
 - `find_pAs()`: initialize per-start-vertex DFS state and counters.
 - `descend_graph()`: one DFS step; applies pruning, checks closure, and handles backtracking.
 - `check_all_norms()`: matrix-based lower-bound pruning checks.
-- `record_pA()`: insert/update accepted result class keyed by characteristic polynomial.
+- `record_pA()`: apply the dilatation window and the gate test, then insert/update the result class keyed by characteristic polynomial (`add_current_path`).
+- `check_gates(bool)`: enable/disable the gate test (default on); `rejected_pA_list()`, `gate_candidates()`, `gate_rejected()` and `gate_rejection_rate()` expose the rejections (cumulative over the search); the statistics block prints "Gate test = R rejected of C candidates (P%)".
 
 Purpose: this is the main "engine" of the repository.
 
@@ -408,7 +448,8 @@ Purpose: reduce search cost without changing the core fold graph.
 ## Practical "Where to Change What"
 
 - Topological modifications and transformations, coding, cusp/fold mechanics: `include/traintracks/traintrack.hpp`, `lib/traintracks/traintrack.cpp`, `include/traintracks/multigon.hpp`, `lib/traintracks/multigon.cpp`, `include/traintracks/edge.hpp`.
-- Fold map and matrix conventions: `include/traintracks/map.hpp`, `include/traintracks/map_labels.hpp`, and `tests/test_ttmap.cpp`.
+- Fold map and matrix conventions: `include/traintracks/map.hpp`, `include/traintracks/fold_map.hpp`, `include/traintracks/map_labels.hpp`, and `tests/test_ttmap.cpp`.
+- Gate test (pseudo-Anosov versus reducible): `include/traintracks/gates.hpp`, `lib/traintracks/gates.cpp`, `testsuite/traintracks/test_gates.cpp`.
 - Automaton construction/symmetry/decomposition: `include/ttauto/ttfoldgraph.hpp`.
 - DFS pruning and candidate acceptance logic: `include/ttauto/ttauto.hpp`, `include/ttauto/badwords.hpp`.
 - Result grouping/serialization: `include/ttauto/pAclass.hpp`.

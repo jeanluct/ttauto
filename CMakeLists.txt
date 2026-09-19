@@ -115,6 +115,10 @@ function(ttauto_add_testsuite source_file)
   add_executable(${target_name} "${source_file}")
   target_link_libraries(${target_name} PRIVATE ttauto)
   ttauto_add_compile_flags(${target_name})
+  # Keep assert() live in testsuite programs even in Release builds;
+  # otherwise every assert-based test passes vacuously.
+  target_compile_options(${target_name} PRIVATE -UNDEBUG)
+  target_include_directories(${target_name} PRIVATE "${CMAKE_SOURCE_DIR}/testsuite")
 
   set_target_properties(${target_name} PROPERTIES OUTPUT_NAME "${program_name}")
   ttauto_set_inplace_output(${target_name} "${CMAKE_BINARY_DIR}/testsuite")

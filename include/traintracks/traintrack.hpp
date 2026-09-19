@@ -34,6 +34,7 @@
 #include "traintracks/map.hpp"
 #include "traintracks/mathmatrix_permplus1.hpp"
 #include "traintracks/coding.hpp"
+#include "traintracks/fold_map.hpp"
 
 
 namespace traintracks {
@@ -195,14 +196,14 @@ public:
   //  f odd  = fold counterclockwise
   bool fold(const int f);
 
-  // Return the infinitesimal generator index (0-based)
-  // associated with fold index f in the current cusp ordering.
-  int fold_infinitesimal_index(const int f) const;
+  // Fold f and record what happened to every edge and prong, in the
+  // canonical numberings before and after (see fold_map.hpp).  Returns
+  // false, leaving the track and fm unchanged, if the fold is illegal.
+  bool fold_with_map(const int f, fold_map_data& fm);
 
-  // Return infinitesimal generator for fold index f, given the
-  // main-generator count nmain.
-  // Orientation is fixed by the global infinitesimal-loop convention.
-  int fold_infinitesimal_generator(const int f, const int nmain) const;
+  // Canonical numbering of prongs and edges (see coding.hpp).  Requires a
+  // normalised track; rooted at monogon 0 like weights() and the coding.
+  ttnumbering numbering() const;
 
   // Return cusp location for fold index f in the current cusp ordering.
   // Output:
@@ -211,26 +212,30 @@ public:
   // - ec:  cusp index on that prong (first edge encountered clockwise)
   void fold_cusp_location(const int f, multigon*& mmc, int& pc, int& ec) const;
 
-  // Apply fold f and return its transition matrix.
+  // Apply fold f and return its transition matrix (identity if the fold
+  // is illegal, in which case the track is unchanged).
   mathmatrix_permplus1 fold_transition_matrix(const int f)
   {
-    mathmatrix_permplus1 M(traintracks::fold_transition_matrix(*this,f));
-    fold(f);
-    return M;
+    fold_map_data fm;
+    if (!fold_with_map(f,fm)) return identity_transition_matrix(edges());
+    return fm.transition_matrix();
   }
 
-  // Apply fold f and return its train-track map.
+  // Apply fold f and return its train-track map (identity if the fold
+  // is illegal, in which case the track is unchanged).
   jlt::freeauto<int> fold_traintrack_map(const int f)
   {
-    jlt::freeauto<int> AM(traintracks::fold_traintrack_map(*this,f));
-    fold(f);
-    return AM;
+    fold_map_data fm;
+    if (!fold_with_map(f,fm))
+      return identity_traintrack_map(edges(),total_prongs());
+    return fm.to_freeauto();
   }
 
-  // Return vector of edge weights.
+  // Return vector of edge weights, in the canonical edge order of
+  // ttnumbering rooted at uncusped monogon mono.
   dblVec weights(const int mono = 0) const;
 
-  // Set edge weights from iterator.
+  // Set edge weights from iterator, in the canonical edge order.
   dblVec::const_iterator weights(dblVec::const_iterator wi);
 
   // Print some information about the traintrack.
@@ -305,18 +310,6 @@ private:
 
   // Recursively reconstruct a track from coding blocks.
   void recursive_build(edgep& ee, intVec::const_iterator& cd);
-
-  // Recursively collect edge weights in canonical traversal order.
-  void recursive_get_weights(const multigon& mm, const int pp, const int ee,
-			     dblVec& wv) const;
-
-  // Recursively assign edge weights in canonical traversal order.
-  void recursive_set_weights(const multigon& mm, const int pp, const int ee,
-			     dblVec::const_iterator& wi);
-
-  // Recursively locate cusp fcusp and return its multigon/prong/edge location.
-  bool recursive_find_cusp(multigon& mm, const int pp, const int ee,
-		   int& fcusp, multigon*& mmc, int& pc, int& ec) const;
 
   // Sort ascending using the strict order relation for multigons.
   void sort();

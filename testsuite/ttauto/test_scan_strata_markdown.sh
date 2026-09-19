@@ -70,7 +70,14 @@ if ! diff -u "${baseline_before}" "${baseline_after}" >/dev/null; then
   exit 1
 fi
 
-if ! diff -u "${BASELINE_MD}" "${generated_md}" >/dev/null; then
+# The baseline may carry annotations that the scan does not generate:
+# struck-through table rows (old values, `| ~~...~~ |`) and blockquote
+# notes (`> ...`).  Ignore them, and squeeze the blank lines they leave.
+strip_annotations() {
+  grep -v -E '^\| ~~|^>' "$1" | cat -s
+}
+if ! diff -u <(strip_annotations "${BASELINE_MD}") \
+             <(strip_annotations "${generated_md}") >/dev/null; then
   echo "Generated markdown differs from baseline." >&2
   exit 1
 fi

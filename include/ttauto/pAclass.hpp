@@ -60,9 +60,11 @@ private:
   //   be nice to use map since we could easily keep the list sorted
   //   by length, but when there are millions of pAs it's better to
   //   use folding_path's hash function to speed up checking.
+public:
   typedef typename std::unordered_map<folding_path<TrTr>,Mat,path_hash>
   pathlist;
 
+private:
   pathlist pathl;	// List of vertex paths/transition matrix
                         // pairs in this pseudo-Anosov class.
 
@@ -93,6 +95,9 @@ public:
 
   // Number of representative closed paths stored for this class.
   int number_of_paths() const { return pathl.size(); }
+
+  // Read-only access to the stored (path, transition matrix) pairs.
+  const pathlist& paths() const { return pathl; }
 
   // The minimum path length over all the paths in this class.
   int shortest() const

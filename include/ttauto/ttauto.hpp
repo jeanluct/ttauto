@@ -118,10 +118,12 @@ private:
   int tt0;			// Current initial vertex.
   Mat TM;			// Transition matrix of the current pA path.
   pAlist pAl;			// List of pAs.
+  pAlist rejl;			// Closed irreducible paths rejected by the gate test.
   static constexpr double tol = 1e-5;// Tolerance for a match of the dilatation.
 
   // Criteria to reject paths.
   bool do_check_norms;		// Limit path lengths from matrix norms.
+  bool do_check_gates;		// Reject candidates failing the gate test.
   double lambdamin;		// Minimum dilatation to keep (0: keep all).
   double lambdamax;		// Maximum dilatation to keep (0: keep all).
   double maxnorm;		// Maximum norm of matrix before giving up.
@@ -141,7 +143,7 @@ private:
   llint totalpathstried;	// How many total paths tried?
   double totalpathlength;	// Total pathlength traversed?
   llint closed;			// Total closed paths encountered?
-  llint irreducible;		// Total irreducible paths encountered?
+  llint primitive;		// Total closed paths with primitive matrix?
   llint pseudoAnosov;		// Total pA paths encountered?
   llint maxpathlengthexceeded;	// Total times exceeded max_path_length?
   llint normexceeded;		// Total times exceeded matrix norm?
@@ -151,6 +153,11 @@ private:
   llint symmetricnormexceeded;	// Total times exceeded matrix symmetric norm?
 #endif
   llint badwordsomitted;	// Total times we omitted bad words?
+  llint gatecandidates;		// Candidates reaching the gate test (closed,
+				// primitive, inside the dilatation window),
+				// cumulative over the whole search (the
+				// other counters are per initial vertex).
+  llint gaterejected;		// Of those, rejected by the gate test.
 
 public:
   // Contructor: given an initial configuration in a train track
@@ -164,6 +171,7 @@ public:
       p(ttg),
       TM(n,n),
       do_check_norms(false),
+      do_check_gates(true),
       lambdamin(0),
       lambdamax(0),
       maxnorm(0),
@@ -172,7 +180,9 @@ public:
       max_paths_save(1),
       max_paths_print(3),
       print_every(2000000),
-      pAfile(0)
+      pAfile(0),
+      gatecandidates(0),
+      gaterejected(0)
   {
     eliminate_pairs();
     if (debug)
@@ -222,6 +232,18 @@ public:
 	find_maxnorm();
 	badword_length(max_badword_length);
       }
+    return *this;
+  }
+
+  // Bestvina-Handel gate test (issue #2): an irreducible matrix with
+  // dilatation > 1 is not enough for a closed path to be pseudo-Anosov;
+  // the gates at every vertex must also be connected by infinitesimal
+  // edges (see traintracks/gates.hpp and devel/iss002/issue2_gates.tex).
+  // On by default.  Rejected candidates are counted and kept in
+  // rejected_pA_list().
+  ttauto<TrTr>& check_gates(const bool do_check_gates_ = true)
+  {
+    do_check_gates = do_check_gates_;
     return *this;
   }
 
@@ -303,7 +325,22 @@ public:
   // Access the map of recorded pseudo-Anosov classes.
   const pAlist& pA_list() const { return pAl; }
 
+  // Candidates that passed the matrix test but failed the gate test.
+  const pAlist& rejected_pA_list() const { return rejl; }
+
+  // Gate-test statistics, cumulative over the whole search: candidates
+  // that reached the test (closed path, primitive matrix, dilatation in
+  // the window), those rejected, and the rejection rate.
+  llint gate_candidates() const { return gatecandidates; }
+  llint gate_rejected() const { return gaterejected; }
+  double gate_rejection_rate() const
+  {
+    return (gatecandidates > 0 ? (double)gaterejected/gatecandidates : 0.0);
+  }
+
   std::ostream& print_pA_list(std::ostream& strm = std::cout) const;
+
+  std::ostream& print_rejected_pA_list(std::ostream& strm = std::cout) const;
 
   std::ostream&
   print_pA_list_MathematicaForm(std::ostream& strm = std::cout) const;
@@ -336,7 +373,7 @@ private:
     totalpathstried = 0;
     totalpathlength = 0;
     closed = 0;
-    irreducible = 0;
+    primitive = 0;
     pseudoAnosov = 0;
     maxpathlengthexceeded = 0;
     normexceeded = 0;
@@ -380,6 +417,9 @@ private:
   // For a fixed polynomial, save paths and transition matrices.
   void record_pA();
 
+  // Add the current path and matrix to a class list keyed by charpoly.
+  void add_current_path(pAlist& l);
+
 }; // class ttauto
 
 
@@ -400,6 +440,31 @@ std::ostream& ttauto<TrTr>::print_pA_list(std::ostream& strm) const
   strm << "     dilatation #  paths\n";
 
   for (auto it = pAl.begin(); it != pAl.end(); ++it, ++npAs)
+    {
+      strm << setw(3) << npAs << "  ";
+      strm << it->second.dilatation() << "  ";
+      strm << setw(3) << it->second.number_of_paths() << "  ";
+      it->second.print_paths(strm,max_paths_print);
+      strm << std::endl;
+    }
+  strm.unsetf(std::ios::showpoint);
+  strm.precision(prec);
+  return strm;
+}
+
+template<class TrTr>
+std::ostream& ttauto<TrTr>::print_rejected_pA_list(std::ostream& strm) const
+{
+  using std::setw;
+
+  int prec = strm.precision();
+  strm.precision(6);
+  strm.setf(std::ios::showpoint);
+  int npAs = 0;
+
+  strm << "     dilatation #  paths\n";
+
+  for (auto it = rejl.begin(); it != rejl.end(); ++it, ++npAs)
     {
       strm << setw(3) << npAs << "  ";
       strm << it->second.dilatation() << "  ";
@@ -442,6 +507,10 @@ void ttauto<TrTr>::search(const int tt00)
 {
   using std::cout;
   using std::endl;
+
+  gatecandidates = 0;
+  gaterejected = 0;
+  rejl.clear();
 
   // Loop over selected vertices as initial vertex to search for pAs,
   // starting from tt00.
@@ -634,7 +703,16 @@ bool ttauto<TrTr>::find_pAs()
   cout << "Total path length  = " << totalpathlength << endl;
   cout << "Mean path length   = " << totalpathlength/totalpathstried << endl;
   cout << "Closed paths       = " << closed << endl;
-  cout << "Irreducible paths  = " << irreducible << endl;
+  cout << "Primitive paths    = " << primitive << endl;
+  if (do_check_gates)
+    {
+      cout << "Gate test          = " << gaterejected << " rejected of "
+	   << gatecandidates << " candidates";
+      if (gatecandidates > 0)
+	cout << " (" << std::setprecision(3) << 100*gate_rejection_rate()
+	     << "%)" << std::setprecision(prec);
+      cout << " (cumulative)" << endl;
+    }
 #if 0 /* This is redundant.  We don't yet know if it's really pA. */
   cout << "pseudoAnosov paths = " << pseudoAnosov << endl;
 #endif
@@ -758,11 +836,17 @@ bool ttauto<TrTr>::descend_graph()
       else
 	TM = p.transition_matrix();
 
-      // Is path a pA?
-      if (!(TM.is_reducible()))
+      // Is path a pA?  The transition matrix of a pseudo-Anosov is
+      // primitive (irreducible and aperiodic): its dilatation is a
+      // simple dominant eigenvalue.  An irreducible but imprimitive
+      // matrix (eigenvalues +-lambda, characteristic polynomial in
+      // x^2) cannot come from a pseudo-Anosov; the paper's definition
+      // of a primitive closed path already excludes it, and the search
+      // used to admit it (issue #2).
+      if (TM.is_primitive())
 	{
-	  if (debug) std::cerr << " irreducible";
-	  ++irreducible;
+	  if (debug) std::cerr << " primitive";
+	  ++primitive;
 
 	  // Find the characteristic polynomial.
 	  charpoly = TM.charpoly();
@@ -817,13 +901,11 @@ bool ttauto<TrTr>::descend_graph()
 	    }
 #endif
 
-	  // This is somewhat redundant: there is a theorem (see
-	  // Toby Hall's BH notes) stating that an irreducible
-	  // Perron-Frobenius matrix has unit spectral radius iff it
-	  // is a permutation matrix.  But none of our matrices can
-	  // be permutation matrices, since there is at least one
-	  // fold.  Nevertheless, it is very cheap to do this and we
-	  // need to find the spectral radius anyways.
+	  // This is somewhat redundant: a primitive matrix has unit
+	  // spectral radius iff it is the 1x1 matrix (1), and none of
+	  // our matrices can be permutation matrices since there is at
+	  // least one fold.  Nevertheless, it is very cheap to do this
+	  // and we need to find the spectral radius anyways.
 	  if (lambda-1 > tol) // Avoid false pA's.  Tricky.
 	    {
 	      if (debug) std::cerr << ", pseudo-Anosov";
@@ -967,11 +1049,25 @@ inline void ttauto<TrTr>::record_pA()
   // in which case keep them all.
   if (lambda < lambdamin-tol && lambdamin != 0) return;
 
-  // Check that we don't already have it.
+  // Bestvina-Handel gate test: an irreducible matrix is not sufficient
+  // (issue #2).  Rejected candidates go to a separate list.
+  ++gatecandidates;
+  if (do_check_gates && !p.gates().connected)
+    {
+      ++gaterejected;
+      add_current_path(rejl);
+      return;
+    }
 
+  add_current_path(pAl);
+}
+
+template<class TrTr>
+inline void ttauto<TrTr>::add_current_path(pAlist& l)
+{
   // Find the first polynomial not less than charpoly.
-  auto pAit = pAl.lower_bound(charpoly);
-  if (pAit == pAl.end() || charpoly != pAit->first)
+  auto pAit = l.lower_bound(charpoly);
+  if (pAit == l.end() || charpoly != pAit->first)
     {
       // A new dilatation: add it to the list.
       pAclass<TrTr> newpA(charpoly,lambda,max_paths_save);
@@ -979,8 +1075,8 @@ inline void ttauto<TrTr>::record_pA()
       // Use pAit as a hint: for fastest results, it should point to
       // the element before the one to be inserted.  So decrement
       // pAit, unless it's already at the end.
-      if (pAit != pAl.end()) --pAit;
-      pAl.insert(pAit,std::pair<Poly,pAclass<TrTr> >(charpoly,newpA));
+      if (pAit != l.end()) --pAit;
+      l.insert(pAit,std::pair<Poly,pAclass<TrTr> >(charpoly,newpA));
     }
   else
     {

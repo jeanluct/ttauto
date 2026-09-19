@@ -8,12 +8,16 @@
 
 ## Repository Map
 
-- `include/traintracks/` - public headers for train-track core primitives.
+- `include/traintracks/` - public headers for train-track core primitives
+  (`coding.hpp` also holds `ttnumbering`, the canonical prong/edge numbering;
+  `fold_map.hpp` the record of one fold used to build train-track maps;
+  `gates.hpp` the Bestvina-Handel gate test).
 - `include/ttauto/` - public headers for automaton/search layer.
 - `lib/` - `ttauto` implementation (`multigon`, `traintrack`, coding, builders, etc.).
 - `examples/` - executable programs used for smoke/integration checks.
 - `tests/` - executable tests (plain `main()`, no unit-test framework).
 - `testsuite/` - deterministic CTest targets (plus optional slow integration tests).
+  Built with `-UNDEBUG` so asserts are live; `testsuite/check.hpp` provides `CHECK()`.
 - `extern/jlt/` - bundled dependency with its own build/tests and AGENTS file.
 - `extern/jlt/extern/CSparse/` - bundled CSparse source/build directory.
 

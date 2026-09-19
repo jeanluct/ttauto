@@ -324,54 +324,25 @@ void traintrack::sort()
 
 //  f even = fold clockwise
 //  f odd  = fold counterclockwise
+//
+// Cusps are numbered by the canonical numbering (ttnumbering::cusp), i.e.
+// in the order of the depth-first walk from monogon 0 that also numbers
+// edges and prongs.
 bool traintrack::fold(const int f)
 {
   // Need normalised train track.
   require_normalised("traintrack::fold");
 
-  int fcusp = f/2;
-  int fdir = 1 - 2*(f % 2);
-
-  if (f >= foldings())
+  if (f < 0 || f >= foldings())
     {
       std::cerr << "Nonexistent cusp in traintrack::traintrack::fold.\n";
       std::exit(1);
     }
-  // Loop over cusps from first uncusped monogon, assuming a
-  // normalised train track. (Ambiguous for multigons with cyclic
-  // symmetry, such as 2121?)
 
-  // Since normalised, number cusps from 0th monogon.
-  int mono = 0;
-
-  // Recurse down and count cusps.
-  // Start by finding the multigon the edge is attached to, and which
-  // prong.
-  int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
-
-  // Find the monogon, prong, edge of the cusp with number fcusp.
-#if __cplusplus > 199711L
-  multigon* mmc = nullptr;
-#else
-  multigon* mmc = 0;
-#endif
-  int pc, ec, cs = fcusp;
-  recursive_find_cusp(*egmono,pmono,pemono,cs,mmc,pc,ec);
-
-#if __cplusplus > 199711L
-  if (mmc == nullptr)
-#else
-  if (mmc == 0)
-#endif
-    {
-      std::cerr << "Could not find cusp in traintrack::traintrack::fold.\n";
-      std::exit(1);
-    }
-
-  // Fold at the cusp.
-  return fold(*mmc,pc,ec,fdir);
+  const ttnumbering num = detail::coding_engine::numbering(*this,0);
+  int m, p, slot;
+  num.fold_cusp(f,m,p,slot);
+  return fold(Multigon(m),p,slot,1 - 2*(f % 2));
 }
 
 // Resolve fold index f to the concrete cusp location on the current track.
@@ -385,109 +356,14 @@ void traintrack::fold_cusp_location(const int f, multigon*& mmc, int& pc, int& e
       std::exit(1);
     }
 
-  int cs = f/2;
-  int mono = 0;
-
-  // Find the 0th monogon, where coding starts.
-  for (; mono < (int)mgv.size(); ++mono)
-    {
-      if (Multigon(mono).prongs() == 1 && Multigon(mono).edges() == 1) break;
-    }
-  if (mono == (int)mgv.size())
-    {
-      std::cerr << "Could not find monogon in traintrack::traintrack::fold_cusp_location.\n";
-      std::exit(1);
-    }
-
-  // Start by finding the multigon the monogon edge is attached to.
-  int pmono, pemono;
-  multigon* egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
-
-  // Reuse recursive cusp ordering to locate cusp cs.
-  mmc = 0;
-  pc = -1;
-  ec = -1;
-  recursive_find_cusp(*egmono,pmono,pemono,cs,mmc,pc,ec);
-
-  if (mmc == 0 || pc < 0 || ec < 0)
-    {
-      std::cerr << "Could not resolve cusp in traintrack::traintrack::fold_cusp_location.\n";
-      std::exit(1);
-    }
-}
-
-// Return zero-based infinitesimal edge index selected by fold f.
-int traintrack::fold_infinitesimal_index(const int f) const
-{
-  multigon* mmc = 0;
-  int pc = -1, ec = -1;
-  fold_cusp_location(f,mmc,pc,ec);
-
-  int mi = multigon_index(mmc);
-  return multigon_prong_index(mi,pc);
-}
-
-// Return signed-generator label for fold f after nmain main generators.
-int traintrack::fold_infinitesimal_generator(const int f, const int nmain) const
-{
-  multigon* mmc = 0;
-  int pc = -1, ec = -1;
-  fold_cusp_location(f,mmc,pc,ec);
-
-  const int mi = multigon_index(mmc);
-  const int infix = multigon_prong_index(mi,pc);
-  return nmain + infix + 1;
-}
-
-// Depth-first cusp locator used by fold() and fold_cusp_location().
-bool traintrack::recursive_find_cusp(multigon& mm,
-				     const int pin, const int ein,
-				     int& fcusp, multigon*& mmc,
-				     int& pc, int& ec) const
-{
-  int p = pin, e = ein;
-
-  do
-    {
-      // Is there a cusp here?  There is, as long as it's not the
-      // last edge on a prong.
-      if (e < mm.edges(p)-1)
-	{
-	  if (fcusp-- == 0)
-	    {
-	      // We've found the cusp!  We're done here.  Send
-	      // back the location of the cusp.
-	      mmc = &mm;
-	      pc = p;
-	      ec = e;
-	      return true;
-	    }
-	}
-
-      // Find the next multigon down.
-      int pout, eout;
-      multigon *ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
-
-      // Don't recurse down the entry edge.
-      if (!(p == pin && e == ein))
-	{
-	  // Recurse only if it's not an uncusped monogon down there.
-	  if (ed->edges() > 1)
-	    {
-	      if (recursive_find_cusp(*ed,pout,eout,fcusp,mmc,pc,ec))
-		return true;
-	    }
-	}
-      mm.cycle_edges(p,e);	// Increment the edge and prong.
-    }
-  while (!(p == pin && e == ein));
-
-  return false;
+  const ttnumbering num = detail::coding_engine::numbering(*this,0);
+  int m;
+  num.fold_cusp(f,m,pc,ec);
+  mmc = &*mgv[m];
 }
 
 // Fold cusp c of prong p of multigon m in direction dir.
-//   dir = 1 clockwise, dir = 1 anticlockwise.
+//   dir = 1 clockwise, dir = -1 anticlockwise.
 //
 // A cusp is specified by c, the first of its two edges encountered
 // clockwise.
@@ -566,101 +442,44 @@ bool traintrack::fold(multigon& mm, const int p, const int c, const int dir)
   return true;
 }
 
+// Weights in canonical edge order (ttnumbering rooted at monogon mono).
 // Assumes a track is normalised.
 traintrack::dblVec traintrack::weights(const int mono) const
 {
   require_normalised("traintrack::weights(get)");
 
-  // Start the weights vector with the monogon.
-  dblVec wv;
-  wv.push_back(Multigon(mono).Edge(0,0)->weight());
-
-  // Recurse down and collect weights.
-  // Start by finding the multigon the edge is attached to, and which
-  // prong.
-  int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
-
-  recursive_get_weights(*egmono,pmono,pemono,wv);
-
+  const ttnumbering num = detail::coding_engine::numbering(*this,mono);
+  dblVec wv(num.nedges());
+  for (int e = 0; e < num.nedges(); ++e) wv[e] = num.edge_ptr[e]->weight();
   return wv;
 }
 
-void traintrack::recursive_get_weights(const multigon& mm,
-				       const int pin, const int ein,
-				       dblVec& wv) const
-{
-  int p = pin, e = ein;
-  mm.cycle_edges(p,e);	// Increment the edge and prong.
-
-  do
-    {
-      // Record the weight.
-      wv.push_back(mm.Edge(p,e)->weight());
-
-      // Find the next multigon down.
-      int pout, eout;
-      multigon *ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
-
-      // Recurse only if it's not an uncusped monogon down there.
-      if (ed->edges() > 1)
-	{
-	  recursive_get_weights(*ed,pout,eout,wv);
-	}
-      mm.cycle_edges(p,e);	// Increment the edge and prong.
-    }
-  while (!(p == pin && e == ein));
-}
-
+// Set weights from an iterator, in canonical edge order (monogon 0).
 // Assumes a track is normalised.
 traintrack::dblVec::const_iterator
 traintrack::weights(traintrack::dblVec::const_iterator wi)
 {
   require_normalised("traintrack::weights(set)");
 
-  // Since normalised, distribute weights from 0th monogon.
-  int mono = 0;
-
-  // Start the weights vector with the monogon.
-  Multigon(mono).Edge(0,0)->weight(*wi++);
-
-  // Recurse down and collect weights.
-  // Start by finding the multigon the edge is attached to, and which
-  // prong.
-  int pmono, pemono;
-  multigon *egmono =
-    Multigon(mono).Edge(0,0)->target_multigon(&Multigon(mono),pmono,pemono);
-
-  recursive_set_weights(*egmono,pmono,pemono,wi);
-
-  return wi;
-}
-
-void traintrack::recursive_set_weights(const multigon& mm,
-				       const int pin, const int ein,
-				       dblVec::const_iterator& wi)
-{
-  int p = pin, e = ein;
-  mm.cycle_edges(p,e);	// Increment the edge and prong.
-
-  do
+  const ttnumbering num = detail::coding_engine::numbering(*this,0);
+  for (int e = 0; e < num.nedges(); ++e)
     {
-      // Copy the weight.
-      mm.Edge(p,e)->weight(*wi++);
-
-      // Find the next multigon down.
-      int pout, eout;
-      multigon *ed = mm.Edge(p,e)->target_multigon(&mm,pout,eout);
-
-      // Recurse only if it's not an uncusped monogon down there.
-      if (ed->edges() > 1)
+      // Reach the edge through its tail slot, which is the only non-const
+      // handle on it.
+      const int q = num.edge_tail[e];
+      const int m = num.prong[q].multigon, p = num.prong[q].prong;
+      const std::vector<int>& letters = num.prong_letters[q];
+      int slot = -1;
+      for (std::size_t k = 0; k < letters.size(); ++k)
+	if (letters[k] == num.main_letter(e)) slot = k;
+      if (slot < 0)
 	{
-	  recursive_set_weights(*ed,pout,eout,wi);
+	  std::cerr << "Edge not found at its tail prong in traintrack::traintrack::weights(set).\n";
+	  std::exit(1);
 	}
-      mm.cycle_edges(p,e);	// Increment the edge and prong.
+      Multigon(m).Edge(p,slot)->weight(*wi++);
     }
-  while (!(p == pin && e == ein));
+  return wi;
 }
 
 // Print some information about the traintrack.

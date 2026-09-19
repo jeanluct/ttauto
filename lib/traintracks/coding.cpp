@@ -24,6 +24,8 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <map>
+#include <vector>
 
 #include "traintracks/coding.hpp"
 #include "traintracks/traintrack.hpp"
@@ -172,6 +174,157 @@ void coding_engine::recursive_coding(const multigon& mm,
   while (!(p == pin && e == ein));
 }
 
+// Canonical prong/edge numbering rooted at uncusped monogon mono.
+ttnumbering coding_engine::numbering(const traintrack& tt, int mono)
+{
+  if (mono < 0 || mono >= tt.multigons() || tt.Multigon(mono).edges() != 1)
+    {
+      std::cerr << "Not an uncusped monogon in traintracks::coding_engine::numbering.\n";
+      std::exit(1);
+    }
+
+  ttnumbering num;
+  num.start_monogon = mono;
+  num.prong_number.resize(tt.multigons());
+  for (int m = 0; m < tt.multigons(); ++m)
+    num.prong_number[m].assign(tt.Multigon(m).prongs(),-1);
+
+  // Monogon mono: prong number 0, edge number 0 oriented away from it.
+  number_prongs(tt,mono,0,num);
+  const multigon& mm0 = tt.Multigon(mono);
+  num.edge_tail.push_back(num.prong_number[mono][0]);
+  num.edge_head.push_back(-1);
+  num.edge_ptr.push_back(mm0.Edge(0,0).get());
+
+  int pmono, pemono;
+  multigon* egmono = mm0.Edge(0,0)->target_multigon(&mm0,pmono,pemono);
+
+  if (egmono->edges() > 1)
+    {
+      recursive_numbering(tt,*egmono,pmono,pemono,0,num);
+    }
+  else
+    {
+      // Degenerate two-monogon track.
+      const int mj = tt.multigon_index(egmono);
+      number_prongs(tt,mj,pmono,num);
+      num.edge_head[0] = num.prong_number[mj][pmono];
+    }
+
+  // Signed main letters at each prong in slot order.
+  {
+    std::map<const edge*,int> number_of;
+    for (int e = 0; e < num.nedges(); ++e) number_of[num.edge_ptr[e]] = e;
+    num.prong_letters.assign(num.nprongs(),std::vector<int>());
+    for (int q = 0; q < num.nprongs(); ++q)
+      {
+        const multigon& mm = tt.Multigon(num.prong[q].multigon);
+        const int p = num.prong[q].prong;
+        for (int e = 0; e < mm.edges(p); ++e)
+          {
+            auto it = number_of.find(mm.Edge(p,e).get());
+            if (it == number_of.end())
+              {
+                std::cerr << "Edge not numbered in traintracks::coding_engine::numbering.\n";
+                std::exit(1);
+              }
+            const int en = it->second;
+            num.prong_letters[q].push_back(num.edge_tail[en] == q ? en+1 : -(en+1));
+          }
+      }
+  }
+
+  // Every prong must have been numbered exactly once, every edge must
+  // have a head, and every cusp must have been met.
+  if (num.nprongs() != tt.total_prongs() || num.nedges() != tt.edges() ||
+      num.ncusps() != tt.cusps())
+    {
+      std::cerr << "Incomplete walk in traintracks::coding_engine::numbering.\n";
+      std::exit(1);
+    }
+  for (int e = 0; e < num.nedges(); ++e)
+    {
+      if (num.edge_head[e] < 0)
+        {
+          std::cerr << "Edge without head in traintracks::coding_engine::numbering.\n";
+          std::exit(1);
+        }
+    }
+
+  return num;
+}
+
+void coding_engine::number_prongs(const traintrack& tt, int mi, int pin,
+                                  ttnumbering& num)
+{
+  const multigon& mm = tt.Multigon(mi);
+  const int k = mm.prongs();
+  if (num.prong_number[mi][pin] >= 0)
+    {
+      std::cerr << "Multigon visited twice in traintracks::coding_engine::numbering.\n";
+      std::exit(1);
+    }
+  for (int j = 0; j < k; ++j)
+    {
+      const int pp = traintracks::mod(pin+j,k);
+      num.prong_number[mi][pp] = num.prong.size();
+      ttnumbering::prong_info info;
+      info.multigon = mi;
+      info.prong = pp;
+      info.nprongs = k;
+      info.punctured = mm.punctured();
+      num.prong.push_back(info);
+    }
+}
+
+// The depth-first walk that defines the canonical order of edges, prongs
+// and cusps (the one the coding also uses): the entry edge has already
+// been numbered by the caller; number the other edges of mm in cycle_edges
+// order, descending into every non-monogon target.
+void coding_engine::recursive_numbering(const traintrack& tt,
+                                        const multigon& mm,
+                                        int pin,
+                                        int ein,
+                                        int entry_edge,
+                                        ttnumbering& num)
+{
+  const int mi = tt.multigon_index(&mm);
+  number_prongs(tt,mi,pin,num);
+  num.edge_head[entry_edge] = num.prong_number[mi][pin];
+
+  int p = pin, e = ein;
+  // The cusp at the entry slot comes first in fold order.
+  if (e < mm.edges(p)-1) num.cusp.push_back(std::make_pair(num.prong_number[mi][p],e));
+  mm.cycle_edges(p,e);
+
+  do
+    {
+      const edge* E = mm.Edge(p,e).get();
+      const int en = num.nedges();
+      num.edge_tail.push_back(num.prong_number[mi][p]);
+      num.edge_head.push_back(-1);
+      num.edge_ptr.push_back(E);
+      // Cusp at this slot, before descending into the child.
+      if (e < mm.edges(p)-1) num.cusp.push_back(std::make_pair(num.prong_number[mi][p],e));
+
+      int pout, eout;
+      multigon* ed = E->target_multigon(&mm,pout,eout);
+
+      if (ed->edges() > 1)
+        {
+          recursive_numbering(tt,*ed,pout,eout,en,num);
+        }
+      else
+        {
+          const int mj = tt.multigon_index(ed);
+          number_prongs(tt,mj,pout,num);
+          num.edge_head[en] = num.prong_number[mj][pout];
+        }
+      mm.cycle_edges(p,e);
+    }
+  while (!(p == pin && e == ein));
+}
+
 // Detect cyclic coding matches and recover induced branch permutation.
 mathmatrix_permplus1 coding_engine::cyclic_symmetry(traintrack& tt)
 {
@@ -252,6 +405,146 @@ std::ostream& coding_engine::print_coding(const traintrack& tt,
 } // namespace detail
 
 // Public wrapper that delegates coding generation to coding_engine.
+//
+// ttnumbering methods
+//
+
+int ttnumbering::side_to(const int q) const
+{
+  const prong_info& info = prong[q];
+  const int pp = traintracks::mod(info.prong+1,info.nprongs);
+  return prong_number[info.multigon][pp];
+}
+
+bool ttnumbering::is_main(const int letter) const
+{
+  return (letter != 0 && std::abs(letter) <= nedges());
+}
+
+bool ttnumbering::is_side(const int letter) const
+{
+  const int a = std::abs(letter);
+  return (a > nedges() && a <= nedges() + nprongs());
+}
+
+int ttnumbering::edge_of(const int letter) const
+{
+  if (!is_main(letter))
+    {
+      std::cerr << "Not a main letter in traintracks::ttnumbering::edge_of.\n";
+      std::exit(1);
+    }
+  return std::abs(letter) - 1;
+}
+
+int ttnumbering::side_of(const int letter) const
+{
+  if (!is_side(letter))
+    {
+      std::cerr << "Not a side letter in traintracks::ttnumbering::side_of.\n";
+      std::exit(1);
+    }
+  return std::abs(letter) - nedges() - 1;
+}
+
+int ttnumbering::tail_of(const int letter) const
+{
+  if (is_main(letter))
+    {
+      const int e = edge_of(letter);
+      return (letter > 0 ? edge_tail[e] : edge_head[e]);
+    }
+  const int q = side_of(letter);
+  return (letter > 0 ? q : side_to(q));
+}
+
+void ttnumbering::fold_cusp(const int f, int& m, int& p, int& slot) const
+{
+  if (f < 0 || f >= foldings())
+    {
+      std::cerr << "Illegal folding index in traintracks::ttnumbering::fold_cusp.\n";
+      std::exit(1);
+    }
+  const std::pair<int,int>& c = cusp[f/2];
+  m = prong[c.first].multigon;
+  p = prong[c.first].prong;
+  slot = c.second;
+}
+
+int ttnumbering::side_from_prev(const int q) const
+{
+  const prong_info& info = prong[q];
+  const int pp = traintracks::mod(info.prong-1,info.nprongs);
+  return prong_number[info.multigon][pp];
+}
+
+std::vector<int> ttnumbering::directions_at_prong(const int q) const
+{
+  std::vector<int> d;
+  if (prong[q].punctured) d.push_back(-side_letter(side_from_prev(q)));
+  d.insert(d.end(),prong_letters[q].begin(),prong_letters[q].end());
+  if (prong[q].punctured) d.push_back(side_letter(q));
+  return d;
+}
+
+bool ttnumbering::operator==(const ttnumbering& o) const
+{
+  // Edge identity (edge_ptr) is deliberately excluded: two copies of the
+  // same track have the same numbering.
+  if (start_monogon != o.start_monogon) return false;
+  if (prong.size() != o.prong.size()) return false;
+  for (std::size_t q = 0; q < prong.size(); ++q)
+    {
+      if (prong[q].multigon != o.prong[q].multigon ||
+          prong[q].prong != o.prong[q].prong ||
+          prong[q].nprongs != o.prong[q].nprongs ||
+          prong[q].punctured != o.prong[q].punctured) return false;
+    }
+  return (prong_number == o.prong_number &&
+          edge_tail == o.edge_tail && edge_head == o.edge_head &&
+          prong_letters == o.prong_letters && cusp == o.cusp);
+}
+
+bool ttnumbering::same_labels(const ttnumbering& o) const
+{
+  if (prong.size() != o.prong.size()) return false;
+  for (std::size_t q = 0; q < prong.size(); ++q)
+    {
+      if (prong[q].nprongs != o.prong[q].nprongs ||
+          prong[q].punctured != o.prong[q].punctured) return false;
+    }
+  return (edge_tail == o.edge_tail && edge_head == o.edge_head &&
+          prong_letters == o.prong_letters && cusp == o.cusp);
+}
+
+std::ostream& ttnumbering::print(std::ostream& strm) const
+{
+  strm << "prongs (number: multigon,prong; k; punctured):\n";
+  for (int q = 0; q < nprongs(); ++q)
+    {
+      strm << "  " << q << ": (" << prong[q].multigon << "," << prong[q].prong
+           << "); k=" << prong[q].nprongs
+           << (prong[q].punctured ? "; punctured" : "")
+           << "; side " << side_letter(q) << " -> prong " << side_to(q) << "\n";
+    }
+  strm << "cusps (fold index/2: prong number, slot):\n";
+  for (int c = 0; c < ncusps(); ++c)
+    strm << "  " << c << ": prong " << cusp[c].first << " slot " << cusp[c].second << "\n";
+  strm << "edges (number: tail prong -> head prong):\n";
+  for (int e = 0; e < nedges(); ++e)
+    {
+      strm << "  " << main_letter(e) << ": " << edge_tail[e] << " -> "
+           << edge_head[e] << "\n";
+    }
+  return strm;
+}
+
+ttnumbering traintrack::numbering() const
+{
+  require_normalised("traintrack::numbering");
+  return detail::coding_engine::numbering(*this,0);
+}
+
 traintrack::intVec traintrack::coding(const int dir) const
 {
   return detail::coding_engine::coding(*this,dir);
