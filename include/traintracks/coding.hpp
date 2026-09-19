@@ -78,6 +78,9 @@ struct ttnumbering
   std::vector<std::vector<int> > prong_number;   // [multigon][prong]
   std::vector<int> edge_tail;                    // by edge number
   std::vector<int> edge_head;                    // by edge number
+  // Signed main letters leaving each prong, in slot (cycle_edges) order:
+  // +(e+1) if the edge's tail is at the prong, -(e+1) if its head is.
+  std::vector<std::vector<int> > prong_letters;  // by prong number
   // Identity of the edge objects, by edge number.  Valid only as long as
   // the track is not modified; used to follow edges through a fold.
   std::vector<const edge*> edge_ptr;
@@ -97,6 +100,15 @@ struct ttnumbering
   int side_of(const int letter) const;   // prong number q of a side letter
   int tail_of(const int letter) const;
   int head_of(const int letter) const { return tail_of(-letter); }
+
+  // Prong whose side leads to q (the previous prong of q's multigon).
+  int side_from_prev(const int q) const;
+
+  // All directions at prong q in cyclic order: for a punctured multigon
+  // the incoming peripheral side reversed, the main letters in slot order,
+  // then the outgoing peripheral side; for an unpunctured multigon only the
+  // main letters (its sides are infinitesimal edges, not directions).
+  std::vector<int> directions_at_prong(const int q) const;
 
   bool operator==(const ttnumbering& o) const;
   bool operator!=(const ttnumbering& o) const { return !operator==(o); }

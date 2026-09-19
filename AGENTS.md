@@ -10,7 +10,8 @@
 
 - `include/traintracks/` - public headers for train-track core primitives
   (`coding.hpp` also holds `ttnumbering`, the canonical prong/edge numbering;
-  `fold_map.hpp` the record of one fold used to build train-track maps).
+  `fold_map.hpp` the record of one fold used to build train-track maps;
+  `gates.hpp` the Bestvina-Handel gate test).
 - `include/ttauto/` - public headers for automaton/search layer.
 - `lib/` - `ttauto` implementation (`multigon`, `traintrack`, coding, builders, etc.).
 - `examples/` - executable programs used for smoke/integration checks.

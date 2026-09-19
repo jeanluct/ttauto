@@ -264,6 +264,29 @@ Core functions:
 
 Why this matters: the automaton stores both matrix and map data per branch; these functions keep conventions synchronized.
 
+### `include/traintracks/gates.hpp` and `lib/traintracks/gates.cpp`
+
+The Bestvina-Handel gate test for a train-track map (issue #2; the
+mathematics is in `devel/iss002/issue2_gates.tex`).
+
+- `fold_derivative(AM, target_numbering)`: the derivative `D` (first letter
+  of each image) and the turns taken by the image words of the main edges,
+  read in the target track's numbering.  Works for one-step and composed
+  maps.
+- `gate_accumulator`: `push_back` one `fold_derivative` per branch of a
+  path; composes `D` and the realised turns (`T <- T_i U D_i(T)`) without
+  ever forming the composed words.  `analyse(N)` on a closed path closes the
+  turns under `D x D`, partitions the directions at each Bestvina-Handel
+  vertex (an unpunctured multigon, or one prong of a punctured multigon)
+  into gates by eventual coincidence under `D`, joins gates by realised
+  turns, and reports connectivity and the allowed infinitesimal-edge shape
+  per vertex (`gate_analysis`, `gate_vertex_report`).
+- `analyse_gates(N, AM)`: word-based version of the same test, for tests and
+  diagnostics.
+- Fail-fast on impossible data: a realised turn inside a gate, a turn
+  joining two vertices, a derivative that does not map directions to
+  directions.
+
 ### `include/traintracks/map_labels.hpp`
 
 `ttmap_labeler` defines edge (free group generator) indexing conventions used everywhere in map code.
@@ -420,7 +443,8 @@ Purpose: reduce search cost without changing the core fold graph.
 ## Practical "Where to Change What"
 
 - Topological modifications and transformations, coding, cusp/fold mechanics: `include/traintracks/traintrack.hpp`, `lib/traintracks/traintrack.cpp`, `include/traintracks/multigon.hpp`, `lib/traintracks/multigon.cpp`, `include/traintracks/edge.hpp`.
-- Fold map and matrix conventions: `include/traintracks/map.hpp`, `include/traintracks/map_labels.hpp`, and `tests/test_ttmap.cpp`.
+- Fold map and matrix conventions: `include/traintracks/map.hpp`, `include/traintracks/fold_map.hpp`, `include/traintracks/map_labels.hpp`, and `tests/test_ttmap.cpp`.
+- Gate test (pseudo-Anosov versus reducible): `include/traintracks/gates.hpp`, `lib/traintracks/gates.cpp`, `testsuite/traintracks/test_gates.cpp`.
 - Automaton construction/symmetry/decomposition: `include/ttauto/ttfoldgraph.hpp`.
 - DFS pruning and candidate acceptance logic: `include/ttauto/ttauto.hpp`, `include/ttauto/badwords.hpp`.
 - Result grouping/serialization: `include/ttauto/pAclass.hpp`.

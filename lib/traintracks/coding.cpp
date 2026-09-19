@@ -24,6 +24,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <map>
 #include <vector>
 
 #include "traintracks/coding.hpp"
@@ -209,6 +210,29 @@ ttnumbering coding_engine::numbering(const traintrack& tt, int mono)
       number_prongs(tt,mj,pmono,num);
       num.edge_head[0] = num.prong_number[mj][pmono];
     }
+
+  // Signed main letters at each prong in slot order.
+  {
+    std::map<const edge*,int> number_of;
+    for (int e = 0; e < num.nedges(); ++e) number_of[num.edge_ptr[e]] = e;
+    num.prong_letters.assign(num.nprongs(),std::vector<int>());
+    for (int q = 0; q < num.nprongs(); ++q)
+      {
+        const multigon& mm = tt.Multigon(num.prong[q].multigon);
+        const int p = num.prong[q].prong;
+        for (int e = 0; e < mm.edges(p); ++e)
+          {
+            auto it = number_of.find(mm.Edge(p,e).get());
+            if (it == number_of.end())
+              {
+                std::cerr << "Edge not numbered in traintracks::coding_engine::numbering.\n";
+                std::exit(1);
+              }
+            const int en = it->second;
+            num.prong_letters[q].push_back(num.edge_tail[en] == q ? en+1 : -(en+1));
+          }
+      }
+  }
 
   // Every prong must have been numbered exactly once and every edge
   // must have a head.
@@ -428,6 +452,22 @@ int ttnumbering::tail_of(const int letter) const
   return (letter > 0 ? q : side_to(q));
 }
 
+int ttnumbering::side_from_prev(const int q) const
+{
+  const prong_info& info = prong[q];
+  const int pp = traintracks::mod(info.prong-1,info.nprongs);
+  return prong_number[info.multigon][pp];
+}
+
+std::vector<int> ttnumbering::directions_at_prong(const int q) const
+{
+  std::vector<int> d;
+  if (prong[q].punctured) d.push_back(-side_letter(side_from_prev(q)));
+  d.insert(d.end(),prong_letters[q].begin(),prong_letters[q].end());
+  if (prong[q].punctured) d.push_back(side_letter(q));
+  return d;
+}
+
 bool ttnumbering::operator==(const ttnumbering& o) const
 {
   // Edge identity (edge_ptr) is deliberately excluded: two copies of the
@@ -442,7 +482,8 @@ bool ttnumbering::operator==(const ttnumbering& o) const
           prong[q].punctured != o.prong[q].punctured) return false;
     }
   return (prong_number == o.prong_number &&
-          edge_tail == o.edge_tail && edge_head == o.edge_head);
+          edge_tail == o.edge_tail && edge_head == o.edge_head &&
+          prong_letters == o.prong_letters);
 }
 
 std::ostream& ttnumbering::print(std::ostream& strm) const

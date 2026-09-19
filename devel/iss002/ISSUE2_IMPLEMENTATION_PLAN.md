@@ -1,7 +1,7 @@
 # Issue #2: implementation plan for the gate test
 
-Status: plan approved 2026-09-19; Steps 0, 1 and 2 done the same day (see
-the "Outcome" notes below).  Supersedes `ISSUE2_GATES_PLAN.md`.  The
+Status: plan approved 2026-09-19; Steps 0 to 3 done the same day (see the
+"Outcome" notes below).  Supersedes `ISSUE2_GATES_PLAN.md`.  The
 mathematics and the worked example are in `issue2_gates.tex` (built to
 `issue2_gates.pdf`) in this directory; the scratch diagnostic that
 established the result is `gates_check.cpp`.
@@ -277,6 +277,28 @@ Files: new `include/traintracks/gates.hpp` (~120 lines), new
   any other shape as a diagnostic warning; on a connected candidate it
   indicates a bug in the map or the label bookkeeping, not a property of
   the braid.
+
+Outcome of Step 3 (2026-09-19):
+
+- `gates.hpp/.cpp` as planned: `fold_derivative` (built from any map plus
+  the target numbering, so the word-based overload is the same code fed
+  the composed map), `gate_accumulator`, `gate_analysis` with per-vertex
+  reports, `analyse_gates`, `bh_vertex_of`.  Gates are computed by
+  comparing `D^K` images with `K = (#directions)^2`; directions at a vertex
+  come in cyclic order from `ttnumbering::directions_at_prong`, added to
+  the numbering for this purpose (`prong_letters`).
+- The shape check (Props. 3.3.3-3.3.4) is implemented with the cyclic
+  order, not only counts, and reported per vertex as `shape_ok`; it is a
+  diagnostic flag, not a fail-fast.
+- `testsuite/traintracks/test_gates.cpp` (0.1 s, so it stays in the fast
+  set): bad path rejected at exactly the fixed 3-edge monogon, by a refined
+  prong, with the shape flag raised; the four controls (seven matching
+  branch sequences in all) connected with allowed shapes; accumulator and
+  word-based analyses agree; puncture corollary asserted; sweep of all 2630
+  closed paths of length <= 5 on the n=5 first stratum: no fail-fast, and
+  every connected primitive path has the allowed shape.  No control
+  exhibits a refined prong at an unpunctured multigon; the sweeps in Step
+  5 remain the guard for that case.
 
 ## Step 4: integrate into the search (`ttauto`)
 

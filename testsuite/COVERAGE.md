@@ -49,6 +49,16 @@ This file maps public headers to deterministic CTest programs in `testsuite/`.
   - Coverage focus:
     - main/infinitesimal label indexing used in fold map checks
 
+- `include/traintracks/gates.hpp`
+  - Primary: `testsuite/traintracks/test_gates.cpp`
+  - Coverage focus:
+    - Bestvina-Handel gate test on the n=6 stratum 3,3(2) subautomaton: the
+      known spurious pseudo-Anosov is rejected at exactly the fixed 3-edge
+      monogon, four genuine pseudo-Anosovs pass
+    - accumulator-based and word-based analyses agree
+    - puncture corollary and the Props. 3.3.3-3.3.4 shape pattern on every
+      connected primitive closed path of a small automaton
+
 - `include/traintracks/edge.hpp`
 - `include/traintracks/multigon.hpp`
   - Covered indirectly via `traintrack` mutation checks:
