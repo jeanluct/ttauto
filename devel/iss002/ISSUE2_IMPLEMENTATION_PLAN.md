@@ -458,6 +458,28 @@ Outcome of Step 4 (2026-09-19):
 - `ISSUE2_BAD_PA_SUMMARY.md`: "resolved by" section.
 - Close GitHub issue #2 pointing at the note and the tests.
 
+## Actual scope (measured 2026-09-19 after commit da91acc)
+
+`git diff --stat master...HEAD` (merge base 8add0f3), whole branch
+including the coverage pass and the symmetry follow-up:
+
+| Area | Files | Added | Removed | Net |
+|---|---:|---:|---:|---:|
+| Library (`include/`, `lib/`, CMake) | 15 | 1599 | 378 | +1221 |
+| Tests (`testsuite/`, `tests/`) | 17 | 2430 | 433 | +1997 |
+| Docs, `devel/`, `examples/`, `.gitignore` | 19 | 3268 | 154 | +3114 |
+| Whole repository | 51 | 7155 | 947 | +6208 |
+
+Library size (`include/**/*.hpp` + `lib/**/*.cpp`): 7048 -> 8265 lines,
++17%.  The estimate before Step 1 was 12-13% (~890 lines).  The overshoot
+is `gates.cpp/.hpp` (495 lines, ~420 planned), `fold_map.cpp/.hpp` (445,
+~280 planned) and `coding.cpp/.hpp` (+417, ~190 planned: follow-up A moved
+the weights and cusp walks onto the numbering, and `same_labels` was
+added).  The 378 removed lines are mostly the old `fold_traintrack_map`
+body in `map.hpp` and the three recursive walks in `traintrack.cpp`.
+Tests grew by more than the library, documentation by more than both
+(about half of it the LaTeX note).
+
 ## Order and commits
 
 One commit per step, build green and `ctest` passing after each.  Steps 1
