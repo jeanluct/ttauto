@@ -1,10 +1,13 @@
 # Issue #2 - "Bad pA" Repro Summary
 
-> Status 2026-09-19: root cause identified (Bestvina-Handel gate
-> connectivity fails at the fixed 3-edge monogon).  See `issue2_gates.tex`
-> for the analysis and `ISSUE2_IMPLEMENTATION_PLAN.md` for the fix plan.
-> The gate pipeline described below in `tests/test_issue2_bad_path.cpp` is
-> superseded by `gates_check.cpp`.
+> Resolved 2026-09-19: the Bestvina-Handel gate test is implemented
+> (`traintracks/gates.hpp`) and runs inside `ttauto::record_pA`; the bad
+> path is rejected at the fixed 3-edge monogon, and a census over all
+> strata for n=3..7 found five further spurious classes of the same kind.
+> See `issue2_gates.tex` for the analysis and
+> `ISSUE2_IMPLEMENTATION_PLAN.md` for what was done.  The reproducer
+> `tests/test_issue2_bad_path.cpp` described below has been removed; its
+> vertex model was wrong.  `gates_check.cpp` remains as a diagnostic.
 
 ## Problem
 

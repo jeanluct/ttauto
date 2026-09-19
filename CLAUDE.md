@@ -108,13 +108,19 @@ Conventions worth knowing:
 
 ## Current work: issue #2 (branch `iss002-spurious-pAs`)
 
-Issue #2: the search very rarely reports a pA that is actually reducible.
-Matrix primitivity and a plausible dilatation are not sufficient; the
-Bestvina-Handel gate condition must also hold.  Root cause established
-2026-09-19: read `devel/iss002/issue2_gates.tex` (or its PDF) first, then
-`devel/iss002/ISSUE2_IMPLEMENTATION_PLAN.md` for the approved fix plan.
-The scratch diagnostic `devel/iss002/gates_check.cpp` reproduces the
-result.  Older material in `devel/iss002/`:
+Issue #2: the search reported some pAs that are actually reducible.  An
+irreducible matrix and a plausible dilatation are not sufficient; the
+Bestvina-Handel gate condition must also hold.  Fixed 2026-09-19: the
+search now runs the gate test in `ttauto::record_pA` (default on,
+`check_gates(false)` to disable; rejected classes in
+`rejected_pA_list()`).  The machinery is `ttnumbering` (coding module),
+`fold_map` and `gates` in `traintracks`.  Read
+`devel/iss002/issue2_gates.tex` (or its PDF) for the mathematics and
+`devel/iss002/ISSUE2_IMPLEMENTATION_PLAN.md` for what was done and what
+remains (follow-ups).  `tests/ttauto_gate_census` lists every rejected
+class across strata; six classes for n=3..7, all "lower-puncture pA plus
+an idle puncture" or an imprimitive matrix.  Older material in
+`devel/iss002/`:
 
 - `ISSUE2_BAD_PA_SUMMARY.md`: the evidence, current status, work log.
 - `ISSUE2_GATES_PLAN.md`: phased plan (directed alphabet per vertex,
@@ -140,7 +146,9 @@ its connectivity verdict as a classification criterion yet.  Treat `.train`
 edge numbering as display-only and keep canonical internal labels from
 `ttmap_labeler` for all logic.
 
-Related: `jlt_todo.md` notes that the reproducer may be misusing
-"infinitesimal" edges where "peripheral" edges are meant.  Issue #3 (train
-track map) is closed and is the prerequisite this work builds on.
+Issue #3 (train track map) is closed and was the prerequisite; its word
+conventions were corrected as part of issue #2 (the side letter is now the
+target multigon's side, sides are permuted, orientations are canonical).
+Testsuite programs are built with `-UNDEBUG`; use `CHECK()` from
+`testsuite/check.hpp` in new tests.
 `TODO.md` holds the author's loose task list.

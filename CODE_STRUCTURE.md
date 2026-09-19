@@ -107,8 +107,9 @@ This is why `folding_path` is the core DFS state in `ttauto`: it is both combina
 During DFS in `ttauto`:
 
 - pruning checks reject many partial paths early (norm bounds, badwords, depth limits, etc.),
-- closed paths that pass checks are converted into candidate records,
-- candidates are grouped into `pAclass` objects keyed by polynomial/dilatation.
+- closed paths with an irreducible matrix and dilatation above 1 become candidates,
+- `record_pA` applies the dilatation window and then the Bestvina-Handel gate test (`folding_path::gates()`, `traintracks/gates.hpp`); candidates with a disconnected gate graph are reducible and go to `rejected_pA_list()`,
+- accepted candidates are grouped into `pAclass` objects keyed by polynomial/dilatation.
 
 In short: one fold becomes one graph edge with matrix+map payload; many edges compose into one candidate dynamical class.
 
@@ -389,7 +390,8 @@ Important internal flow:
 - `find_pAs()`: initialize per-start-vertex DFS state and counters.
 - `descend_graph()`: one DFS step; applies pruning, checks closure, and handles backtracking.
 - `check_all_norms()`: matrix-based lower-bound pruning checks.
-- `record_pA()`: insert/update accepted result class keyed by characteristic polynomial.
+- `record_pA()`: apply the dilatation window and the gate test, then insert/update the result class keyed by characteristic polynomial (`add_current_path`).
+- `check_gates(bool)`: enable/disable the gate test (default on); `rejected_pA_list()`, `gate_rejected()` expose the rejections.
 
 Purpose: this is the main "engine" of the repository.
 

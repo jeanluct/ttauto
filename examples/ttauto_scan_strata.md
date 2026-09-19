@@ -31,7 +31,7 @@
 | 3 | 1. 1. 1. 1. 1. 1. 4 (2) | 22 | 5 | 1.88320 | 5 | 5 | 5 |
 | ~~3~~ | ~~1. 1. 1. 1. 1. 1. 4 (2)~~ | ~~22~~ | ~~5~~ | ~~1.61803~~ | ~~4~~ | ~~4~~ | ~~5~~ |
 | 4 | 1. 1. 1. 1. 1. 1. 5 (1) | 3 | 0 | 2.08102 | 3 | 3 | 4 |
-| 5 | 1. 1. 1. 1. 1. 1. 3 3 (2) | 90 | 20 | 2.45317 | 4 | 4 | 6 |
+| 5 | 1. 1. 1. 1. 1. 1. 3 3 (2) | 90 | 20 | 2.08102 | 7 | **4** | 8 |
 | ~~5~~ | ~~1. 1. 1. 1. 1. 1. 3 3 (2)~~ | ~~90~~ | ~~20~~ | ~~2.01536~~ | ~~6~~ | ~~**4**~~ | ~~6~~ |
 | 6 | 1. 1. 1. 1. 1. 1. 3 4 (1) | 21 | 0 | 1.88320 | 4 | 4 | 4 |
 | 7 | 1. 1. 1. 1. 1. 1. 3 3 3 (1) | 28 | 0 | 2.17113 | 8 | 8 | 8 |
@@ -40,7 +40,10 @@
 > added to the search (2026-09-19, issue #2).  The classes with dilatation
 > 1.61803 (stratum 3) and 2.01536 (stratum 5) are reducible: each is a
 > lower-puncture pseudo-Anosov plus an idle puncture, and the 1.61803
-> matrix is not even primitive.  See `devel/iss002/`.
+> matrix is not even primitive.  The search length for stratum 5 was raised
+> from 6 to 8 at the same time; at length 8 the gate test also rejects a
+> class with dilatation 2.54205 whose paths extend the 2.01536 cycle.  See
+> `devel/iss002/`.
 
 ## 7 Punctures
 

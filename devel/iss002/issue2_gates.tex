@@ -828,11 +828,66 @@ $\{28,45,42,45,28\}$ ($\lam=2.453$), $\{2,37,39,19,22,20,12,2\}$
 $\{21,42,45,28,45,42,21\}$ ($\lam=3.254$), finds every gate graph
 connected, with the shapes of Proposition~\ref{prop:shape} at every
 vertex.  A fifth control, $\{1,18,65,18,56,57,57,1\}$, could not be
-analysed: the scratch program's fold at $57\to58$ produced a track that
-was not the stored vertex~58.  The scratch program matches branches to
-target vertices while the automaton enumerates non-identity folds, and the
-discrepancy has to be understood before the controls are trusted
-(\code{ISSUE2\_IMPLEMENTATION\_PLAN.md}, Step~5).
+analysed by the scratch program because of its own branch bookkeeping; the
+library implementation described in \S\ref{sec:plan} accepts it.
+
+\subsection{Census over all strata}
+\label{sec:census}
+Once the test was in the library, it was run inside the search on the
+main subautomaton of every stratum for $n=3,\dots,7$, with the path
+lengths of the strata scan (\code{examples/ttauto\_scan\_strata.sh}).
+The bad path is not the only spurious pseudo-Anosov, but every rejection
+has the same shape.
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{@{}cllcl@{}}
+    \toprule
+    $n$ & stratum & rejected $\lam$ (paths) & vertex & interpretation \\
+    \midrule
+    4 & $(2)$ & $2.61803$ (3) & 3-edge monogon & $\sigma_1\sigma_2^{-1}$ on 3 strings plus an idle puncture; \\
+      &       &               &                & characteristic polynomial $(x-1)(x^2-3x+1)$; a genuine \\
+      &       &               &                & class with the same dilatation is still accepted \\
+    6 & $4\,(2)$ & $1.61803$ & unpunctured 4-gon & matrix irreducible but not primitive \\
+      &          &           &                   & (eigenvalues $\pm\varphi$) \\
+    6 & $4\,(2)$ & $1.93185$ & 3-edge monogon & a 5-puncture dilatation plus an idle puncture \\
+    6 & $4\,(2)$ & $2.15372$ & 3-edge monogon & the $n=5$, $4\,(1)$ minimum plus an idle puncture \\
+    6 & $3\,3\,(2)$ & $2.01536$ (3) & 3-edge monogon & the bad path of this note \\
+    6 & $3\,3\,(2)$ & $2.54205$ (8) & 3-edge monogon & two length-8 extensions of the bad cycle \\
+      &             &               &                & (one repeats its last two folds, one inserts \\
+      &             &               &                & a loop $45\,42\,45\,42$); seen once the search \\
+      &             &               &                & length for this stratum was raised from 6 to 8 \\
+    7 & $3\,4\,(2)$ & $1.88320$ (6) & 3-edge monogon & the $n=6$, $(4)$ minimum plus an idle puncture \\
+    \bottomrule
+  \end{tabular}
+  \caption{Classes rejected by the gate test in the strata scan, $n=3$ to
+    $7$ (141 paths in the three $n=6$, $4\,(2)$ classes together; seven
+    classes and 161 paths in all).  No class
+    has both accepted and rejected representatives.  On the $n=5$ first
+    stratum, none of the 726 closed paths of length at most 5 with a
+    primitive matrix is rejected.}
+  \label{tab:census}
+\end{table}
+
+Three rows of the strata scan table change as a result: $n=6$, stratum
+$4\,(2)$ from $1.61803$ to $1.88320$; $n=6$, stratum $3\,3\,(2)$ from
+$2.01536$ to $2.08102$ (at the old search length 6 it would read
+$2.45317$; the length was raised to 8 for this stratum, and the minimiser
+is the length-7 control path $\{2,37,39,19,22,20,12,2\}$ of
+\S\ref{sec:example}); $n=7$, stratum $3\,4\,(2)$ from $1.88320$ to
+$2.47541$.  The first of these is the entry the paper's Table for six
+punctures lists as $1.61803$ and marks as below the systole; the gate test
+now explains it.  Every rejected dilatation is the minimum of a stratum
+with one puncture fewer, or the golden ratio squared on four punctures,
+which is exactly what ``a pseudo-Anosov plus an idle puncture'' predicts.
+
+One observation falls out of the census: the search accepts an
+\emph{irreducible} matrix with $\lam>1$, not a \emph{primitive} one.
+The $1.61803$ class has an irreducible matrix with period two, eigenvalues
+$\pm\varphi$; the paper's own definition of a primitive closed path would
+exclude it without any gate test.  Requiring primitivity in the search is
+a one-line change left as a decision.
 
 %======================================================================
 \section{A word-free formulation}
@@ -950,7 +1005,13 @@ strata scan recorded under \code{examples/} must be re-run and diffed.
 \section{Where this goes}
 \label{sec:plan}
 
-The implementation plan in this directory turns the above into six steps:
+Status (19 September 2026): the plan below has been carried out through
+its Step~4 and the census of \S\ref{sec:census}; the search now rejects
+disconnected candidates by default (\code{check\_gates(false)} restores
+the old behaviour), and the numbering, fold record and gate test live in
+the \code{traintracks} namespace as \code{ttnumbering}, \code{fold\_map}
+and \code{gates}.  The implementation plan in this directory turns the
+above into six steps:
 \begin{enumerate}
   \item make the test suite real (its asserts are currently compiled out);
   \item canonical prong numbers and orientations, a struct

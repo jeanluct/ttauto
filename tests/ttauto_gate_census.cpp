@@ -57,7 +57,7 @@ typedef ttauto::ttauto<traintrack> ttsearch;
 static int max_len_for(const int n, const int stratum)
 {
   static const std::map<std::string,int> table = {
-    {"6:3",5}, {"6:5",6}, {"6:7",8},
+    {"6:3",5}, {"6:5",8}, {"6:7",8},
     {"7:6",5}, {"7:7",7}, {"7:11",8}, {"7:12",8},
   };
   std::ostringstream key; key << n << ":" << stratum;

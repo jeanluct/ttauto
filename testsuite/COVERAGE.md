@@ -93,6 +93,12 @@ This file maps public headers to deterministic CTest programs in `testsuite/`.
     - structural invariants of discovered pseudo-Anosov classes
     - output helper calls remain valid on non-empty results
 
+- `include/ttauto/ttauto.hpp` (gate test in the search)
+  - Primary: `testsuite/ttauto/test_ttauto_gates.cpp`
+  - Coverage focus:
+    - `check_gates` on/off on the n=6 stratum 3,3(2) subautomaton: the
+      2.01536 class moves to `rejected_pA_list()`, all others unchanged
+
 - `include/ttauto/pAclass.hpp`
   - Primary: `testsuite/ttauto/test_ttauto_search.cpp`
   - Coverage focus:

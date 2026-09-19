@@ -343,18 +343,22 @@ Outcome of Step 4 (2026-09-19):
   | 6 | 3 `4(2)` | 1.93185 | | 5-puncture dilatation plus an idle puncture |
   | 6 | 3 `4(2)` | 2.15372 | | the n=5 stratum 4(1) minimum plus an idle puncture |
   | 6 | 5 `3 3(2)` | 2.01536 | 3 | the known bad path (n=5 stratum 3 3(1) minimum plus an idle puncture) |
+  | 6 | 5 `3 3(2)` | 2.54205 | 8 | two length-8 extensions of the bad cycle (search length raised to 8) |
   | 7 | 7 `3 4(2)` | 1.88320 | 6 | the n=6 stratum (4) minimum plus an idle puncture |
 
-  Six classes, 153 paths, none with an accepted representative.  Every
+  Seven classes, 161 paths, none with an accepted representative.  Every
   rejection is at a prong of a multi-edge punctured monogon split into
   two main gates, except the imprimitive one, which is disconnected at an
   unpunctured 4-gon.  On the n=5 first stratum, 0 of the 726 primitive
   closed paths of length <= 5 are disconnected.  So the bad path was NOT
   the only spurious pA, but the mechanism is always the same one.
 - Consequence for the scan baseline `examples/ttauto_scan_strata.md`
-  (regenerated, three rows change):
-  n=6 stratum 3: 1.61803 -> 1.88320; n=6 stratum 5: 2.01536 -> 2.45317;
-  n=7 stratum 7: 1.88320 -> 2.47541.  The paper's table row for n=6
+  (three rows change; the old rows are kept struck through with a note,
+  and the slow regression ignores such annotations):
+  n=6 stratum 3: 1.61803 -> 1.88320; n=6 stratum 5: 2.01536 -> 2.08102
+  (search length for this stratum raised from 6 to 8 in the scan script,
+  user decision; at length 6 it would read 2.45317); n=7 stratum 7:
+  1.88320 -> 2.47541.  The paper's table row for n=6
   stratum 3 (`ttauto.tex` ~1395, `1.61803`) is one of the entries the
   paper itself marks as below the systole (`\chkabs`); the gate test now
   explains it.
