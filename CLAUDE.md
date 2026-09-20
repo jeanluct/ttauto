@@ -28,7 +28,7 @@ Companion documents already in the repo; read them rather than rediscovering:
 
 ## Build and test
 
-CMake is primary; SCons files are legacy and still work (`scons`).
+CMake is the build system; the legacy SCons files were removed in 2026.
 
 ```bash
 cmake -S . -B build

@@ -65,7 +65,6 @@ The development of *ttauto* was supported by the [US National Science Foundation
 [7]: https://github.com/jeanluct/ttauto/raw/master/LICENSE
 [8]: https://github.com/jeanluct/ttauto/raw/master/examples
 [9]: https://github.com/jeanluct/ttauto/raw/master/examples/ttauto.cpp
-[10]: https://www.scons.org
 [11]: https://www.nsf.gov
 [12]: https://www.nsf.gov/awardsearch/showAward?AWD_ID=0806821
 [13]: https://www.nsf.gov/awardsearch/showAward?AWD_ID=1233935

@@ -2,9 +2,6 @@
 lib/libttauto.a
 *.o
 
-# SCons build database
-.sconsign.dblite
-
 # CMake build directories and metadata
 build/
 
