@@ -11,6 +11,11 @@ Lanneau.  GPLv3.
 
 Companion documents already in the repo; read them rather than rediscovering:
 
+- `doc/ttauto.tex` (build with `latexmk -pdf` in `doc/`): the mathematics
+  and implementation of the pseudo-Anosov test, from train tracks and folds
+  to the Bestvina-Handel gate condition, with a worked n=4 example and a
+  concept-to-file appendix.  Read this before touching the acceptance
+  logic.
 - `AGENTS.md`: style, ownership model, testing expectations, refactor rules.
 - `CODE_STRUCTURE.md`: class-by-class tour, glossary, worked "one fold
   through the stack" example, suggested reading orders.

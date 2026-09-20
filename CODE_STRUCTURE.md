@@ -6,6 +6,10 @@ Scope: this covers code in `include/`, `lib/`, `examples/`, `tests/`, and `tests
 
 ## What This Project is About
 
+For the mathematics behind the pipeline (folds as free-group substitutions,
+the transition matrix, and the Bestvina-Handel gate condition that decides
+whether a closed path is pseudo-Anosov) see `doc/ttauto.tex`.
+
 At a high level, the project explores **train-track automata** associated with mappings on punctured discs and searches for pseudo-Anosov candidates.
 
 In concrete terms, it does three main things:

@@ -44,3 +44,13 @@ tests/ttauto_gate_census
 
 # Coverage build directory (see TESTING.md)
 build-cov/
+
+# LaTeX build artefacts and the built PDF of doc/ttauto.tex (latexmk -pdf)
+doc/*.aux
+doc/*.log
+doc/*.out
+doc/*.toc
+doc/*.fdb_latexmk
+doc/*.fls
+doc/*.synctex.gz
+doc/*.pdf
