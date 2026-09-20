@@ -2,6 +2,8 @@
 
 ~Symmetries ok?~
 
+Remove ~ entries in tables
+
 Add comments to the code.  Big audit of the code.
 
 ## Ham Song
