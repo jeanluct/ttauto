@@ -82,6 +82,19 @@ is covered through the testsuite objects
 line to get a per-file figure.  The per-file table as of 2026-09-19 is at
 the top of `testsuite/COVERAGE.md`.
 
+## Large automata
+
+Building the automaton for a large stratum used to segfault, because
+construction recursed once per vertex (issue #14).  It now uses a
+worklist and indexes vertices by their coding, so the nine-puncture
+stratum `1. 1. 1. 1. 1. 1. 1. 1. 1. 3 3 (5)` builds on the default
+stack: 71253 vertices in about 165 s and 1.4 GB.  Memory, not the
+stack, is now what limits how far this can be pushed.
+
+`testsuite/ttauto/test_ttfoldgraph_build.cpp` guards the property by
+building a seven-puncture stratum on a thread with a 256 KB stack; it
+is skipped where pthreads are unavailable.
+
 ## Gate-test census
 
 `tests/ttauto_gate_census [nmin [nmax]]` (default 3 6; n=7 takes about
