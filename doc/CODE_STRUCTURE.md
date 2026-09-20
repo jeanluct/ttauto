@@ -350,8 +350,8 @@ Stored per vertex/branch:
 
 Key behavior:
 
-- `add_vertex(...)`: recursively builds the graph by trying all fold slots and discarding identity transitions.
-- `find_symmetries()` / `sort_by_symmetries()`: computes reflection/cyclic symmetry relations and reorders vertices accordingly.
+- `build_graph(...)`: builds the graph from one train track by trying all fold slots and discarding identity transitions, with `new_vertex(...)` creating each vertex.  It keeps an explicit worklist rather than recursing once per vertex, which used to exhaust the stack on large strata (issue #14), and indexes vertices by their coding rather than scanning the tracks stored so far.  Both the vertex numbering and the graph are exactly what the recursion produced.
+- `find_symmetries()` / `sort_by_symmetries()`: computes reflection/cyclic symmetry relations and reorders vertices accordingly.  Reflection symmetry also goes through a coding index; comparing every pair of vertices cost more than building the graph.
 - branch accessors: `foldings(v)`, `target_vertex(v, br)`, `transition_matrix(v, br)`, `traintrack_map(v, br)`.
 - decomposition utility: `subgraphs(...)` extracts invariant subgraphs via sparse matrix decomposition.
 

@@ -28,6 +28,8 @@
 #include <iostream>
 #include <list>
 #include <algorithm>
+#include <vector>
+#include <unordered_map>
 #include <jlt/freeauto.hpp>
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
@@ -94,18 +96,17 @@ private:
   // Maximum number of foldings at each vertex.
   const int nfoldsmax;
 
-  Mat TM;		// Transition matrix.
   const Mat id;		// Identity matrix.
 
 public:
 
   // Make a folding graph from an initial train track.
   ttfoldgraph(const TrTr& trtr)
-    : n(trtr.edges()), nfoldsmax(trtr.foldings()), TM(n,n),
+    : n(trtr.edges()), nfoldsmax(trtr.foldings()),
       id(jlt::identity_matrix<int>(n))
   {
     // Build the graph.
-    add_vertex(trtr);
+    build_graph(trtr);
 
     if (exploit_symmetries) find_symmetries();
   }
@@ -118,69 +119,119 @@ public:
 	      const jlt::vector<jlt::vector<jlt::freeauto<int> > >& AMv_,
 	      const jlt::vector<int>& nfoldsv_)
     : trtrv(trtrv_), tv(tv_), TMv(TMv_), AMv(AMv_), nfoldsv(nfoldsv_),
-      n(trtrv.front().edges()), nfoldsmax(trtrv.front().foldings()), TM(n,n),
+      n(trtrv.front().edges()), nfoldsmax(trtrv.front().foldings()),
       id(jlt::identity_matrix<int>(n))
   {
     if (exploit_symmetries) find_symmetries();
   }
 
 private:
-  // Add a vertex.  This recursively builds the whole graph.
-  int add_vertex(const TrTr& trtr)
+  // Create a new vertex holding trtr, and return its index.
+  int new_vertex(const TrTr& trtr)
   {
-    // See if the vertex is already in the graph.
-    int idx = std::distance(trtrv.begin(),
-			    std::find(trtrv.begin(),trtrv.end(),trtr));
+    if (debug)
+      std::cerr << "Adding new vertex " << vertices() << std::endl;
 
-    if (idx == (int)vertices())
+    trtrv.push_back(trtr);
+    // Add an outgoing branch.
+    tv.push_back(jlt::vector<int>());
+    // Add an outgoing matrix.
+    TMv.push_back(jlt::vector<Matpp1>());
+    // Add an outgoing train track map.
+    AMv.push_back(jlt::vector<jlt::freeauto<int> >());
+    // Initalise the vector giving the number of foldings.
+    nfoldsv.push_back(0);
+
+    // The index of the vertex we just added.
+    return vertices()-1;
+  }
+
+  // Hash of a train track coding, for the index used while building the
+  // graph.  Codings identify tracks up to isotopy, so they are the
+  // natural key; the usual combine is good enough for vectors of small
+  // integers.
+  struct coding_hash
+  {
+    std::size_t operator()(const typename TrTr::intVec& c) const
+    {
+      std::size_t h = c.size();
+      for (int i = 0; i < (int)c.size(); ++i)
+	h ^= (std::size_t)c[i] + 0x9e3779b9 + (h << 6) + (h >> 2);
+      return h;
+    }
+  };
+
+  // Build the whole graph, starting from one train track.
+  //
+  // This was once a recursion with one level per newly-discovered
+  // vertex, and on large strata it exhausted the stack (issue #14).
+  // The worklist below discovers vertices in exactly the same order:
+  // a frame holds a vertex and the next fold to try there, and a
+  // newly-found target is pushed straight away, so its whole subtree
+  // is explored before we come back to the parent's next fold.
+  //
+  // Vertices are looked up through an index keyed on the coding rather
+  // than by scanning every track stored so far.  The scan compared with
+  // operator==, which recomputes the codings of both tracks, so the
+  // cost of building a graph grew as the square of its vertex count.
+  // The index lives only as long as the build, so it never has to
+  // survive the renumbering that find_symmetries() does afterwards.
+  void build_graph(const TrTr& start)
+  {
+    struct frame { int idx; int f; };
+    std::vector<frame> todo;
+    std::unordered_map<typename TrTr::intVec,int,coding_hash> index;
+
+    todo.push_back(frame{new_vertex(start),0});
+    index.emplace(start.coding(),todo.back().idx);
+
+    while (!todo.empty())
       {
-	if (debug)
-	  std::cerr << "Adding new vertex " << vertices() << std::endl;
+	// Read the frame by value: pushing below can reallocate todo.
+	const int top = (int)todo.size()-1;
+	if (todo[top].f == nfoldsmax) { todo.pop_back(); continue; }
+	const int idx = todo[top].idx;
+	const int f = todo[top].f++;
 
-	// It's not already in the graph, so add it.
-	trtrv.push_back(trtr);
-	// Add an outgoing branch.
-	tv.push_back(jlt::vector<int>());
-	// Add an outgoing matrix.
-	TMv.push_back(jlt::vector<Matpp1>());
-	// Add an outgoing train track map.
-	AMv.push_back(jlt::vector<jlt::freeauto<int> >());
-	// Initalise the vector giving the number of foldings.
-	nfoldsv.push_back(0);
-	// The index of the vertex we just added.
-	idx = vertices()-1;
-      }
-    else
-      {
-	if (debug)
-	  std::cerr << "Not adding vertex " << idx << std::endl;
-
-	// It's already in the graph.  Just return its id.
-	return idx;
-      }
-
-    // Try all nfolds foldings from this vertex.
-    for (int f = 0; f < nfoldsmax; ++f)
-      {
-	// Fold and find the transition matrix.
-	TrTr trtr0(trtr);
+	// Fold a copy of this vertex's track and find the transition
+	// matrix.  Do not hold a reference into trtrv across the calls
+	// to new_vertex() below, which can reallocate it.
+	TrTr trtr0(trtrv[idx]);
 	jlt::freeauto<int> AM = trtr0.fold_traintrack_map(f);
-	TM = traintracks::transition_matrix_from_map(trtr,AM);
-	if (TM != id)
+	Mat TM = traintracks::transition_matrix_from_map(trtrv[idx],AM);
+	if (TM == id) continue;
+
+	++nfoldsv[idx];
+	// Convert matrix to sparse type and add to list.
+	TMv[idx].push_back(Matpp1(TM));
+	// Add automorphism to list.
+	AMv[idx].push_back(AM);
+
+	// Add the target vertex, if it's not already in there, and
+	// point to it.  Pointing to it before its own branches are
+	// explored is harmless: exploring them only appends to the
+	// branch lists of other vertices, since coming back here finds
+	// this vertex already present and adds no frame.
+	const typename TrTr::intVec code = trtr0.coding();
+	const typename decltype(index)::const_iterator it = index.find(code);
+	const bool isnew = (it == index.end());
+	int tidx;
+	if (isnew)
 	  {
-	    ++nfoldsv[idx];
-	    // Convert matrix to sparse type and add to list.
-	    TMv[idx].push_back(Matpp1(TM));
-	    // Add automorphism to list.
-	    AMv[idx].push_back(AM);
-	    // Add the target vertex, if it's not already in there, and
-	    // point to it.
-	    int tidx = add_vertex(trtr0);
-	    tv[idx].push_back(tidx);
+	    tidx = new_vertex(trtr0);
+	    index.emplace(code,tidx);
 	  }
+	else
+	  {
+	    tidx = it->second;
+	    if (debug)
+	      std::cerr << "Not adding vertex " << tidx << std::endl;
+	  }
+
+	tv[idx].push_back(tidx);
+
+	if (isnew) todo.push_back(frame{tidx,0});
       }
-    // Return the index, which allows the recursion.
-    return idx;
   }
 
   // Delete a vertex.
@@ -351,31 +402,41 @@ private:
       }
 
     // Reflection symmetry.
+    //
+    // Index the codings once.  Scanning every earlier vertex for each
+    // one recomputed coding() for every pair, so finding the
+    // symmetries cost more than building the graph as soon as a
+    // stratum ran to a few hundred vertices.  Codings are unique to a
+    // vertex, so the index holds the one candidate; keeping the first
+    // insertion matches the old scan, which took the lowest match.
+    std::unordered_map<typename TrTr::intVec,int,coding_hash> index;
+    for (int v = 0; v < vertices(); ++v)
+      index.emplace(trtrv[v].coding(),v);
+
     for (int v = 0; v < vertices(); ++v)
       {
 	// The reverse coding.
 	jlt::vector<int> rcoding = trtrv[v].coding(-1);
 	// Check for symmetry with the previous tracks.
-	bool issym = false;
-	for (int vv = 0; vv <= v; ++vv)
+	const typename decltype(index)::const_iterator it = index.find(rcoding);
+	if (it != index.end() && it->second <= v)
 	  {
-	    if (trtrv[vv].coding() == rcoding)
+	    const int vv = it->second;
+	    if (debug)
 	      {
-		if (debug)
-		  {
-		    std::cerr << v << " symmetric to "  << vv << "!\n";
-		  }
-		// Make the two symmetric tracks point to each other.
-		// Note that it's possible to have vv = v
-		// (track is self-symmetric).
-		symtov.push_back(vv);
-		symtov[vv] = v;
-		issym = true;
-		break;
+		std::cerr << v << " symmetric to "  << vv << "!\n";
 	      }
+	    // Make the two symmetric tracks point to each other.
+	    // Note that it's possible to have vv = v
+	    // (track is self-symmetric).
+	    symtov.push_back(vv);
+	    symtov[vv] = v;
 	  }
-	// A -1 indicates no symmetry (yet!)
-	if (!issym) symtov.push_back(-1);
+	else
+	  {
+	    // A -1 indicates no symmetry (yet!)
+	    symtov.push_back(-1);
+	  }
       }
 
     // Cyclic symmetry.
