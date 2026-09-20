@@ -402,31 +402,41 @@ private:
       }
 
     // Reflection symmetry.
+    //
+    // Index the codings once.  Scanning every earlier vertex for each
+    // one recomputed coding() for every pair, so finding the
+    // symmetries cost more than building the graph as soon as a
+    // stratum ran to a few hundred vertices.  Codings are unique to a
+    // vertex, so the index holds the one candidate; keeping the first
+    // insertion matches the old scan, which took the lowest match.
+    std::unordered_map<typename TrTr::intVec,int,coding_hash> index;
+    for (int v = 0; v < vertices(); ++v)
+      index.emplace(trtrv[v].coding(),v);
+
     for (int v = 0; v < vertices(); ++v)
       {
 	// The reverse coding.
 	jlt::vector<int> rcoding = trtrv[v].coding(-1);
 	// Check for symmetry with the previous tracks.
-	bool issym = false;
-	for (int vv = 0; vv <= v; ++vv)
+	const typename decltype(index)::const_iterator it = index.find(rcoding);
+	if (it != index.end() && it->second <= v)
 	  {
-	    if (trtrv[vv].coding() == rcoding)
+	    const int vv = it->second;
+	    if (debug)
 	      {
-		if (debug)
-		  {
-		    std::cerr << v << " symmetric to "  << vv << "!\n";
-		  }
-		// Make the two symmetric tracks point to each other.
-		// Note that it's possible to have vv = v
-		// (track is self-symmetric).
-		symtov.push_back(vv);
-		symtov[vv] = v;
-		issym = true;
-		break;
+		std::cerr << v << " symmetric to "  << vv << "!\n";
 	      }
+	    // Make the two symmetric tracks point to each other.
+	    // Note that it's possible to have vv = v
+	    // (track is self-symmetric).
+	    symtov.push_back(vv);
+	    symtov[vv] = v;
 	  }
-	// A -1 indicates no symmetry (yet!)
-	if (!issym) symtov.push_back(-1);
+	else
+	  {
+	    // A -1 indicates no symmetry (yet!)
+	    symtov.push_back(-1);
+	  }
       }
 
     // Cyclic symmetry.
