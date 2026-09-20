@@ -1,9 +1,26 @@
 # Issue #14: large train-track automata crash during construction
 
-Status: plan written 2026-09-20 on branch
-`iss014-large-ttgraph-segfaults`.  No code changed yet.  The previous
-branch is preserved as `iss014-large-ttgraph-segfaults-dubious`; its
-coding-traversal guard is not a fix and is not carried over.
+Status: carried out 2026-09-20 on branch
+`iss014-large-ttgraph-segfaults`, in four commits.  The previous branch
+is preserved as `iss014-large-ttgraph-segfaults-dubious`; its
+coding-traversal guard is not a fix and was not carried over.
+
+**Result.**  The nine-puncture stratum-8 automaton, the reproducer for
+this issue, now builds on the default 8 MB stack: 71253 vertices in
+165 s, 1.4 GB peak.  Construction of all twelve seven-puncture strata
+fell from 6.81 s to 0.73 s.  Every automaton for n = 3 to 7 is
+byte-identical to before, codings, branch targets, matrices and maps
+alike, so the vertex numbering quoted in the tests, the issue-2 note
+and the papers is unchanged.
+
+**The plan below missed the larger half.**  It identified the recursion
+and the vertex lookup, and both needed fixing, but once they were done
+the reproducer stopped allocating and sat at 1.4 GB inside
+`find_symmetries()`, which compared every vertex's reversed coding
+against every earlier vertex, recomputing codings for each pair.  At
+1012 vertices that already cost five times as much as building the
+graph.  It is the same quadratic pattern and took the same fix, in a
+fourth commit.
 
 On whether this is worth doing now: both changes matter almost entirely
 beyond seven punctures, and essentially not at all below that, since
@@ -178,10 +195,23 @@ the `-DNDEBUG` episode in this repository showed.
   them; they must be byte-identical.  A scratch program, not committed.
 - Time `tests/ttauto_gate_census 7 7` before and after; it is about
   8.7 s today.
-- Acceptance: run
-  `devel/iss014-large-ttgraph-segfaults/run_ttauto_n9_capture.sh` on
-  n=9 stratum 8 with the default 8 MB stack and have it complete.
-  Record the vertex count and the wall time in this file.
+- Acceptance: build n=9 stratum 8 with the default 8 MB stack and have
+  it complete.  **Done**: 71253 vertices, 165 s, 1.4 GB peak.
+
+## What was measured
+
+| quantity | before | after |
+|---|---|---|
+| n=6 construction, all 7 strata (376 vertices) | 0.222 s | 0.073 s |
+| n=7 construction, all 12 strata (3272 vertices) | 6.81 s | 0.73 s |
+| smallest stack building n=7 stratum 6 | > 384 KB | < 32 KB |
+| n=9 stratum 8 | SIGSEGV at 11 min | 71253 vertices in 165 s |
+
+One correction to the earlier estimate: the vertex lookup was about
+three quarters of construction time at n=7, not the factor of thousands
+guessed from the asymptotics.  `operator==` tests `same_multigons()`
+first, which is cheap and usually rejects, so the scan rarely reached
+the coding comparison it was assumed to be dominated by.
 
 ## Risks
 
