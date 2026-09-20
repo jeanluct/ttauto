@@ -47,11 +47,15 @@
   gate/.style={line width=2.5pt,gray!60,line cap=round},
   chord/.style={thick,dashed},
   vert/.style={circle,fill=black,inner sep=1.2pt},
-  punct/.style={cross out,draw=black,thick,minimum size=4pt,inner sep=0pt},
+  punct/.style={circle,fill=black,inner sep=1.6pt},
+  pr/.style={font=\scriptsize,gray!60!black},   % prong numbers
   lbl/.style={font=\small},
   state/.style={circle,draw,thick,minimum size=8mm,inner sep=0pt},
   branch/.style={thick,-{Stealth[length=2.5mm]}},
   cyc/.style={very thick,orange!90!black,-{Stealth[length=2.5mm]}},
+  oriented/.style={main,postaction={decorate},
+    decoration={markings,mark=at position 0.55 with {\arrow{Stealth[length=2mm]}}}},
+  disc/.style={thick,gray!70},
 }
 
 \title[The pseudo-Anosov test in \ttauto]{\ttauto: mathematics and
@@ -106,6 +110,8 @@ from~$1$, while the internals are numbered from~$0$.
 \label{sec:tracks}
 
 \subsection{Multigons, prongs, cusps}
+The surface throughout is the disc with $\np$ punctures, $\np\ge3$, and
+the train tracks are the properly embedded ones of \cite{Lanneau2011}.
 A train track in \ttauto\ is a finite list of \emph{multigons}.  A
 multigon with $k$ prongs is a $k$-gon whose $k$ corners are the
 \emph{prongs}; at each prong a linearly ordered list of \emph{main edges}
@@ -113,75 +119,195 @@ is attached, and two consecutive edges at the same prong form a
 \emph{cusp}.  The $k$ \emph{sides} of the polygon are infinitesimal: they
 carry no weight and are never folded.  A multigon may be \emph{punctured};
 a punctured monogon ($k=1$) is the standard neighbourhood of a puncture,
-its single side is a loop around the puncture.  Every edge has two ends
+its single side is a loop around the puncture.  Properly embedded means
+that every puncture is enclosed by a punctured monogon and that the track
+fills the disc: its complement consists of the interiors of the polygons
+and of the punctured monogons, and one more region, the annulus between
+the track and the outer boundary of the disc.  Every edge has two ends
 attached at prongs, so the structure is a graph whose vertices are
-blown up into polygons (Figure~\ref{fig:blowup}).  The \emph{singularity
-data} of a track is the list of its multigons with their prong numbers
-and puncturedness; \ttauto\ writes it as, for instance, $1.\,1.\,1.\,1.\,(2)$
-for four punctured monogons and an unpunctured 2-gon on the outer
-boundary.  Tracks with the same singularity data form a \emph{stratum},
-and the constructor \code{build_traintrack_list(n)} returns one
-representative track per stratum of the disc with $n$ punctures.
+blown up into polygons (Figure~\ref{fig:multigon}).  The corners of the
+boundary region are the cusps of the track, so that region is a polygon
+with as many prongs as the track has cusps.  The \emph{singularity data}
+of a track lists its multigons with their prong numbers, a dot marking
+the punctured ones, and the number of cusps in parentheses;
+Figure~\ref{fig:tracks} shows the tracks $1.\,1.\,1.\,1.\,(2)$, four
+punctured monogons and a 2-pronged boundary, and $1.\,1.\,1.\,1.\,3\,(1)$,
+which has in addition an unpunctured trigon and a 1-pronged boundary.
+Tracks with the same singularity data form a \emph{stratum}, and the
+constructor \code{build_traintrack_list(n)} returns one representative
+track per stratum of the disc with $n$ punctures.
 
 \begin{figure}[t]
   \centering
   \begin{tikzpicture}[scale=1.0]
+    % ---- left: the multigon as a vertex of the graph ----
     \begin{scope}
       \node[vert] (v) at (0,0) {};
-      \foreach \a in {70,95,120} \draw[main] (v) -- (\a:1.6);
-      \foreach \a in {205,235} \draw[main] (v) -- (\a:1.6);
-      \draw[main] (v) -- (320:1.6);
-      \draw[gate] (70:1.25) arc (70:120:1.25);
-      \draw[gate] (205:1.25) arc (205:235:1.25);
-      \draw[gate] (312:1.25) arc (312:328:1.25);
-      \node[lbl] at (95:1.9) {$\gamma_1$};
-      \node[lbl] at (220:1.95) {$\gamma_2$};
-      \node[lbl] at (320:1.95) {$\gamma_3$};
-      \node[lbl,align=center] at (0,-2.5) {graph map: one vertex,\\ three gates};
+      \foreach \a in {62,90,118} \draw[main] (v) .. controls (90:0.9) .. (\a:1.7);
+      \foreach \a in {196,224} \draw[main] (v) .. controls (210:0.9) .. (\a:1.7);
+      \draw[main] (v) -- (330:1.7);
+      \node[lbl,align=center] at (0,-2.4) {a trigon as a vertex:\\ three prongs, $3,2,1$ edges};
     \end{scope}
-    \begin{scope}[xshift=7cm]
-      \coordinate (A) at (90:0.7);
-      \coordinate (B) at (210:0.7);
-      \coordinate (C) at (330:0.7);
+    % ---- middle: the same multigon blown up into a trigon ----
+    \begin{scope}[xshift=5.6cm]
+      \coordinate (A) at (90:0.75);
+      \coordinate (B) at (210:0.75);
+      \coordinate (C) at (330:0.75);
       \draw[side] (A) -- (B) -- (C) -- cycle;
-      \foreach \a in {70,95,120} \draw[main] (A) .. controls ($(A)+(\a:0.8)$) .. ($(A)+(\a:1.6)$);
-      \foreach \a in {205,235} \draw[main] (B) .. controls ($(B)+(\a:0.8)$) .. ($(B)+(\a:1.6)$);
-      \draw[main] (C) .. controls ($(C)+(320:0.8)$) .. ($(C)+(320:1.6)$);
-      \node[lbl] at ($(A)+(95:1.9)$) {prong $\gamma_1$};
-      \node[lbl] at ($(B)+(220:2.0)$) {prong $\gamma_2$};
-      \node[lbl] at ($(C)+(320:2.0)$) {prong $\gamma_3$};
-      \node[lbl,blue!70!black] at (0,-0.05) {sides};
-      \node[lbl,align=center] at (0,-2.5) {train track: a trigon with\\ edge counts $3,2,1$ at its prongs};
+      \foreach \a in {62,90,118} \draw[main] (A) .. controls ($(A)+(90:0.9)$) .. ($(A)+(\a:1.7)$);
+      \foreach \a in {196,224} \draw[main] (B) .. controls ($(B)+(210:0.9)$) .. ($(B)+(\a:1.7)$);
+      \draw[main] (C) -- ($(C)+(330:1.7)$);
+      % cusps: the thin wedges between consecutive tangent edges
+      \draw[gate] ($(A)+(80:0.75)$) arc (80:87:0.75);
+      \draw[gate] ($(A)+(93:0.75)$) arc (93:100:0.75);
+      \draw[gate] ($(B)+(205:0.75)$) arc (205:215:0.75);
+      \node[lbl,gray!60!black] at ($(A)+(35:1.25)$) {cusps};
+      \node[lbl] at ($(A)+(155:1.2)$) {prong};
+      \node[lbl] at ($(C)+(25:1.1)$) {prong};
+      \node[lbl] at ($(B)+(275:1.0)$) {prong};
+      \node[lbl,blue!70!black,align=center] at (0,-0.05) {\footnotesize sides};
+      \node[lbl,align=center] at (0,-2.4) {the trigon blown up:\\ its sides are infinitesimal edges};
     \end{scope}
-    \begin{scope}[yshift=-6cm]
-      \node[vert] (v) at (0,0) {};
-      \node[punct] at (0,1.0) {};
-      \draw[periph] (v) .. controls (-1.2,0.9) and (-1.0,2.1) .. (0,2.0)
-                        .. controls (1.0,2.1) and (1.2,0.9) .. (v);
-      \node[lbl,red!70!black] at (-1.35,1.6) {$\per$};
-      \node[lbl,red!70!black] at (1.35,1.6) {$\anti\per$};
-      \foreach \a in {225,260,295} \draw[main] (v) -- (\a:1.6);
-      \draw[gate] (222:1.25) arc (222:298:1.25);
-      \node[lbl,align=center] at (0,-2.5) {graph map: vertex on a\\ peripheral loop; gates\\ $\set{\per}$, $\set{\anti\per}$ and the main edges};
-    \end{scope}
-    \begin{scope}[xshift=7cm,yshift=-6cm]
-      \coordinate (c) at (0,0);
-      \node[punct] at (0,1.0) {};
-      \draw[periph] (c) .. controls (-1.2,0.9) and (-1.0,2.1) .. (0,2.0)
-                        .. controls (1.0,2.1) and (1.2,0.9) .. (c);
-      \foreach \a in {225,260,295} \draw[main] (c) .. controls ($(c)+(\a:0.9)$) .. (\a:1.6);
-      \node[lbl] at (0,-0.55) {cusps};
-      \node[lbl,align=center] at (0,-2.5) {train track: punctured\\ monogon with three edges\\ at its single prong};
+    % ---- right: a punctured monogon ----
+    \begin{scope}[xshift=11.2cm]
+      \coordinate (c) at (0,-0.3);
+      \node[punct] at (0,0.45) {};
+      \draw[periph] (c) .. controls (-0.9,0.4) and (-0.8,1.4) .. (0,1.35)
+                        .. controls (0.8,1.4) and (0.9,0.4) .. (c);
+      \foreach \a in {242,270,298} \draw[main] (c) .. controls ($(c)+(270:0.9)$) .. ($(c)+(\a:1.7)$);
+      \draw[gate] ($(c)+(260:0.75)$) arc (260:267:0.75);
+      \draw[gate] ($(c)+(273:0.75)$) arc (273:280:0.75);
+      \node[lbl,red!70!black] at (1.1,1.2) {loop};
+      \node[lbl,align=center] at (0,-2.4) {punctured monogon:\\ one prong, two cusps};
     \end{scope}
   \end{tikzpicture}
-  \caption{The blow-up.  Top: a graph-map vertex with three gates is the
-    same object as a trigon whose corners are the prongs and whose sides
-    are infinitesimal edges.  Bottom: a puncture; the peripheral loop
-    $\per$ is a real edge of the graph, and in \ttauto\ it is the side of
-    the punctured monogon.  The main edges at the single prong are pairwise
-    separated by cusps.}
-  \label{fig:blowup}
+  \caption{Left: a trigon drawn as a vertex of the underlying graph.  It
+    has three prongs, each a bundle of edges that are mutually tangent
+    where they meet the vertex, with $3$, $2$ and $1$ edges.  Middle: the
+    same trigon blown up, as \ttauto\ stores it: the blue sides are
+    infinitesimal edges, and consecutive edges at one prong are separated
+    by a cusp, the thin wedge between two tangent edges.  Right: a
+    punctured monogon, whose single side is the loop around the puncture
+    (the dot).}
+  \label{fig:multigon}
 \end{figure}
+
+\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}[scale=1.0]
+    % ---------- left: 1.1.1.1.(2), the vertex-0 track of Section 5 ----------
+    \begin{scope}
+      \draw[disc] (0,-0.3) circle (2.9);
+      % monogon 3 (prong 1) at the centre, loop 5 above, puncture inside
+      \coordinate (p1) at (0,0);
+      \node[punct] at (0,0.62) {};
+      \draw[periph] (p1) .. controls (0.7,0.45) and (0.6,1.25) .. (0,1.2)
+                       .. controls (-0.6,1.25) and (-0.7,0.45) .. (p1);
+      \node[lbl,red!70!black] at (0.85,1.05) {$5$};
+      % monogon 0 (prong 0), lower left, loop 4 beyond the prong point
+      \coordinate (p0) at (-1.55,-1.35);
+      \node[punct] at ($(p0)+(220:0.55)$) {};
+      \draw[periph] (p0) .. controls ($(p0)+(160:0.7)$) and ($(p0)+(220:1.15)$) .. ($(p0)+(220:1.1)$)
+                       .. controls ($(p0)+(220:1.15)+(300:0.35)$) and ($(p0)+(280:0.7)$) .. (p0);
+      \node[lbl,red!70!black] at ($(p0)+(220:1.5)$) {$4$};
+      % monogon 1 (prong 2), bottom, loop 6
+      \coordinate (p2) at (0,-1.85);
+      \node[punct] at ($(p2)+(270:0.55)$) {};
+      \draw[periph] (p2) .. controls ($(p2)+(210:0.7)$) and ($(p2)+(270:1.15)$) .. ($(p2)+(270:1.1)$)
+                       .. controls ($(p2)+(270:1.15)+(0:0.35)$) and ($(p2)+(330:0.7)$) .. (p2);
+      \node[lbl,red!70!black] at ($(p2)+(270:1.5)$) {$6$};
+      % monogon 2 (prong 3), lower right, loop 7
+      \coordinate (p3) at (1.55,-1.35);
+      \node[punct] at ($(p3)+(320:0.55)$) {};
+      \draw[periph] (p3) .. controls ($(p3)+(260:0.7)$) and ($(p3)+(320:1.15)$) .. ($(p3)+(320:1.1)$)
+                       .. controls ($(p3)+(320:1.15)+(40:0.35)$) and ($(p3)+(20:0.7)$) .. (p3);
+      \node[lbl,red!70!black] at ($(p3)+(320:1.5)$) {$7$};
+      % edges: 1 from prong 0 to prong 1, 2 from prong 1 to prong 2, 3 from prong 1 to prong 3
+      \draw[oriented] (p0) .. controls ($(p0)+(40:0.6)$) and ($(p1)+(270:0.8)$) .. (p1);
+      \draw[oriented] (p1) -- (p2);
+      \draw[oriented] (p1) .. controls ($(p1)+(270:0.8)$) and ($(p3)+(140:0.6)$) .. (p3);
+      \node[lbl] at (-0.95,-0.85) {$1$};
+      \node[lbl] at (0.3,-1.2) {$2$};
+      \node[lbl] at (0.95,-0.85) {$3$};
+      % prong numbers
+      \node[pr] at (-0.3,0.12) {1};
+      \node[pr] at ($(p0)+(120:0.35)$) {0};
+      \node[pr] at ($(p2)+(180:0.3)$) {2};
+      \node[pr] at ($(p3)+(60:0.35)$) {3};
+      % cusps at prong 1: thin wedges between the tangent edges
+      \draw[gate] (255:0.7) arc (255:266:0.7);
+      \draw[gate] (274:0.7) arc (274:285:0.7);
+      \node[lbl,gray!60!black] at (-0.7,-1.3) {\footnotesize cusps};
+      \node[lbl] at (0,-3.95) {$1.\,1.\,1.\,1.\,(2)$};
+    \end{scope}
+    % ---------- right: 1.1.1.1.3(1) ----------
+    \begin{scope}[xshift=7.4cm]
+      \draw[disc] (0,-0.3) circle (2.9);
+      % trigon (multigon 4) at the centre: prongs 2 (top), 3 (lower left), 4 (lower right)
+      \coordinate (q2) at (90:0.55);
+      \coordinate (q3) at (210:0.55);
+      \coordinate (q4) at (330:0.55);
+      \draw[side] (q2) -- (q3) -- (q4) -- cycle;
+      \node[lbl,blue!70!black] at (0,-0.1) {\footnotesize $7,8,9$};
+      % monogon 3 (prong 1) above the trigon, loop 6 above it; two edges: 1 in, 2 out
+      \coordinate (p1) at (0,1.45);
+      \node[punct] at (0,2.05) {};
+      \draw[periph] (p1) .. controls (0.65,1.9) and (0.55,2.65) .. (0,2.6)
+                       .. controls (-0.55,2.65) and (-0.65,1.9) .. (p1);
+      \node[lbl,red!70!black] at (0.8,2.45) {$6$};
+      % monogon 0 (prong 0) to the left, loop 5
+      \coordinate (p0) at (-1.9,1.0);
+      \node[punct] at ($(p0)+(200:0.55)$) {};
+      \draw[periph] (p0) .. controls ($(p0)+(140:0.7)$) and ($(p0)+(200:1.15)$) .. ($(p0)+(200:1.1)$)
+                       .. controls ($(p0)+(200:1.15)+(280:0.35)$) and ($(p0)+(260:0.7)$) .. (p0);
+      \node[lbl,red!70!black] at ($(p0)+(200:1.5)$) {$5$};
+      % monogon 1 (prong 5) lower left, loop 10; monogon 2 (prong 6) lower right, loop 11
+      \coordinate (p5) at (-1.5,-1.55);
+      \node[punct] at ($(p5)+(225:0.55)$) {};
+      \draw[periph] (p5) .. controls ($(p5)+(165:0.7)$) and ($(p5)+(225:1.15)$) .. ($(p5)+(225:1.1)$)
+                       .. controls ($(p5)+(225:1.15)+(305:0.35)$) and ($(p5)+(285:0.7)$) .. (p5);
+      \node[lbl,red!70!black] at ($(p5)+(225:1.5)$) {$10$};
+      \coordinate (p6) at (1.5,-1.55);
+      \node[punct] at ($(p6)+(315:0.55)$) {};
+      \draw[periph] (p6) .. controls ($(p6)+(255:0.7)$) and ($(p6)+(315:1.15)$) .. ($(p6)+(315:1.1)$)
+                       .. controls ($(p6)+(315:1.15)+(35:0.35)$) and ($(p6)+(15:0.7)$) .. (p6);
+      \node[lbl,red!70!black] at ($(p6)+(315:1.5)$) {$11$};
+      % edges: 1: prong 0 -> prong 1; 2: prong 1 -> prong 2; 3: prong 3 -> prong 5; 4: prong 4 -> prong 6
+      \draw[oriented] (p0) .. controls ($(p0)+(340:1.0)$) and ($(p1)+(270:0.7)$) .. (p1);
+      \draw[oriented] (p1) -- (q2);
+      \draw[oriented] (q3) -- (p5);
+      \draw[oriented] (q4) -- (p6);
+      \node[lbl] at (-1.05,0.55) {$1$};
+      \node[lbl] at (0.25,1.0) {$2$};
+      \node[lbl] at (-1.15,-0.55) {$3$};
+      \node[lbl] at (1.15,-0.55) {$4$};
+      % prong numbers
+      \node[pr] at ($(p0)+(60:0.3)$) {0};
+      \node[pr] at ($(p1)+(20:0.3)$) {1};
+      \node[pr] at ($(q2)+(0:0.32)$) {2};
+      \node[pr] at ($(q3)+(150:0.32)$) {3};
+      \node[pr] at ($(q4)+(30:0.32)$) {4};
+      \node[pr] at ($(p5)+(90:0.3)$) {5};
+      \node[pr] at ($(p6)+(90:0.3)$) {6};
+      % cusp at prong 1 between edges 1 and 2
+      \draw[gate] ($(p1)+(255:0.6)$) arc (255:267:0.6);
+      \node[lbl,gray!60!black] at (-0.6,1.55) {\footnotesize cusp};
+      \node[lbl] at (0,-3.95) {$1.\,1.\,1.\,1.\,3\,(1)$};
+    \end{scope}
+  \end{tikzpicture}
+  \caption{Two properly embedded train tracks on the disc with four
+    punctures, with their canonical numbering.  Punctures are dots,
+    loops of punctured monogons are red and labelled by their side
+    letter, main edges are black with their orientation and number, sides
+    of the unpunctured trigon are blue, and the small grey numbers are the
+    prong numbers.  Left: the stratum $1.\,1.\,1.\,1.\,(2)$
+    (vertex~0 of Section~\ref{sec:example}); the central monogon carries
+    three edges and two cusps, so the region between the track and the
+    grey boundary has two prongs.  Right: the stratum $1.\,1.\,1.\,1.\,3\,(1)$,
+    with an unpunctured trigon and a single cusp.}
+  \label{fig:tracks}
+\end{figure}
+
 
 \subsection{Codings and normal form}
 A track is identified up to isotopy by its \emph{coding}: a depth-first
@@ -505,6 +631,66 @@ lies in $H$.  In particular each peripheral direction is a gate by itself.
 shows that a track is the blown-up graph, and fixes the following
 correspondence, which is what the gate module implements.
 
+\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}[scale=1.0]
+    \begin{scope}
+      \node[vert] (v) at (0,0) {};
+      \foreach \a in {70,95,120} \draw[main] (v) -- (\a:1.6);
+      \foreach \a in {205,235} \draw[main] (v) -- (\a:1.6);
+      \draw[main] (v) -- (320:1.6);
+      \draw[gate] (70:1.25) arc (70:120:1.25);
+      \draw[gate] (205:1.25) arc (205:235:1.25);
+      \draw[gate] (312:1.25) arc (312:328:1.25);
+      \node[lbl] at (95:1.9) {$\gamma_1$};
+      \node[lbl] at (220:1.95) {$\gamma_2$};
+      \node[lbl] at (320:1.95) {$\gamma_3$};
+      \node[lbl,align=center] at (0,-2.5) {graph map: one vertex,\\ three gates};
+    \end{scope}
+    \begin{scope}[xshift=7cm]
+      \coordinate (A) at (90:0.7);
+      \coordinate (B) at (210:0.7);
+      \coordinate (C) at (330:0.7);
+      \draw[side] (A) -- (B) -- (C) -- cycle;
+      \foreach \a in {70,95,120} \draw[main] (A) .. controls ($(A)+(\a:0.8)$) .. ($(A)+(\a:1.6)$);
+      \foreach \a in {205,235} \draw[main] (B) .. controls ($(B)+(\a:0.8)$) .. ($(B)+(\a:1.6)$);
+      \draw[main] (C) .. controls ($(C)+(320:0.8)$) .. ($(C)+(320:1.6)$);
+      \node[lbl] at ($(A)+(95:1.9)$) {prong $\gamma_1$};
+      \node[lbl] at ($(B)+(220:2.0)$) {prong $\gamma_2$};
+      \node[lbl] at ($(C)+(320:2.0)$) {prong $\gamma_3$};
+      \node[lbl,blue!70!black] at (0,-0.05) {sides};
+      \node[lbl,align=center] at (0,-2.5) {train track: a trigon with\\ edge counts $3,2,1$ at its prongs};
+    \end{scope}
+    \begin{scope}[yshift=-6cm]
+      \node[vert] (v) at (0,0) {};
+      \node[punct] at (0,1.0) {};
+      \draw[periph] (v) .. controls (-1.2,0.9) and (-1.0,2.1) .. (0,2.0)
+                        .. controls (1.0,2.1) and (1.2,0.9) .. (v);
+      \node[lbl,red!70!black] at (-1.35,1.6) {$\per$};
+      \node[lbl,red!70!black] at (1.35,1.6) {$\anti\per$};
+      \foreach \a in {225,260,295} \draw[main] (v) -- (\a:1.6);
+      \draw[gate] (222:1.25) arc (222:298:1.25);
+      \node[lbl,align=center] at (0,-2.5) {graph map: vertex on a\\ peripheral loop; gates\\ $\set{\per}$, $\set{\anti\per}$ and the main edges};
+    \end{scope}
+    \begin{scope}[xshift=7cm,yshift=-6cm]
+      \coordinate (c) at (0,0);
+      \node[punct] at (0,1.0) {};
+      \draw[periph] (c) .. controls (-1.2,0.9) and (-1.0,2.1) .. (0,2.0)
+                        .. controls (1.0,2.1) and (1.2,0.9) .. (c);
+      \foreach \a in {225,260,295} \draw[main] (c) .. controls ($(c)+(\a:0.9)$) .. (\a:1.6);
+      \node[lbl] at (0,-0.55) {cusps};
+      \node[lbl,align=center] at (0,-2.5) {train track: punctured\\ monogon with three edges\\ at its single prong};
+    \end{scope}
+  \end{tikzpicture}
+  \caption{The blow-up.  Top: a graph-map vertex with three gates is the
+    same object as a trigon whose corners are the prongs and whose sides
+    are infinitesimal edges.  Bottom: a puncture; the peripheral loop
+    $\per$ is a real edge of the graph, and in \ttauto\ it is the side of
+    the punctured monogon.  The main edges at the single prong are pairwise
+    separated by cusps.}
+  \label{fig:blowup}
+\end{figure}
+
 \begin{table}[h]
   \centering
   \begin{tabular}{@{}ll@{}}
@@ -754,7 +940,8 @@ gate test inherits this convention.)
 
 \subsection{The stratum and its automaton}
 Take the disc with $\np=4$ punctures and the stratum $1.\,1.\,1.\,1.\,(2)$:
-four punctured monogons and an unpunctured 2-gon on the outer boundary.
+four punctured monogons and a 2-pronged singularity on the outer
+boundary (Figure~\ref{fig:tracks}, left).
 Every track on it has $n=3$ main edges and $n_{\mathrm{s}}=4$ prongs, so
 the letters are $1,2,3$ (edges) and $4,5,6,7$ (the four loops).  The
 automaton has four vertices (Figure~\ref{fig:automaton}).  Vertex~0 is
