@@ -79,20 +79,27 @@
 \maketitle
 \tableofcontents
 
-\subsection*{Conventions}
-Indices are the C++ ones: vertices, branches, multigons, prongs and edges
-are numbered from~$0$.  (The interactive \code{ttauto} program
-and the published tables print vertices from~$1$.)  Letters of a
-train-track map follow the convention of the map module:
-the $n$ main edges are the letters $1,\dots,n$, the sides of the multigons
-are $n+1,\dots,n+n_{\mathrm{s}}$ where $n_{\mathrm{s}}$ is the total number
-of prongs, and a negative letter is the same edge with the opposite
-orientation ($\anti e=-e$ in the code).  Identifiers of the library are
-set in \code{typewriter}; file names appear only in
-Appendix~\ref{sec:appendix}.  The mathematics is that of Bestvina and
-Handel~\cite{Bestvina1995}, in the notation of Hall~\cite{HallBHchapter};
-the train-track formalism is that of the \ttauto\
-paper~\cite{Lanneau2011}.
+\subsection*{A note about numbering}
+There is an inherent tension present in the code: mathematical objects are
+usually numbered from~$1$ in the literature, but the C++ language is
+zero-indexed (the first element of an array is zero).  These two conventions
+coexist here, and the loose rule is that user-facing objects are numbered
+from~$1$, while the internals are numbered from~$0$.
+\begin{itemize}
+  \item \textbf{One-indexed}: everything a user reads or types.  The
+    interactive \code{ttauto} program numbers strata, subautomata and
+    vertices from~$1$, as do its Mathematica output files and the printed
+    codings.  The \emph{letters} are also one-indexed, of necessity.  A
+    train-track map is stored as a substitution on an alphabet whose
+    letters are signed integers naming the edges and sides of the track
+    (Section~\ref{sec:onefold}); the sign carries the orientation
+    ($\anti e=-e$), so zero cannot be a letter.
+  \item \textbf{Zero-indexed}: everything inside the library.  Vertices
+    and branches of the automaton, multigons, prongs, edges and fold
+    indices are C++ indices from~$0$, and so are the diagnostic printouts
+    of the library itself (the gate table, the fold record, the path lists
+    of the search).
+\end{itemize}
 
 %======================================================================
 \section{Train tracks and their numbering}
