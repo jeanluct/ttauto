@@ -21,7 +21,7 @@ candidate follow-ups.
   - Keep existing fail-fast style (`std::cerr` + `std::exit(1)`) but improve
     message accuracy.
 
-- Expand `TESTING.md` with rough expected runtime for long-running examples.
+- Expand `doc/TESTING.md` with rough expected runtime for long-running examples.
   - Keep recommendations practical for local dev and CI.
 
 - Search for /* */ and other TODO items in the code.

@@ -17,9 +17,9 @@ Companion documents already in the repo; read them rather than rediscovering:
   concept-to-file appendix.  Read this before touching the acceptance
   logic.
 - `AGENTS.md`: style, ownership model, testing expectations, refactor rules.
-- `CODE_STRUCTURE.md`: class-by-class tour, glossary, worked "one fold
+- `doc/CODE_STRUCTURE.md`: class-by-class tour, glossary, worked "one fold
   through the stack" example, suggested reading orders.
-- `TESTING.md` and `testsuite/COVERAGE.md`: test matrix and header-to-test
+- `doc/TESTING.md` and `testsuite/COVERAGE.md`: test matrix and header-to-test
   map.
 - `devel/macro-status.md`: every non-guard feature macro and how to build
   with it.
@@ -128,7 +128,7 @@ class across strata: for n=3..7 the gate test rejects five classes, all
 "lower-puncture pA plus an idle puncture", and the primitivity
 requirement removes two more with imprimitive matrices.  Test coverage
 (86% of library lines, measured 2026-09-19) and how to re-measure it are
-in `testsuite/COVERAGE.md` and `TESTING.md`.  Older material in
+in `testsuite/COVERAGE.md` and `doc/TESTING.md`.  Older material in
 `devel/iss002/`:
 
 - `ISSUE2_BAD_PA_SUMMARY.md`: the evidence, current status, work log.

@@ -5,7 +5,7 @@ This file maps public headers to deterministic CTest programs in `testsuite/`.
 ## Measured line coverage (2026-09-19)
 
 gcov on a Debug build of the ten fast testsuite programs (see "Measuring
-line coverage" in `TESTING.md`; header lines are merged over all
+line coverage" in `doc/TESTING.md`; header lines are merged over all
 translation units).  Before/after the coverage pass of 2026-09-19.
 
 | File | Lines | Before % | After % | Left uncovered |

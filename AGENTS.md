@@ -55,7 +55,7 @@ Notes:
   - `./examples/ttauto_count` (~2 minutes)
   - `./examples/ttauto_labels` (~100 minutes)
 
-See `TESTING.md` for the project-maintained recommended matrix and timing notes.
+See `doc/TESTING.md` for the project-maintained recommended matrix and timing notes.
 
 ## External jlt / CSparse Notes
 

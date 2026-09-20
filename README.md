@@ -16,7 +16,7 @@ The mathematics and the implementation of the pseudo-Anosov test (train
 tracks, folds, the automaton, and the Bestvina-Handel gate condition as it
 is computed along a folding path, with a four-puncture example worked in
 full) are explained in `doc/ttauto.tex`; build it with `latexmk -pdf` in
-`doc/`.  `CODE_STRUCTURE.md` gives a class-by-class tour of the code.  See
+`doc/`.  `doc/CODE_STRUCTURE.md` gives a class-by-class tour of the code.  See
 the [examples folder][8] for some basic examples.  The most complete program
 is [ttauto.cpp][9], an interactive program.
 
@@ -50,7 +50,7 @@ cmake -S . -B build
 cmake --build build -j
 ctest --test-dir build --output-on-failure
 ```
-See `TESTING.md` for more details.
+See `doc/TESTING.md` for more details.
 
 ### support
 
