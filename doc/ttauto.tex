@@ -706,16 +706,21 @@ correspondence, which is what the gate module implements.
     gate at $v$ & a prong (a priori); refined by $\Dg^k$-coincidence \\
     infinitesimal edge & a side of an \emph{unpunctured} multigon that
                          some iterate traverses \\
-    peripheral edge & a side of a \emph{punctured} multigon (the loop of a
-                      monogon) \\
+    peripheral edge & a side of a \emph{punctured} multigon (for a
+                      monogon, its loop) \\
     $M_H$ & the transition matrix on the $n$ main edges \\
     turn taken by $g^k(e)$ & consecutive main letters $x\,S\,y$ of an image
                              word, joining $\anti x$ to $y$ \\
     \bottomrule
   \end{tabular}
   \caption{The dictionary.  A side of a punctured multigon is a real
-    (peripheral) edge of $G$, so its two ends are two different vertices
-    when $k\ge2$ and the same vertex when $k=1$.}
+    (peripheral) edge of $G$: the $k$ sides of a punctured $k$-gon form
+    the circle around the puncture, each joining two different prongs
+    when $k\ge2$, and the single side of a monogon is a loop at its one
+    prong.  In the strata that \texttt{build\_traintrack\_list} produces every
+    punctured multigon is a monogon, and folds preserve prong counts, so
+    the case $k\ge2$ is implemented by the dictionary and the code but is
+    not exercised by any automaton run so far.}
   \label{tab:dictionary}
 \end{table}
 
