@@ -29,6 +29,7 @@
 #include <list>
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
 #include <jlt/freeauto.hpp>
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
@@ -145,12 +146,20 @@ private:
     return vertices()-1;
   }
 
-  // Find the vertex holding trtr, or vertices() if there is none.
-  int find_vertex(const TrTr& trtr) const
+  // Hash of a train track coding, for the index used while building the
+  // graph.  Codings identify tracks up to isotopy, so they are the
+  // natural key; the usual combine is good enough for vectors of small
+  // integers.
+  struct coding_hash
   {
-    return std::distance(trtrv.begin(),
-			 std::find(trtrv.begin(),trtrv.end(),trtr));
-  }
+    std::size_t operator()(const typename TrTr::intVec& c) const
+    {
+      std::size_t h = c.size();
+      for (int i = 0; i < (int)c.size(); ++i)
+	h ^= (std::size_t)c[i] + 0x9e3779b9 + (h << 6) + (h >> 2);
+      return h;
+    }
+  };
 
   // Build the whole graph, starting from one train track.
   //
@@ -160,12 +169,21 @@ private:
   // a frame holds a vertex and the next fold to try there, and a
   // newly-found target is pushed straight away, so its whole subtree
   // is explored before we come back to the parent's next fold.
+  //
+  // Vertices are looked up through an index keyed on the coding rather
+  // than by scanning every track stored so far.  The scan compared with
+  // operator==, which recomputes the codings of both tracks, so the
+  // cost of building a graph grew as the square of its vertex count.
+  // The index lives only as long as the build, so it never has to
+  // survive the renumbering that find_symmetries() does afterwards.
   void build_graph(const TrTr& start)
   {
     struct frame { int idx; int f; };
     std::vector<frame> todo;
+    std::unordered_map<typename TrTr::intVec,int,coding_hash> index;
 
     todo.push_back(frame{new_vertex(start),0});
+    index.emplace(start.coding(),todo.back().idx);
 
     while (!todo.empty())
       {
@@ -194,12 +212,21 @@ private:
 	// explored is harmless: exploring them only appends to the
 	// branch lists of other vertices, since coming back here finds
 	// this vertex already present and adds no frame.
-	int tidx = find_vertex(trtr0);
-	const bool isnew = (tidx == (int)vertices());
+	const typename TrTr::intVec code = trtr0.coding();
+	const typename decltype(index)::const_iterator it = index.find(code);
+	const bool isnew = (it == index.end());
+	int tidx;
 	if (isnew)
-	  tidx = new_vertex(trtr0);
-	else if (debug)
-	  std::cerr << "Not adding vertex " << tidx << std::endl;
+	  {
+	    tidx = new_vertex(trtr0);
+	    index.emplace(code,tidx);
+	  }
+	else
+	  {
+	    tidx = it->second;
+	    if (debug)
+	      std::cerr << "Not adding vertex " << tidx << std::endl;
+	  }
 
 	tv[idx].push_back(tidx);
 
