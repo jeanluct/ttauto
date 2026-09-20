@@ -28,6 +28,10 @@ project(ttauto LANGUAGES C CXX)
 
 include(CTest)
 
+# Optional: one testsuite program builds an automaton on a thread with a
+# reduced stack, to check that construction does not recurse per vertex.
+find_package(Threads)
+
 option(TTAUTO_ENABLE_SLOW_TESTS "Enable slow integration tests" OFF)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -119,6 +123,10 @@ function(ttauto_add_testsuite source_file)
   # otherwise every assert-based test passes vacuously.
   target_compile_options(${target_name} PRIVATE -UNDEBUG)
   target_include_directories(${target_name} PRIVATE "${CMAKE_SOURCE_DIR}/testsuite")
+  if(CMAKE_USE_PTHREADS_INIT)
+    target_link_libraries(${target_name} PRIVATE Threads::Threads)
+    target_compile_definitions(${target_name} PRIVATE TTAUTO_HAVE_PTHREAD)
+  endif()
 
   set_target_properties(${target_name} PROPERTIES OUTPUT_NAME "${program_name}")
   ttauto_set_inplace_output(${target_name} "${CMAKE_BINARY_DIR}/testsuite")
