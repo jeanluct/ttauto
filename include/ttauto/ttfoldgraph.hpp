@@ -28,6 +28,7 @@
 #include <iostream>
 #include <list>
 #include <algorithm>
+#include <vector>
 #include <jlt/freeauto.hpp>
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
@@ -94,18 +95,17 @@ private:
   // Maximum number of foldings at each vertex.
   const int nfoldsmax;
 
-  Mat TM;		// Transition matrix.
   const Mat id;		// Identity matrix.
 
 public:
 
   // Make a folding graph from an initial train track.
   ttfoldgraph(const TrTr& trtr)
-    : n(trtr.edges()), nfoldsmax(trtr.foldings()), TM(n,n),
+    : n(trtr.edges()), nfoldsmax(trtr.foldings()),
       id(jlt::identity_matrix<int>(n))
   {
     // Build the graph.
-    add_vertex(trtr);
+    build_graph(trtr);
 
     if (exploit_symmetries) find_symmetries();
   }
@@ -118,69 +118,93 @@ public:
 	      const jlt::vector<jlt::vector<jlt::freeauto<int> > >& AMv_,
 	      const jlt::vector<int>& nfoldsv_)
     : trtrv(trtrv_), tv(tv_), TMv(TMv_), AMv(AMv_), nfoldsv(nfoldsv_),
-      n(trtrv.front().edges()), nfoldsmax(trtrv.front().foldings()), TM(n,n),
+      n(trtrv.front().edges()), nfoldsmax(trtrv.front().foldings()),
       id(jlt::identity_matrix<int>(n))
   {
     if (exploit_symmetries) find_symmetries();
   }
 
 private:
-  // Add a vertex.  This recursively builds the whole graph.
-  int add_vertex(const TrTr& trtr)
+  // Create a new vertex holding trtr, and return its index.
+  int new_vertex(const TrTr& trtr)
   {
-    // See if the vertex is already in the graph.
-    int idx = std::distance(trtrv.begin(),
-			    std::find(trtrv.begin(),trtrv.end(),trtr));
+    if (debug)
+      std::cerr << "Adding new vertex " << vertices() << std::endl;
 
-    if (idx == (int)vertices())
+    trtrv.push_back(trtr);
+    // Add an outgoing branch.
+    tv.push_back(jlt::vector<int>());
+    // Add an outgoing matrix.
+    TMv.push_back(jlt::vector<Matpp1>());
+    // Add an outgoing train track map.
+    AMv.push_back(jlt::vector<jlt::freeauto<int> >());
+    // Initalise the vector giving the number of foldings.
+    nfoldsv.push_back(0);
+
+    // The index of the vertex we just added.
+    return vertices()-1;
+  }
+
+  // Find the vertex holding trtr, or vertices() if there is none.
+  int find_vertex(const TrTr& trtr) const
+  {
+    return std::distance(trtrv.begin(),
+			 std::find(trtrv.begin(),trtrv.end(),trtr));
+  }
+
+  // Build the whole graph, starting from one train track.
+  //
+  // This was once a recursion with one level per newly-discovered
+  // vertex, and on large strata it exhausted the stack (issue #14).
+  // The worklist below discovers vertices in exactly the same order:
+  // a frame holds a vertex and the next fold to try there, and a
+  // newly-found target is pushed straight away, so its whole subtree
+  // is explored before we come back to the parent's next fold.
+  void build_graph(const TrTr& start)
+  {
+    struct frame { int idx; int f; };
+    std::vector<frame> todo;
+
+    todo.push_back(frame{new_vertex(start),0});
+
+    while (!todo.empty())
       {
-	if (debug)
-	  std::cerr << "Adding new vertex " << vertices() << std::endl;
+	// Read the frame by value: pushing below can reallocate todo.
+	const int top = (int)todo.size()-1;
+	if (todo[top].f == nfoldsmax) { todo.pop_back(); continue; }
+	const int idx = todo[top].idx;
+	const int f = todo[top].f++;
 
-	// It's not already in the graph, so add it.
-	trtrv.push_back(trtr);
-	// Add an outgoing branch.
-	tv.push_back(jlt::vector<int>());
-	// Add an outgoing matrix.
-	TMv.push_back(jlt::vector<Matpp1>());
-	// Add an outgoing train track map.
-	AMv.push_back(jlt::vector<jlt::freeauto<int> >());
-	// Initalise the vector giving the number of foldings.
-	nfoldsv.push_back(0);
-	// The index of the vertex we just added.
-	idx = vertices()-1;
-      }
-    else
-      {
-	if (debug)
-	  std::cerr << "Not adding vertex " << idx << std::endl;
-
-	// It's already in the graph.  Just return its id.
-	return idx;
-      }
-
-    // Try all nfolds foldings from this vertex.
-    for (int f = 0; f < nfoldsmax; ++f)
-      {
-	// Fold and find the transition matrix.
-	TrTr trtr0(trtr);
+	// Fold a copy of this vertex's track and find the transition
+	// matrix.  Do not hold a reference into trtrv across the calls
+	// to new_vertex() below, which can reallocate it.
+	TrTr trtr0(trtrv[idx]);
 	jlt::freeauto<int> AM = trtr0.fold_traintrack_map(f);
-	TM = traintracks::transition_matrix_from_map(trtr,AM);
-	if (TM != id)
-	  {
-	    ++nfoldsv[idx];
-	    // Convert matrix to sparse type and add to list.
-	    TMv[idx].push_back(Matpp1(TM));
-	    // Add automorphism to list.
-	    AMv[idx].push_back(AM);
-	    // Add the target vertex, if it's not already in there, and
-	    // point to it.
-	    int tidx = add_vertex(trtr0);
-	    tv[idx].push_back(tidx);
-	  }
+	Mat TM = traintracks::transition_matrix_from_map(trtrv[idx],AM);
+	if (TM == id) continue;
+
+	++nfoldsv[idx];
+	// Convert matrix to sparse type and add to list.
+	TMv[idx].push_back(Matpp1(TM));
+	// Add automorphism to list.
+	AMv[idx].push_back(AM);
+
+	// Add the target vertex, if it's not already in there, and
+	// point to it.  Pointing to it before its own branches are
+	// explored is harmless: exploring them only appends to the
+	// branch lists of other vertices, since coming back here finds
+	// this vertex already present and adds no frame.
+	int tidx = find_vertex(trtr0);
+	const bool isnew = (tidx == (int)vertices());
+	if (isnew)
+	  tidx = new_vertex(trtr0);
+	else if (debug)
+	  std::cerr << "Not adding vertex " << tidx << std::endl;
+
+	tv[idx].push_back(tidx);
+
+	if (isnew) todo.push_back(frame{tidx,0});
       }
-    // Return the index, which allows the recursion.
-    return idx;
   }
 
   // Delete a vertex.
