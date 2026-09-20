@@ -171,44 +171,17 @@ parse_run_metrics() {
   printf "%s\t%s\t%s\t%s\t%s\n" "${main_size:-NA}" "${other_size}" "${min_dil}" "${shortest_minimiser}" "${shortest_overall}"
 }
 
-extract_effective_max_len() {
-  local out="$1"
-  printf "%s\n" "${out}" | awk '
-    /pA candidates found with path length <=/ ||
-    /NO pseudo-Anosov candidates found with path length <=/ {
-      x = $0;
-      gsub(/[^0-9]/, "", x);
-      print x;
-      exit;
-    }
-  '
-}
-
 run_ttauto_for_stratum() {
   local n="$1"
   local stratum="$2"
-  local nstrata="$3"
-  local max_len="$4"
+  local max_len="$3"
 
-  local choose_part=""
-  if (( nstrata > 1 )); then
-    choose_part="${stratum}\n"
-  fi
-
-  # First try assumes "Subgraph to search" is prompted.
-  local out
-  out="$(printf "%s\n%b" "${n}" "${choose_part}y\nn\n1\n${max_len}\n" | "${TTAUTO_BIN}" 2>/dev/null || true)"
-
-  local used_len
-  used_len="$(extract_effective_max_len "${out}")"
-
-  # If the run used a different limit, retry assuming no subgraph prompt
-  # (single-subgraph case, where sending "1" would shift inputs).
-  if [[ -n "${used_len}" && "${used_len}" != "${max_len}" ]]; then
-    out="$(printf "%s\n%b" "${n}" "${choose_part}y\nn\n${max_len}\n" | "${TTAUTO_BIN}" 2>/dev/null || true)"
-  fi
-
-  printf "%s\n" "${out}"
+  # Every prompt consumes exactly one line, including those with a single
+  # valid answer, so the input is the same six lines for every stratum:
+  # punctures, stratum, divide into subgraphs, do not write them to file,
+  # subgraph to search, maximum path length.
+  printf "%s\n%b" "${n}" "${stratum}\ny\nn\n1\n${max_len}\n" \
+    | "${TTAUTO_BIN}" 2>/dev/null || true
 }
 
 printf "# ttauto Strata Scan (n=%s..%s)\n\n" "${N_MIN}" "${N_MAX}" > "${OUTPUT_MD}"
@@ -239,7 +212,7 @@ for ((n=N_MIN; n<=N_MAX; ++n)); do
 
     progress "  -> running stratum ${stratum}: ${singularity} (max path length ${max_len_for_case_val})"
 
-    run_out="$(run_ttauto_for_stratum "${n}" "${stratum}" "${nstrata}" "${max_len_for_case_val}")"
+    run_out="$(run_ttauto_for_stratum "${n}" "${stratum}" "${max_len_for_case_val}")"
 
     read -r main_vertices other_vertices_total min_dilatation minimiser_path_len shortest_path_len_overall <<<"$(parse_run_metrics "${run_out}")"
 
