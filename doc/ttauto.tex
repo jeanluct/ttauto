@@ -61,7 +61,7 @@
 
 \title[The pseudo-Anosov test in \ttauto]{\ttauto: mathematics and
   implementation of the pseudo-Anosov test}
-\date{19 September 2026.  Describes the code at commit \code{bb29dc5}.}
+\date{20 September 2026.  Describes the code at commit \code{c5fc451}.}
 
 \begin{document}
 
@@ -69,74 +69,56 @@
   \ttauto\ enumerates pseudo-Anosov homeomorphisms of the punctured disc
   as closed paths in a folding automaton of train tracks.  This document
   explains, for a reader who knows train tracks but not the code, what
-  the library computes and why it is correct: how a track is encoded and
-  numbered, what one fold does to the edges as a matrix and as a
-  free-group substitution, how the automaton and the search are built on
-  that, and above all how the Bestvina--Handel criterion for
+  the library computes and why it is correct.  Part~I is mathematics: how
+  a track is labelled, what one fold does to the edges as a matrix and as
+  a free-group substitution, how the automaton and the search are built
+  on that, and above all how the Bestvina--Handel criterion for
   pseudo-Anosov (a primitive transition matrix \emph{and} connected gates
   at every vertex) is evaluated along a folding path without ever writing
-  down an image word.  A four-puncture example is worked out completely,
-  from the four one-step maps to the gate graph that shows the map to be
-  reducible.  An appendix maps each concept to the file that implements
-  it and the test that pins it.
+  down an image word.  Part~II names the classes and functions that
+  realise each of these objects, works out a four-puncture example
+  completely, from the four one-step maps to the gate graph that shows
+  the map to be reducible, and shows how to drive the test from the
+  library.  An appendix maps each concept to the file that implements it
+  and the test that pins it.
 \end{abstract}
 
 \maketitle
 \tableofcontents
 
-\subsection*{A note about numbering}
-There is an inherent tension present in the code: mathematical objects are
-usually numbered from~$1$ in the literature, but the C++ language is
-zero-indexed (the first element of an array is zero).  These two conventions
-coexist here, and the loose rule is that user-facing objects are numbered
-from~$1$, while the internals are numbered from~$0$.
-\begin{itemize}
-  \item \textbf{One-indexed}: everything a user reads or types.  The
-    interactive \code{ttauto} program numbers strata, subautomata and
-    vertices from~$1$, as do its Mathematica output files and the printed
-    codings.  The \emph{letters} are also one-indexed, of necessity.  A
-    train-track map is stored as a substitution on an alphabet whose
-    letters are signed integers naming the edges and sides of the track
-    (Section~\ref{sec:onefold}); the sign carries the orientation
-    ($\anti e=-e$), so zero cannot be a letter.
-  \item \textbf{Zero-indexed}: everything inside the library.  Vertices
-    and branches of the automaton, multigons, prongs, edges and fold
-    indices are C++ indices from~$0$, and so are the diagnostic printouts
-    of the library itself (the gate table, the fold record, the path lists
-    of the search).
-\end{itemize}
+%======================================================================
+\part{Mathematics}
 
 %======================================================================
-\section{Train tracks and their numbering}
+\section{Train tracks on the punctured disc}
 \label{sec:tracks}
 
 \subsection{Multigons, prongs, cusps}
 The surface throughout is the disc with $\np$ punctures, $\np\ge3$, and
 the train tracks are the properly embedded ones of \cite{Lanneau2011}.
-A train track in \ttauto\ is a finite list of \emph{multigons}.  A
-multigon with $k$ prongs is a $k$-gon whose $k$ corners are the
-\emph{prongs}; at each prong a linearly ordered list of \emph{main edges}
-is attached, and two consecutive edges at the same prong form a
-\emph{cusp}.  The $k$ \emph{sides} of the polygon are infinitesimal: they
-carry no weight and are never folded.  A multigon may be \emph{punctured};
-a punctured monogon ($k=1$) is the standard neighbourhood of a puncture,
-its single side is a loop around the puncture.  Properly embedded means
-that every puncture is enclosed by a punctured monogon and that the track
-fills the disc: its complement consists of the interiors of the polygons
-and of the punctured monogons, and one more region, the annulus between
-the track and the outer boundary of the disc.  Every edge has two ends
-attached at prongs, so the structure is a graph whose vertices are
-blown up into polygons (Figure~\ref{fig:multigon}).  The corners of the
-boundary region are the cusps of the track, so that region is a polygon
-with as many prongs as the track has cusps.  The \emph{singularity data}
-of a track lists its multigons with their prong numbers, a dot marking
-the punctured ones, and the number of cusps in parentheses;
-Figure~\ref{fig:tracks} shows the tracks $1.\,1.\,1.\,1.\,(2)$, four
-punctured monogons and a 2-pronged boundary, and $1.\,1.\,1.\,1.\,3\,(1)$,
-which has in addition an unpunctured trigon and a 1-pronged boundary.
-Tracks with the same singularity data form a \emph{stratum}, and the
-constructor \code{build_traintrack_list(n)} returns one representative
-track per stratum of the disc with $n$ punctures.
+A train track is a finite collection of \emph{multigons} joined by
+\emph{main edges}.  A multigon with $k$ prongs is a $k$-gon whose $k$
+corners are the \emph{prongs}; at each prong a linearly ordered list of
+main edges is attached, tangent to one another, and two consecutive
+edges at the same prong form a \emph{cusp}.  The $k$ \emph{sides} of the
+polygon are infinitesimal: they carry no weight and are never folded.  A
+multigon may be \emph{punctured}; a punctured monogon ($k=1$) is the
+standard neighbourhood of a puncture, its single side is a loop around
+the puncture.  Properly embedded means that every puncture is enclosed
+by a punctured multigon and that the track fills the disc: its
+complement consists of the interiors of the polygons and of the punctured
+multigons, and one more region, the annulus between the track and the
+outer boundary of the disc.  Every edge has two ends attached at prongs,
+so the structure is a graph whose vertices are blown up into polygons
+(Figure~\ref{fig:multigon}).  The corners of the boundary region are the
+cusps of the track, so that region is a polygon with as many prongs as
+the track has cusps.  The \emph{singularity data} of a track lists its
+multigons with their prong numbers, a dot marking the punctured ones,
+and the number of cusps in parentheses; Figure~\ref{fig:tracks} shows
+the tracks $1.\,1.\,1.\,1.\,(2)$, four punctured monogons and a
+2-pronged boundary, and $1.\,1.\,1.\,1.\,3\,(1)$, which has in addition
+an unpunctured trigon and a 1-pronged boundary.  Tracks with the same
+singularity data form a \emph{stratum}.
 
 \begin{figure}[t]
   \centering
@@ -297,7 +279,7 @@ track per stratum of the disc with $n$ punctures.
     \end{scope}
   \end{tikzpicture}
   \caption{Two properly embedded train tracks on the disc with four
-    punctures, with their canonical numbering.  Punctures are dots,
+    punctures, with the canonical numbering of Section~\ref{sec:numbering}.  Punctures are dots,
     loops of punctured monogons are red and labelled by their side
     letter, main edges are black with their orientation and number, sides
     of the unpunctured trigon are blue, and the small grey numbers are the
@@ -309,63 +291,61 @@ track per stratum of the disc with $n$ punctures.
   \label{fig:tracks}
 \end{figure}
 
+\subsection{The coding walk and the normal form}
+\label{sec:coding}
+A track is identified up to isotopy by a \emph{coding}, the record of a
+depth-first walk.  The walk starts at an \emph{uncusped monogon} (a
+punctured monogon carrying a single edge), crosses its edge, and at every
+multigon it enters records the number of prongs, the puncture label, the
+entry prong and the number of edges at each prong, then descends into
+each edge in the cyclic order of the prongs and of the slots at a prong.
+From a fixed start the walk is deterministic, so the coding is a function
+of the start monogon, and comparing the codings from all uncusped
+monogons lexicographically singles out a smallest one.  A track in
+\emph{normal form} has been rotated and sorted so that this minimal
+coding is the one read from its first monogon; two tracks are isotopic if
+and only if their minimal codings agree, and the track can be rebuilt
+from the coding.  The same walk run in the opposite cyclic direction
+codes the mirror image; a track is \emph{reflection symmetric} when the
+two codings agree, and \emph{cyclically symmetric} when several uncusped
+monogons give the same minimal coding.
 
-\subsection{Codings and normal form}
-A track is identified up to isotopy by its \emph{coding}: a depth-first
-walk that starts at an uncusped monogon (a punctured monogon carrying a
-single edge), crosses its edge, and at every multigon it enters records
-the number of prongs, the puncture label, the entry prong and the number
-of edges at each prong, descending into each edge in the cyclic order of
-the prongs and of the slots at a prong.  The walk from a fixed start is
-deterministic, so the coding is a function of the start monogon;
-\code{normalise()} rotates every multigon to a canonical position,
-sorts the multigons, and moves to slot~$0$ the uncusped monogon whose
-coding is lexicographically smallest.  After normalisation
-\code{coding()} is that minimal coding, two tracks are equal
-(\code{operator==}) if and only if their codings are equal, and
-\code{traintrack(code)} rebuilds a track from its coding.  The mirror
-image has coding \code{coding(-1)}, the same walk run in the opposite
-cyclic direction; a track is \emph{reflection symmetric} when the two
-agree.  A track is \emph{cyclically symmetric} when several uncusped
-monogons give the same minimal coding; \code{cyclic_symmetry()} returns
-the induced permutation of the edges.
-
-\subsection{The canonical numbering}
+\subsection{The canonical numbering and the letters}
 \label{sec:numbering}
 Everything the maps below say about a track is expressed in one
-\emph{numbering} of its prongs, edges and cusps, the struct
-\code{ttnumbering} returned by \code{traintrack::numbering()}.  It is
-produced by the same walk as the coding, started at monogon~$0$:
+\emph{numbering} of its prongs, edges and cusps, produced by the same
+walk as the coding, started at the distinguished monogon:
 \begin{itemize}
   \item prongs are numbered $0,1,2,\dots$ in the order the walk first
     reaches them; when the walk enters a $k$-gon at prong $p$ it numbers
     all $k$ prongs consecutively from $p$ in the cyclic direction;
-  \item edges are numbered in the order the walk first crosses them, and
-    each edge is oriented \emph{away} from the multigon that first
-    reaches it, so an edge has a tail prong and a head prong
-    (\code{edge_tail}, \code{edge_head});
+  \item edges are numbered $0,1,\dots,n-1$ in the order the walk first
+    crosses them, and each edge is oriented \emph{away} from the multigon
+    that first reaches it, so an edge has a tail prong and a head prong;
   \item side $q$ is the side that runs from prong $q$ to the next prong
     of the same multigon in the cyclic direction (for a monogon, its loop);
   \item cusps are listed in the order the walk meets them, and fold index
     $f$ refers to cusp $\lfloor f/2\rfloor$ folded in direction
     $1-2(f\bmod 2)$.
 \end{itemize}
-This is exactly the order in which \code{weights()} reads the edge
-weights, so the rows and columns of every transition matrix are indexed
-by edge numbers.  The numbering also carries the list of prong letters
-(\code{prong_letters[q]}: the signed main letters whose tail is at prong
-$q$), the type of each prong (\code{nprongs}, \code{punctured}) and the
-letter conventions \code{main_letter(e)}${}=e+1$ and
-\code{side_letter(q)}${}=n+1+q$.
-
 Because the walk is determined by the coding, the numbering is a function
-of the coding: two normalised tracks with the same coding have the same
-edge tails and heads, prong letters and cusps (\code{same_labels}).
-Section~\ref{sec:labels} explains why this is what makes the automaton
-compose maps across vertices without any transport step.
+of the coding: two tracks in normal form with the same coding have the
+same edge tails and heads, prong contents and cusps.  This is the fact
+that lets maps be composed along a path without ever matching up two
+copies of a track by hand (Section~\ref{sec:labels}).
+
+Train-track maps are written as substitutions on an alphabet of
+\emph{letters}, one letter per edge and per side.  Edge $e$ is the
+letter $e+1$ and side $q$ is the letter $n+1+q$, where $n$ is the number
+of main edges; a negative letter is the same edge or side with the
+opposite orientation, $\anti e=-e$.  Letters start at~$1$ because their
+sign carries the orientation.  Figure~\ref{fig:tracks} shows the
+numbering of two tracks: edge numbers and orientations, loop letters,
+and prong numbers.
+
 
 %======================================================================
-\section{Folds, the automaton, and the search}
+\section{Folds and the folding automaton}
 \label{sec:folds}
 
 \subsection{One fold}
@@ -379,9 +359,9 @@ of $e_0$ at $M$ is then detached, slid along $e_1$ to $T$, carried along
 the side of $T$ from $t$ to the adjacent prong $t'=t\pm1 \pmod k$, and
 re-attached there as the outermost edge.  For a punctured monogon target,
 $k=1$, $t'=t$ and the edge goes once around the puncture.  Finally the
-track is normalised.  Folds never create or destroy prongs or edges, so
-the singularity data is preserved and the prongs before and after a fold
-are in canonical bijection.
+track is put back in normal form.  Folds never create or destroy prongs
+or edges, so the singularity data is preserved and the prongs before and
+after a fold are in canonical bijection.
 
 \begin{figure}[t]
   \centering
@@ -442,23 +422,18 @@ are in canonical bijection.
   \label{fig:fold}
 \end{figure}
 
-The library records what one fold does in a \code{fold_map_data}
-(filled by \code{traintrack::fold_with_map}), entirely in the
-numberings before and after the fold: the old edge numbers
-\code{moved}${}=e_0$ and \code{onto}${}=e_1$; the direction; the cusp
-prong; the target prongs $t$ (\code{target_from}) and $t'$
-(\code{target_to}); the signed side letter $S$ traversed between them;
-\code{edge_image[e]}, the signed new letter of every old edge $e$ (the
-sign records whether the canonical orientations before and after agree);
-\code{prong_image[q]}, the new number of old prong $q$; and the
-three-letter word \code{moved_word} which is the image of $e_0$.  Two
-algebraic objects are read off the record.
+Everything one fold does is captured by a small amount of data in the
+numberings before and after the fold: which edge moved and onto which
+edge, the two target prongs $t$ and $t'$ and the signed side $S$ of $T$
+between them, the new number and orientation of every old edge, and the
+new number of every old prong.  Two algebraic objects are read off this
+\emph{fold record}.
 
 \paragraph{The train-track map.}
-The one-fold map is a substitution on the $n+n_{\mathrm{s}}$ letters
-(\code{fold_map_data::to_freeauto}, a \code{jlt::freeauto<int>}): every
-edge other than $e_0$ goes to its signed new letter, every side goes to
-its new side, and $e_0$, in its canonical orientation, goes to
+The one-fold map is a substitution on the $n+n_{\mathrm{s}}$ letters,
+where $n_{\mathrm{s}}$ is the total number of prongs: every edge other
+than $e_0$ goes to its signed new letter, every side goes to its new
+side, and $e_0$, in its canonical orientation, goes to
 \[
   e_0 \;\longmapsto\; e_0'\;S\;e_1
   \qquad\text{or}\qquad
@@ -473,60 +448,59 @@ letters is the side of the target multigon that the path runs along.
 Its abelianisation on main edges is the $n\times n$ matrix with
 $M_{e'e}=$ number of times $e'$ occurs in the image of $e$, regardless of
 sign; for one fold this is a permutation matrix plus a single extra $1$
-in the row of $e_1'$ and the column of $e_0$
-(\code{fold_map_data::transition_matrix}, stored as a
-\code{mathmatrix_permplus1}).  Composing folds multiplies matrices:
-$M(\gamma)=M_L\cdots M_2M_1$ for a path of $L$ folds, so
-$M(\gamma)_{e'e}$ counts how many times the image of $e$ crosses $e'$.
+in the row of $e_1'$ and the column of $e_0$.  Composing folds
+multiplies matrices: $M(\gamma)=M_L\cdots M_2M_1$ for a path of $L$
+folds, so $M(\gamma)_{e'e}$ counts how many times the image of $e$
+crosses $e'$.
 
 \subsection{The automaton}
-The \emph{folding automaton} of a stratum (\code{ttfoldgraph}) has one
-vertex per normalised track and one branch per legal fold.  It is built
-recursively from a starting track: every fold index is tried, the result
-is normalised, identified with an existing vertex if its coding is
-already present and added otherwise, and the branch stores the target
-vertex, the one-step transition matrix and the one-step map
-(\code{target_vertex}, \code{transition_matrix}, \code{traintrack_map}).
-Folds that are not legal are skipped, and a fold whose matrix is the
+\label{sec:automaton}
+The \emph{folding automaton} of a stratum has one vertex per track in
+normal form and one branch per legal fold, labelled by the fold's map and
+matrix.  It is generated from a starting track by trying every fold,
+putting the result in normal form, and identifying it with an existing
+vertex when its coding is already present.  A fold whose matrix is the
 identity contributes no branch.  The automaton usually decomposes into
-strongly connected components (\code{subgraphs}); the searches below run
-on the \emph{main} component, the one that contains pseudo-Anosovs.  A
-\code{folding_path} is a start vertex and a sequence of branch choices;
-it composes the stored one-step data into the path matrix
-(\code{transition_matrix()}), the path map (\code{traintrack_map()}),
-the sequence of vertices visited, and knows whether it is closed.  Two
-closed paths are equal when they are cyclic rotations of each other.
-
-\subsection{The search}
-\label{sec:search}
-\code{ttauto::ttauto::search()} performs a depth-first search over
-folding paths from every vertex of the automaton (skipping one vertex of
-each reflection-symmetric pair, since the mirror image gives the same
-dilatations).  Partial paths are pruned by a length bound
-(\code{max_pathlength}) or, in the norm-bounded mode
-(\code{check_norms}), as soon as the minimum row or column sum of the
-running matrix exceeds the dilatation being searched for, since that sum
-is a lower bound on the spectral radius and grows along the path.
-Optionally \emph{bad words} (\code{badwords}) are pruned: closed subpaths
-whose matrix has the same zero pattern as its square can be traversed
-once instead of repeatedly without lowering the dilatation.  When a path
-closes, \code{record_pA} decides whether it is a pseudo-Anosov
-(Section~\ref{sec:criterion}); accepted paths are grouped into
-\code{pAclass} objects keyed by characteristic polynomial, and each class
-keeps its dilatation and a few representative paths.  Rejected
-candidates go to a second list.
-
-%======================================================================
-\section{When is a closed path pseudo-Anosov?}
-\label{sec:criterion}
+strongly connected components; the searches run on the \emph{main}
+component, the one that contains pseudo-Anosovs.  A \emph{folding path}
+is a start vertex and a sequence of branch choices; it has a path matrix,
+the product of the one-step matrices, and a path map, the composition of
+the one-step maps, and it is \emph{closed} when it returns to its start
+vertex.  Two closed paths are regarded as equal when they are cyclic
+rotations of each other.
 
 A closed folding path $\gamma$ of length $L$ from a track $\trk$ back to
 $\trk$ defines a homeomorphism $\ho$ of the punctured disc, up to
 isotopy: perform the $L$ folds and identify the final track with $\trk$
 by the canonical numbering.  The train-track map $g=g(\gamma)$ carries
-$\trk$ to itself; its main-edge matrix is $M(\gamma)$.  The question is
-when $\ho$ is pseudo-Anosov, and then its dilatation is the
-Perron--Frobenius eigenvalue of $M(\gamma)$.
+$\trk$ to itself and its main-edge matrix is $M(\gamma)$.
+
+\subsection{The search}
+\label{sec:search}
+The search is a depth-first enumeration of folding paths from every
+vertex of the main component, skipping one vertex of each
+reflection-symmetric pair since the mirror image gives the same
+dilatations.  Partial paths are pruned either by a bound on their
+length, or, in the \emph{norm-bounded} mode, as soon as the minimum row
+or column sum of the running matrix exceeds the dilatation being searched
+for, since that sum is a lower bound on the spectral radius and grows
+along the path.  Optionally \emph{bad words} are pruned: closed subpaths
+whose matrix has the same zero pattern as its square can be traversed
+once instead of repeatedly without lowering the dilatation.  When a path
+closes, the criterion of Section~\ref{sec:criterion} decides whether it
+is a pseudo-Anosov; accepted paths are grouped into classes keyed by the
+characteristic polynomial of their matrix, and each class keeps its
+dilatation and a few representative paths.  Rejected candidates are kept
+in a second list.
+
+
+%======================================================================
+\section{When is a closed path pseudo-Anosov?}
+\label{sec:criterion}
+
+The question is when the homeomorphism $\ho$ of a closed path is
+pseudo-Anosov; then its dilatation is the Perron--Frobenius eigenvalue of
+$M(\gamma)$.
 
 \subsection{Matrix conditions, and why they are not enough}
 Two conditions on $M(\gamma)$ are necessary.  It must be
@@ -534,8 +508,8 @@ Two conditions on $M(\gamma)$ are necessary.  It must be
 invariant subgraph, hence a reduction.  Its spectral radius $\lam$ must
 exceed $1$: otherwise the growth is polynomial and $\ho$ is reducible or
 finite order.  \ttauto\ in fact requires the stronger property that
-$M(\gamma)$ be \emph{primitive}, some power strictly positive
-(\code{is_primitive}), for the following reason.
+$M(\gamma)$ be \emph{primitive}, some power strictly positive, for the
+following reason.
 
 \begin{Remark}[primitive versus irreducible]
   \label{rem:primitive}
@@ -604,7 +578,7 @@ then no iterate $g^k(E)$ backtracks either.
 So for an efficient irreducible map the matrix decides nothing further
 and the gate graphs decide everything.  The paper also constrains what
 the infinitesimal edges can look like in the pseudo-Anosov case, which
-the implementation uses as a sanity check:
+gives a cheap sanity check:
 
 \begin{Proposition}[{\cite[Props.~3.3.3--3.3.4]{Bestvina1995}}]
   \label{prop:shape}
@@ -626,11 +600,12 @@ are defined as before, with one extra irreducibility requirement (I2):
 if two distinct directions have the same derivative then that derivative
 lies in $H$.  In particular each peripheral direction is a gate by itself.
 
+
 \subsection{The dictionary}
 \label{sec:dictionary}
 \ttauto\ never writes a graph map; it folds tracks.  Figure~\ref{fig:blowup}
 shows that a track is the blown-up graph, and fixes the following
-correspondence, which is what the gate module implements.
+correspondence.
 
 \begin{figure}[t]
   \centering
@@ -724,6 +699,7 @@ correspondence, which is what the gate module implements.
   \label{tab:dictionary}
 \end{table}
 
+
 The peripheral subgraph is the set of sides of punctured multigons, the
 main edges are $H$, and a subword $x\,S\,y$ of an image word contributes
 the turn $(\anti x,y)$ at the multigon of $S$ if $S$ is a side of an
@@ -740,8 +716,8 @@ consequences of the dictionary do most of the work.
   A fold detaches one end of an edge from a prong and re-attaches it at
   a prong of another multigon; it never changes the number of prongs of
   any multigon.  So along a folding path the prongs of the start track
-  are mapped bijectively to the prongs of the end track
-  (\code{prong_image}), and $\Dg^k(E)$ has its tail at the image prong
+  are mapped bijectively to the prongs of the end track, and
+  $\Dg^k(E)$ has its tail at the image prong
   of the tail of $E$.  Directions at different prongs have images at
   different prongs, hence never coincide.
 \end{proof}
@@ -811,24 +787,26 @@ Proposition~\ref{prop:shape}.
   Proposition~\ref{prop:shape} allows at most one.
 \end{proof}
 
-\subsection{The criterion as implemented}
-Putting the pieces together, \code{record_pA} accepts a closed path
-$\gamma$ as pseudo-Anosov when
+
+\subsection{The criterion}
+\label{sec:criterion-summary}
+Putting the pieces together, a closed path $\gamma$ is accepted as
+pseudo-Anosov when
 \begin{enumerate}
   \item $M(\gamma)$ is primitive;
   \item its Perron root $\lam$, found by Newton iteration on the
     characteristic polynomial from the upper bound $\min(\max$ row sum,
-    $\max$ column sum$)$, lies in the requested window
-    (\code{min_dilatation}, \code{max_dilatation});
+    $\max$ column sum$)$, lies in the requested window;
   \item at every Bestvina--Handel vertex of $\trk$, unpunctured multigon
     or prong of a punctured multigon, the gates of $g(\gamma)$ are
     connected by the realised turns.
 \end{enumerate}
-Condition~3 is \code{folding_path::gates().connected}; the next section
-explains how it is computed.  The analysis also reports whether every
-vertex has one of the shapes of Proposition~\ref{prop:shape}
-(\code{shapes_ok}); this is not used to accept or reject, only printed,
-since by Theorem~\ref{thm:bh} it must hold whenever condition~3 does.
+The next section explains how condition~3 is computed.  The same
+computation also reports whether every vertex has one of the shapes of
+Proposition~\ref{prop:shape}; this is not used to accept or reject, only
+reported, since by Theorem~\ref{thm:bh} it must hold whenever
+condition~3 does.
+
 
 %======================================================================
 \section{Computing the condition along a path}
@@ -841,19 +819,19 @@ $\turns(g)$ of turns taken by the images of the main edges.  Both
 compose without words.
 
 \subsection{Derivative data of one fold}
-For a one-step map $h$ (three-letter words at most) with target
-numbering $N$, the struct \code{fold_derivative(AM, N)} records
+For a one-step map $h$, whose image words have at most three letters,
+the \emph{derivative data} is the pair $(\Dg h,\turns(h))$:
 \begin{itemize}
-  \item $\Dg h$ on every signed letter, main and side (\code{apply});
-    for a side letter this is just the image side;
+  \item $\Dg h$ on every signed letter, main and side; for a side letter
+    this is just the image side;
   \item $\turns(h)$: for each main edge whose image is $x\,S\,y$, the
     turn $(\anti x,y)$ at the unpunctured multigon of $S$, or the turns
     $(\anti x,S)$ and $(\anti S,y)$ if $S$ is peripheral, all in the
-    letters of $N$.
+    letters of the target track.
 \end{itemize}
-The constructor checks that consecutive letters of each word share a
-prong of $N$ and that no turn falls inside a prong, and fails fast
-otherwise; these are the invariants of Section~\ref{sec:onefold}.
+Both are read directly off the three-letter words, checking on the way
+that consecutive letters share a prong and that no turn falls inside a
+prong, the invariants of Section~\ref{sec:onefold}.
 
 \subsection{Composition}
 Write $g$ for the map composed so far and $h$ for the next one-step map,
@@ -880,19 +858,19 @@ $h$).
   with $\Dg g(S)=g(S)$.
 \end{proof}
 
-The class \code{gate_accumulator} holds the pair $(\Dg g,\turns(g))$ and
-\code{push_back(d)} replaces it by
-$(\Dg g\circ\Dg h,\ \turns(g)\cup\Dg g(\turns(h)))$; a \code{folding_path}
-of length $L$ is processed in $O(L\,(n+n_{\mathrm{s}}))$ operations.
+So an \emph{accumulator} holding the pair $(\Dg g,\turns(g))$ absorbs the
+next fold by replacing it with
+$(\Dg g\circ\Dg h,\ \turns(g)\cup\Dg g(\turns(h)))$, and a path of length
+$L$ is processed in $O(L\,(n+n_{\mathrm{s}}))$ operations.
 
 \subsection{Gates and connectivity}
 With the composed $(\Dg g,\turns(g))$ of a closed path read as a self-map
-of the start track with numbering $N$, \code{analyse(N)} does the
-following at each Bestvina--Handel vertex.
+of the start track, the analysis does the following at each
+Bestvina--Handel vertex.
 \begin{enumerate}
-  \item The directions are the prong letters of the vertex's prongs, plus
-    $\anti{\per_{\mathrm{in}}}$ and $\per_{\mathrm{out}}$ at a punctured
-    prong, in cyclic order.
+  \item The directions are the signed main letters with tail at the
+    vertex's prongs, plus $\anti{\per_{\mathrm{in}}}$ and
+    $\per_{\mathrm{out}}$ at a punctured prong, in cyclic order.
   \item Gates: two directions are equivalent when $\Dg^K$ identifies
     them, where $K$, the square of the number of directions, bounds the
     pre-period of the finite dynamical system $\Dg$ on the direction set.
@@ -904,17 +882,164 @@ following at each Bestvina--Handel vertex.
   \item Each realised turn at the vertex joins the gates of its two
     directions; a union-find over the gates gives the number of
     components.  A realised turn inside a gate, or a turn whose two
-    directions are at different vertices, is an invariant violation and
-    fails fast.
+    directions are at different vertices, would violate the invariants
+    of Section~\ref{sec:dictionary} and stops the computation.
   \item The infinitesimal-edge pattern is compared with
     Proposition~\ref{prop:shape}.
 \end{enumerate}
-The result is a \code{gate_analysis}: a flag \code{connected} for the
-whole map, \code{shapes_ok}, and one \code{gate_vertex_report} per
-vertex with its directions, gates, joins and component count, printable
-with \code{print}.  A word-based implementation \code{analyse_gates(N, AM)},
-which reads a fully composed map, exists for cross-checking and agrees
-with the accumulator on every path the tests try.
+The result is one report per vertex, with its directions, gates, joins
+and component count, and the verdict: the map passes when every vertex
+is connected.
+
+
+%======================================================================
+\part{Implementation}
+
+The library has two namespaces.  \code{traintracks} holds everything
+about one train track and one map: the classes \code{traintrack},
+\code{multigon} and \code{edge}, the coding and numbering, the fold
+record, and the gate test.  \code{ttauto} holds the automaton
+\code{ttfoldgraph}, the \code{folding_path}, and the search class
+\code{ttauto}.  This part names, for each object of Part~I, the class or
+function that realises it.  File names are collected in
+Appendix~\ref{sec:appendix}.
+
+%======================================================================
+\section{Tracks, codings and the numbering}
+\label{sec:impl-tracks}
+
+\subsection*{A note about numbering}
+There is an inherent tension present in the code: mathematical objects are
+usually numbered from~$1$ in the literature, but the C++ language is
+zero-indexed (the first element of an array is zero).  These two conventions
+coexist here, and the loose rule is that user-facing objects are numbered
+from~$1$, while the internals are numbered from~$0$.
+\begin{itemize}
+  \item \textbf{One-indexed}: everything a user reads or types.  The
+    interactive \code{ttauto} program numbers strata, subautomata and
+    vertices from~$1$, as do its Mathematica output files and the printed
+    codings.  The letters of Section~\ref{sec:numbering} are also
+    one-indexed, of necessity: a letter's sign carries the orientation of
+    the edge, so zero cannot be a letter.
+  \item \textbf{Zero-indexed}: everything inside the library.  Vertices
+    and branches of the automaton, multigons, prongs, edges and fold
+    indices are C++ indices from~$0$, and so are the diagnostic printouts
+    of the library itself (the gate table, the fold record, the path lists
+    of the search).
+\end{itemize}
+Part~I already used the internal convention: prongs, edges and fold
+indices from~$0$, letters from~$1$.
+
+\subsection{Tracks and codings}
+A \code{traintrack} owns its \code{multigon}s; each multigon holds, per
+prong, the ordered list of attached \code{edge}s, and each edge points
+back to its two endpoints.  The constructor \code{build_traintrack_list(n)}
+returns one representative track per stratum of the disc with $n$
+punctures, in the order of the tables of \cite{Lanneau2011}; the
+constructors \code{traintrack(N)}, \code{traintrack(N,K)} and so on build
+the individual strata.  \code{normalise()} puts a track in normal form
+(rotating every multigon to a canonical position, sorting the multigons,
+and moving the minimising uncusped monogon to slot~$0$); after it,
+\code{coding()} returns the minimal coding, \code{operator==} compares
+codings, and \code{traintrack(code)} rebuilds a track from its coding.
+\code{coding(-1)} is the mirror image's coding, \code{is_reflection_symmetric()}
+compares the two, and \code{cyclic_symmetry()} returns the edge
+permutation induced by a cyclic symmetry.  \code{print_singularity_data}
+prints the singularity data in the dotted notation of
+Section~\ref{sec:tracks}.
+
+\subsection{The canonical numbering}
+\label{sec:impl-numbering}
+The numbering of Section~\ref{sec:numbering} is the struct
+\code{ttnumbering}, returned by \code{traintrack::numbering()} and
+computed by the same walk as the coding.  Its fields are
+\code{prong[q]} (multigon, prong index, number of prongs, puncturedness
+of prong number $q$), \code{edge_tail[e]} and \code{edge_head[e]},
+\code{prong_letters[q]} (the signed main letters whose tail is at prong
+$q$), and \code{cusp} (the cusps in fold order); \code{side_to(q)} gives
+the prong the side $q$ runs to, and the letter conventions are
+\code{main_letter(e)}${}=e+1$ and \code{side_letter(q)}${}=n+1+q$.  The
+edge order is the one \code{weights()} uses, so the rows and columns of
+every transition matrix are indexed by edge numbers.  Two numberings with
+the same canonical content compare equal under \code{same_labels}; the
+stricter \code{operator==} also compares the bookkeeping that ties the
+numbers to one object's multigon positions and is meant for copies of a
+single track.
+
+%======================================================================
+\section{Folds, the automaton and the search}
+\label{sec:impl-fold}
+
+\subsection{The fold record and the one-step data}
+\code{traintrack::fold(f)} performs fold index $f$ and returns whether it
+was legal.  \code{traintrack::fold_with_map(f, fm)} does the same and
+fills a \code{fold_map_data} with the fold record of
+Section~\ref{sec:onefold}: \code{moved} and \code{onto} (old edge
+numbers), \code{dir}, \code{cusp_prong}, \code{target_from} and
+\code{target_to} ($t$ and $t'$), the signed side letter \code{side},
+\code{edge_image[e]} (signed new letter of old edge $e$),
+\code{prong_image[q]}, the three-letter \code{moved_word}, and the
+numberings \code{before} and \code{after}.  From the record,
+\code{to_freeauto()} builds the one-step map as a \code{jlt::freeauto<int>}
+on $n+n_{\mathrm{s}}$ generators, and \code{transition_matrix()} builds
+the one-step matrix as a \code{mathmatrix_permplus1}, a sparse
+permutation-plus-one matrix.  \code{fold_traintrack_map} and
+\code{fold_transition_matrix} in the map module are the corresponding
+free functions.
+
+\subsection{The automaton and folding paths}
+\code{ttfoldgraph<traintrack>} is the automaton of
+Section~\ref{sec:automaton}.  \code{traintrack(v)} is the track at vertex
+$v$, \code{foldings(v)} the number of branches there, and for branch $b$
+\code{target_vertex(v,b)}, \code{transition_matrix(v,b)} and
+\code{traintrack_map(v,b)} return the stored data.  \code{subgraphs}
+splits the automaton into strongly connected components and
+\code{prune_multihumps} discards the ones that support no pseudo-Anosov.
+A \code{folding_path<traintrack>} is built from a graph and a start
+vertex by \code{push_back(b)}; \code{vertices()}, \code{closed()},
+\code{transition_matrix()} and \code{traintrack_map()} give the vertex
+sequence, the closure test, the path matrix and the path map, and
+\code{gates()} runs the gate test of Section~\ref{sec:impl-gates} on a
+closed path.
+
+\subsection{The search}
+The search of Section~\ref{sec:search} is the class
+\code{ttauto::ttauto<traintrack>}, run by \code{search()}.  \code{max_pathlength}
+sets the length bound; \code{check_norms()} together with
+\code{max_dilatation} selects the norm-bounded mode;
+\code{badword_length} enables bad-word pruning; \code{min_dilatation}
+and \code{max_dilatation} set the acceptance window.  When a path closes,
+\code{record_pA} applies the criterion of
+Section~\ref{sec:criterion-summary}: \code{is_primitive} on the matrix,
+\code{findroot} on the characteristic polynomial, and the gate test
+through \code{folding_path::gates()}.  Accepted paths are grouped into
+\code{pAclass} objects, keyed by polynomial, in \code{pA_list()};
+rejected ones go to \code{rejected_pA_list()}.  The gate test is on by
+default and \code{check_gates(false)} disables it.
+
+%======================================================================
+\section{The gate test}
+\label{sec:impl-gates}
+
+The derivative data of Section~\ref{sec:computing} is the struct
+\code{fold_derivative}, constructed from any train-track map (a
+\code{jlt::freeauto<int>}) and the numbering of its target track: it
+stores $\Dg$ on all signed letters (\code{apply}) and the set
+\code{turns}, and its constructor performs the continuity checks.  The
+class \code{gate_accumulator} holds the composed pair; \code{push_back}
+absorbs one \code{fold_derivative} as in Lemma~\ref{lem:compose}, and
+\code{analyse(N)} performs the gate computation of
+Section~\ref{sec:computing} for a closed path read as a self-map of the
+track with numbering \code{N}.  It returns a \code{gate_analysis}: the
+flags \code{connected} and \code{shapes_ok}, and one
+\code{gate_vertex_report} per vertex with its \code{directions},
+\code{gates}, \code{joins}, \code{components} and \code{connected}, all
+printable with \code{print}.  The invariant violations of
+Section~\ref{sec:computing} are fail-fast errors, in the style of the
+rest of the library.  A word-based implementation
+\code{analyse_gates(N, AM)}, which reads a fully composed map, exists for
+cross-checking and agrees with the accumulator on every path the tests
+try.
 
 \subsection{Why composing across vertices needs no transport}
 \label{sec:labels}
@@ -940,7 +1065,6 @@ enumerate those separately, and \cite[\S ``Cyclic symmetry'']{Lanneau2011}
 argues that folding at symmetry-related cusps already produces them.  The
 gate test inherits this convention.)
 
-%======================================================================
 \section{A four-puncture example, worked in full}
 \label{sec:example}
 
@@ -1016,7 +1140,7 @@ are the four prongs, each a puncture.
 
 \subsection{The four folds}
 The closed path starts at vertex~0 and takes branches $1,1,2,2$, visiting
-$0,2,0,3,0$.  The fold records read off the library are:
+$0,2,0,3,0$.  The fold records (Section~\ref{sec:impl-fold}) are:
 \begin{center}
   \small
   \begin{tabular}{@{}clcccl@{}}
@@ -1186,6 +1310,8 @@ them, and the two classes sit side by side in the search's accepted and
 rejected lists.
 
 %======================================================================
+
+%======================================================================
 \section{Using it}
 \label{sec:api}
 
@@ -1327,3 +1453,4 @@ class-by-class tour of the code.
 \end{thebibliography}
 
 \end{document}
+
