@@ -403,6 +403,18 @@ Outcome of Step 4 (2026-09-19):
   `test_gates.cpp` covers the case); `gates_check.cpp` kept as a documented
   diagnostic.
 
+  Minimal example (2026-09-19): the n=4 stratum `(2)` rejection is the
+  smallest instance.  Enumerating all closed paths of length <= 5 from
+  every vertex, nothing fails for n=3 or on n=4 stratum `3(1)`, and
+  nothing of length <= 3 fails for n <= 4; on n=4 `(2)` four paths of
+  length 4 and ten of length 5 are primitive but disconnected.  The
+  simplest is vertices `[0 2 0 3 0]` (0-based), branches `1 1 2 2`,
+  matrix `[[0,0,1],[1,2,0],[0,1,2]]`, polynomial `(x-1)(x^2-3x+1)`,
+  dilatation 2.61803: sigma1 sigma2^-1 on three strings plus an idle
+  puncture, disconnected at the fixed 3-edge monogon (4 gates, 2
+  components), the same pattern as the n=6 bad path.  Pinned in
+  `test_gates` and written up in the note (section "A minimal example").
+
 ## Step 5: tests
 
 - `testsuite/traintracks/test_numbering.cpp`: numbering tables for n=3..5

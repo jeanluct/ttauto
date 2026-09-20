@@ -30,6 +30,7 @@
 // closed path of a small automaton.
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <iostream>
 #include <list>
@@ -38,6 +39,7 @@
 #include <vector>
 #include <jlt/freeauto.hpp>
 #include <jlt/mathmatrix.hpp>
+#include <jlt/polynomial.hpp>
 #include "check.hpp"
 #include "traintracks/build.hpp"
 #include "traintracks/gates.hpp"
@@ -299,6 +301,96 @@ int main()
               << " with connected gates, " << naccepted
               << " primitive and connected, of which " << nrefined
               << " have a refined prong at an unpunctured multigon\n";
+  }
+
+  // ---- The minimal example (n=4, stratum (2)): the 3-puncture golden-mean
+  // pseudo-Anosov with an idle fourth puncture.  Nothing shorter fails for
+  // n <= 4, and nothing fails on n=3 or on the n=4 stratum 3(1).
+  {
+    jlt::vector<traintrack> ttv4 = traintracks::build_traintrack_list(4);
+    ttgraph g4(ttv4[0]);
+    CHECK(g4.vertices() == 4);
+    CHECK(g4.edges() == 3);
+
+    const std::vector<int> br = {1,1,2,2};
+    folding_path<traintrack> p(g4,0);
+    for (int b : br) p.push_back(b);
+    CHECK(p.closed());
+    {
+      const std::vector<int> vp = {0,2,0,3,0};
+      CHECK(p.vertices().size() == vp.size());
+      for (std::size_t i = 0; i < vp.size(); ++i) CHECK(p.vertices()[i] == vp[i]);
+    }
+    const jlt::mathmatrix<int> TM = p.transition_matrix();
+    const std::vector<int> want = {0,0,1, 1,2,0, 0,1,2};
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j) CHECK(TM(i,j) == want[3*i+j]);
+    CHECK(TM.is_primitive());
+    // Characteristic polynomial (x-1)(x^2-3x+1), spectral radius phi^2.
+    const jlt::polynomial<int> cp = TM.charpoly();
+    CHECK(cp(1) == 0);
+    CHECK(std::abs(cp(2.6180339887)) < 1e-6);
+
+    const gate_analysis ga = analyse_branches(g4,0,br);
+    check_same(ga,analyse_words(g4,0,br));
+    std::cout << "Minimal example (n=4 stratum (2), branches 1 1 2 2):\n";
+    ga.print(std::cout);
+    CHECK(!ga.connected);
+    const ttnumbering N = g4.traintrack(0).numbering();
+    int nbad = 0;
+    for (const auto& v : ga.vertices)
+      {
+        if (v.connected) continue;
+        ++nbad;
+        CHECK(v.prong >= 0);
+        CHECK(N.prong[v.prong].nprongs == 1 && N.prong[v.prong].punctured);
+        CHECK(N.prong_letters[v.prong].size() == 3);
+        CHECK(v.gates.size() == 4);
+        CHECK(v.components == 2);
+        // The idle puncture: its peripheral loop is fixed by the map.
+        const int loop = N.side_letter(v.prong);
+        const auto img = p.traintrack_map().get_action(loop);
+        CHECK(img.size() == 1 && *img.begin() == loop);
+      }
+    CHECK(nbad == 1);
+
+    // Exhaustive counts of primitive-but-disconnected closed paths by
+    // length: none for n=3, none on n=4 stratum 3(1), and 0,0,0,4,10 on
+    // n=4 stratum (2) for lengths 1..5.
+    auto count_bad = [](const ttgraph& g, const int L) {
+      int cnt = 0;
+      std::vector<int> b;
+      std::function<void(int,int,int)> rec = [&](int v0, int v, int d) {
+        if (d == L)
+          {
+            if (v != v0) return;
+            folding_path<traintrack> q(g,v0);
+            for (int x : b) q.push_back(x);
+            if (q.transition_matrix().is_primitive() && !q.gates().connected) ++cnt;
+            return;
+          }
+        for (int x = 0; x < g.foldings(v); ++x)
+          {
+            b.push_back(x);
+            rec(v0,g.target_vertex(v,x),d+1);
+            b.pop_back();
+          }
+      };
+      for (int v0 = 0; v0 < g.vertices(); ++v0) rec(v0,v0,0);
+      return cnt;
+    };
+    jlt::vector<traintrack> ttv3 = traintracks::build_traintrack_list(3);
+    ttgraph g3(ttv3[0]);
+    ttgraph g4b(ttv4[1]);
+    for (int L = 1; L <= 5; ++L)
+      {
+        CHECK_MSG(count_bad(g3,L) == 0, "n=3 length " << L);
+        CHECK_MSG(count_bad(g4b,L) == 0, "n=4 stratum 3(1) length " << L);
+      }
+    const std::vector<int> expect4 = {0,0,0,4,10};
+    for (int L = 1; L <= 5; ++L)
+      CHECK_MSG(count_bad(g4,L) == expect4[L-1],
+                "n=4 stratum (2) length " << L << ": " << count_bad(g4,L));
   }
 
   std::cout << "test_gates: OK\n";

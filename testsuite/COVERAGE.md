@@ -108,6 +108,10 @@ added lines that the census, not the testsuite, exercises.
     - Bestvina-Handel gate test on the n=6 stratum 3,3(2) subautomaton: the
       known spurious pseudo-Anosov is rejected at exactly the fixed 3-edge
       monogon, four genuine pseudo-Anosovs pass
+    - the minimal example on n=4 stratum (2): the length-4 path with
+      polynomial (x-1)(x^2-3x+1) is rejected at its fixed 3-edge monogon
+      with the same gate pattern; exhaustive counts show nothing fails at
+      length <= 3 for n <= 4 and nothing at all for n=3 or n=4 stratum 3(1)
     - accumulator-based and word-based analyses agree
     - puncture corollary and the Props. 3.3.3-3.3.4 shape pattern on every
       connected primitive closed path of a small automaton; the sweep also

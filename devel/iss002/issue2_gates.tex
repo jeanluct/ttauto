@@ -903,6 +903,56 @@ and is superseded by $2.02598$ at length 10.  The two imprimitive classes
 were never candidates there: the paper enumerates reciprocal polynomials
 with a Perron root, and a polynomial in $x^2$ has none.
 
+\subsection{A minimal example}
+\label{sec:minimal}
+The first row of Table~\ref{tab:census} is the smallest instance of the
+phenomenon, and it is small enough to check by hand.  Enumerating every
+closed path of length at most~$5$ from every vertex, nothing fails for
+$n=3$ or on the $n=4$ stratum $3\,(1)$, and nothing fails at length at
+most~$3$ anywhere for $n\le4$.  On the $n=4$ stratum $(2)$ (four
+punctured monogons, a 2-prong boundary, three main edges, four vertices
+of which three form the main subautomaton) four paths of length~$4$ and
+ten of length~$5$ have a primitive matrix and disconnected gates.  The
+simplest is the closed path through vertices $1,3,1,4,1$ (1-based; fold
+branches \code{1,1,2,2} in the C++ indexing), whose transition matrix
+\[
+  M=\begin{pmatrix} 0&0&1\\ 1&2&0\\ 0&1&2 \end{pmatrix},
+  \qquad \det(xI-M)=(x-1)(x^2-3x+1),
+\]
+is primitive with spectral radius $\varphi^2=2.61803$.  Vertex~1 has one
+punctured monogon with three edges (edges $1,2,3$; its loop is side~$5$)
+and three punctured monogons with one edge (loops $4$, $6$, $7$).  The
+composed map fixes the loop, $5\mapsto5$: that puncture is idle.  The
+gate analysis at vertex~1 is
+
+\begin{center}
+  \small
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    vertex & gates & joins & connected \\
+    \midrule
+    monogon 0 (puncture) & $\set{\anti4},\set{1},\set{4}$ & $\anti4\!\sim\!1,\ 1\!\sim\!4$ & yes \\
+    monogon 3 (puncture, fixed) & $\set{\anti5},\set{\anti1,2},\set{3},\set{5}$
+       & $\anti5\!\sim\!\anti1,\ \anti5\!\sim\!2,\ 3\!\sim\!5$ & \textbf{no} (2 components) \\
+    monogon 1 (puncture) & $\set{\anti6},\set{\anti2},\set{6}$ & $\anti6\!\sim\!\anti2,\ \anti2\!\sim\!6$ & yes \\
+    monogon 2 (puncture) & $\set{\anti7},\set{\anti3},\set{7}$ & $\anti7\!\sim\!\anti3,\ \anti3\!\sim\!7$ & yes \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\noindent
+exactly the pattern of Table~\ref{tab:gates}: at the fixed 3-edge
+monogon the main prong splits into two gates, and the loop joins each of
+them to only one of its own ends, leaving the components
+$\set{\anti5,\anti1,2}$ and $\set{3,5}$.  The homeomorphism is the
+3-puncture golden-mean pseudo-Anosov $\sigma_1\sigma_2^{-1}$ (dilatation
+$\varphi^2$, the $n=3$ minimum) with a fourth puncture standing still.
+The same stratum also carries a genuine pseudo-Anosov of length~$3$ with
+the same dilatation $2.61803$ but characteristic polynomial
+$x^3-2x^2-2x+1$, the true minimiser listed in the paper's table for four
+punctures; the two matrices are both primitive with the same spectral
+radius, and only the gate test tells them apart.
+
 %======================================================================
 \section{A word-free formulation}
 \label{sec:wordfree}
