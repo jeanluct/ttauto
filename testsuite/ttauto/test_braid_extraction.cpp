@@ -129,6 +129,21 @@ int main()
     CHECK(w.exponent_sum() == 2);
   }
 
+  // Three punctures: the one vertex, the two folds, and the classical
+  // minimum.  The whole pipeline in its smallest instance.
+  {
+    jlt::vector<traintrack> ttv = traintracks::build_traintrack_list(3);
+    ttgraph ttg(ttv[0]);
+    CHECK(ttg.vertices() == 1);
+    path p(ttg,0);
+    p.push_back(0); p.push_back(1);
+    bool verified = false;
+    const braidword b = ttauto::folding_path_braid(p,&verified);
+    CHECK(verified);
+    CHECK(b.word() == std::vector<int>({-1,2}));
+    CHECK(std::fabs(b.growth() - 2.6180339887) < 1e-8);
+  }
+
   long nver = 0, nunver = 0;
   for (int n = 3; n <= 5; ++n)
     {
@@ -147,8 +162,12 @@ int main()
   CHECK(nver > 300);
 
   // The canonical spurious pseudo-Anosov of issue #2: six punctures,
-  // stratum 3 3 (2), the closed path 1,0,3,2,1,2 from vertex 36 with
-  // dilatation 2.01536 that the gate test rejects.  Its braid must have
+  // stratum 3 3 (2), the closed path 1,0,3,2,1,2 with dilatation 2.01536
+  // that the gate test rejects.  CLAUDE.md gives its cycle as
+  // {29,46,43,71,88,85} in the ninety-vertex subgraph, one-based; the same
+  // path in the whole automaton starts at vertex 36, zero-based, and runs
+  // through 57, 54, 86, 107, 104.  Taking it here avoids depending on how
+  // subgraphs() and prune_multihumps order their output.  Its braid must have
   // that growth and fix exactly one puncture, since it is the
   // five-puncture minimum with an idle sixth.  The path runs through
   // cyclically symmetric vertices, so it also guards the rule that each
@@ -165,7 +184,14 @@ int main()
                     - 2.01535718128) < 1e-8);
     const braidword b = ttauto::folding_path_braid(p);
     CHECK(b.strings() == 6);
+    CHECK(b.word()
+          == std::vector<int>({1,2,1,2,3,4,5,5,-4,-3,-5,-5,-4,-3,-2,-1}));
+    CHECK(b.exponent_sum() == 0);
     CHECK(std::fabs(b.growth() - 2.01535718128) < 1e-8);
+    // A five-puncture pseudo-Anosov with an idle sixth, so the permutation
+    // is a five-cycle and one fixed point, as it is for the braid worked
+    // out by hand in devel/iss002, which differs from this one by
+    // conjugation.
     const std::vector<int> perm = b.permutation();
     int fixed = 0;
     for (int i = 0; i < 6; ++i) if (perm[i] == i+1) ++fixed;
@@ -186,6 +212,8 @@ int main()
     CHECK(!p.gates().connected);
     const braidword b = ttauto::folding_path_braid(p);
     CHECK(b.strings() == 4);
+    CHECK(b.word() == std::vector<int>({1,1,2,3,3,-2,-3,-3,-2,-1}));
+    CHECK(b.exponent_sum() == 0);
     CHECK(std::fabs(b.growth() - 2.6180339887) < 1e-8);
     const std::vector<int> perm = b.permutation();
     int fixed = 0;

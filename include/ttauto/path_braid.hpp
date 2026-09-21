@@ -158,8 +158,14 @@ folding_path_braids(const folding_path<TrTr>& p)
 
   // The automaton identifies the final track with the initial one by the
   // canonical numbering, which puts the root monogon, prong 0, at position
-  // 1.  Rotate until it is.
-  b *= traintracks::rotation_braid(np,emb.position_of[0]-1);
+  // 1.  Rotate until it is.  Rotating all the way round is the full twist,
+  // which is central and which the automaton cannot see anyway, since
+  // nothing here records a framing at the boundary of the disc; so take
+  // whichever way round is shorter.
+  int a = emb.position_of[0] - 1;
+  if (2*a > np) a -= np;
+  b *= (a >= 0 ? traintracks::rotation_braid(np,a)
+                : traintracks::rotation_braid(np,-a).inverse());
   b.reduce();
 
   // The initial track's cyclic symmetry, if any, is a root of the full

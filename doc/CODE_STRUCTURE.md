@@ -499,6 +499,11 @@ automaton's copy the next branch index refers to.  Getting that wrong
 gives a braid that is right up to a root of the full twist, which is
 enough to change the dilatation.
 
+The braid is only ever defined up to the full twist, since nothing here
+records a framing at the boundary of the disc, so the final rotation takes
+whichever way round is shorter and the words come out with exponent sum
+zero.
+
 Verified this way: 494 paths at three punctures to length 8, 1284 at four
 to length 6, 1062 at five to length 5 and 2070 at six to length 5, every
 vertex of every stratum, with no failures.
