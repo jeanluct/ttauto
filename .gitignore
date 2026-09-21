@@ -7,6 +7,7 @@ build/
 
 # Example executables
 examples/ttauto
+examples/ttbraid
 examples/ttauto_count
 examples/ttauto_labels
 examples/ttauto_min_example

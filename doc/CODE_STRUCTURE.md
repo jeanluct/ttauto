@@ -440,6 +440,7 @@ Purpose: reduce search cost without changing the core fold graph.
 - `examples/ttauto.cpp`: interactive CLI driver (stratum selection, optional subgraph splitting, search, optional file export).
 - `examples/ttauto_min_example.cpp`: compact scripted driver for low-dilatation checks on small puncture counts.
 - `examples/ttauto_torus.cpp`, `examples/ttauto_count.cpp`, `examples/ttauto_labels.cpp`: additional scenarios/sweeps.
+- `examples/ttbraid.cpp`: the braid of a closed folding path (issue #4).
 
 ## Test Files Worth Reading First
 
@@ -457,3 +458,43 @@ Purpose: reduce search cost without changing the core fold graph.
 - Automaton construction/symmetry/decomposition: `include/ttauto/ttfoldgraph.hpp`.
 - DFS pruning and candidate acceptance logic: `include/ttauto/ttauto.hpp`, `include/ttauto/badwords.hpp`.
 - Result grouping/serialization: `include/ttauto/pAclass.hpp`.
+- Proper embedding, puncture positions, braid extraction: `include/traintracks/embedding.hpp`, `include/traintracks/braid.hpp`, `include/ttauto/path_braid.hpp`, `testsuite/traintracks/test_embedding.cpp`, `testsuite/ttauto/test_braid_extraction.cpp`.
+
+## Braids from Folding Paths (issue #4)
+
+A closed folding path defines a homeomorphism of the punctured disc, and
+`ttauto::folding_path_braid` reads it off as a word in the braid
+generators.  What makes that possible is that the multigons and main edges
+form a tree, so the cyclic order of prongs recorded by the coding is a
+complete rotation system and the track has one planar embedding up to
+reflection.  `traintracks::outer_embedding` walks the boundary region of
+that embedding and puts the punctures in the order they occupy along the
+real axis.  A fold that lands on an unpunctured multigon keeps the track
+properly embedded and moves nothing; a fold that lands on a punctured
+monogon takes the moved edge once around the puncture, and undoing that
+exchanges the punctures of the moved subtree with the target puncture,
+which are next to each other in the walk.
+
+Conventions that had to be calibrated rather than derived: the sense of the
+boundary walk, fixed by the two tracks drawn by hand in `doc/ttauto.tex`
+Fig. 2 and asserted in `testsuite/traintracks/test_embedding.cpp`; and the
+handedness of each swap, which follows the fold direction.
+
+Every braid is checked against the path it came from.  `braidword::growth`
+iterates the braid on Dynnikov coordinates, which shares nothing with the
+rest of the library, and for a pseudo-Anosov path that growth must equal
+the Perron root of the path's transition matrix.  `folding_path_braid`
+reports the outcome through its `verified` flag.
+
+**Limitation.**  A small number of paths do not verify: none up to five
+punctures in the ranges tested (346 in the testsuite, several thousand in
+wider sweeps), about 2% at six punctures and longer lengths.  In those
+cases the permutation is still right -- it agrees with the composite
+`prong_image` of the path -- and the cross-check inside
+`fold_block_swap` passes at every step, so the error is in the handedness
+somewhere, and it is not a global sign: brute-forcing the sign of every
+individual fold finds no combination that verifies.  Failures are
+concentrated on paths where the two blocks straddle the cut (`fold_swap::rotate`
+is nonzero), but most such paths are fine, so that is a correlation and not
+the cause.  Until this is understood, treat an unverified braid as
+unreliable rather than as an answer.
