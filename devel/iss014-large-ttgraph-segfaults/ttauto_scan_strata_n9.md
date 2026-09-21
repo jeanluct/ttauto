@@ -1,5 +1,10 @@
 # ttauto Strata Scan (n=9..9)
 
+> Superseded by `examples/ttauto_strata_sizes.md`, which covers
+> n = 3 to 9 and fills in strata 8 and 17.  Kept because the NA rows
+> below record the state that motivated issue #14: those two strata
+> could not be built at all before the construction was fixed.
+
 ## 9 Punctures
 
 | Stratum | Singularity Data | Main | non-Main | Min Dil. | Min. Dil Len. | Shortest Len. | Max Len. |

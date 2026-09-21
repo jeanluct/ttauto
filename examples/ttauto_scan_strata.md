@@ -11,6 +11,9 @@
 > every vertex; see `doc/ttauto.tex`.  Since the search is bounded by
 > path length, each value is an upper bound on the minimum of its
 > stratum rather than a proof of it.
+>
+> Automaton sizes alone, without the dilatation search and reaching to
+> nine punctures, are in `ttauto_strata_sizes.md`.
 
 ## 3 Punctures
 
