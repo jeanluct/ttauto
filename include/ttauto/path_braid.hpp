@@ -61,8 +61,11 @@ namespace detail {
 // numbers branches by their rank among the folds with a non-identity
 // transition matrix and throws the fold index away, and a subgraph
 // renumbers them again when it drops the branches that leave its block.
-// So identify the fold by what it does -- its transition matrix and the
-// coding of the track it produces -- rather than by counting.
+// So identify the fold by what it does, its transition matrix and the
+// coding of the track it produces.  Two branches of one vertex can agree
+// on both -- they are still different folds, at different cusps -- so
+// break the tie by rank, which works for a subgraph too since taking a
+// subgraph keeps the order of the branches it keeps.
 template<class TrTr>
 int fold_index_of_branch(const ttfoldgraph<TrTr>& ttg, const int v,
                          const int branch)
@@ -72,12 +75,20 @@ int fold_index_of_branch(const ttfoldgraph<TrTr>& ttg, const int v,
   const typename TrTr::intVec target
     = ttg.traintrack(ttg.target_vertex(v,branch)).coding();
 
+  int rank = 0;
+  for (int b = 0; b < branch; ++b)
+    if (ttg.transition_matrix(v,b).full() == TM
+        && ttg.traintrack(ttg.target_vertex(v,b)).coding() == target) ++rank;
+
+  int seen = 0;
   for (int f = 0; f < tt.foldings(); ++f)
     {
       if (traintracks::fold_transition_matrix(tt,f).full() != TM) continue;
       TrTr folded(tt);
       if (!folded.fold(f)) continue;
-      if (folded.coding() == target) return f;
+      if (folded.coding() != target) continue;
+      if (seen == rank) return f;
+      ++seen;
     }
 
   std::cerr << "No fold for branch " << branch << " at vertex " << v
@@ -137,6 +148,12 @@ folding_path_braids(const folding_path<TrTr>& p)
 
       emb = outer_embedding(fm.after,fs.next_cut_dart);
       v = ttg.target_vertex(v,branch);
+
+      // Continue from the automaton's own copy of the track, not from the
+      // one just folded.  The two have the same coding, but when the track
+      // has a symmetry they need not be the same physical track, and it is
+      // the automaton's copy that the next branch index refers to.
+      tt = ttg.traintrack(v);
     }
 
   // The automaton identifies the final track with the initial one by the

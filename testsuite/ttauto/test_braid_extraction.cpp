@@ -31,11 +31,9 @@
 // so the sample is the closed paths with a primitive matrix and connected
 // gates.
 //
-// Known limitation: a small number of paths do not verify, all of them at
-// six punctures and none at three, four or five in the range covered here.
-// folding_path_braid reports that through its `verified` flag rather than
-// returning a braid that looks fine and is not, so this test asserts the
-// rate rather than demanding perfection; see doc/CODE_STRUCTURE.md.
+// folding_path_braid reports the outcome through its `verified` flag, so
+// that a braid which does not check out is never mistaken for one that
+// does.  Nothing fails in the range covered here.
 
 #include <cmath>
 #include <iostream>
@@ -145,9 +143,34 @@ int main()
             }
         }
     }
-  // Nothing fails to verify up to five punctures at this length.
   CHECK(nunver == 0);
   CHECK(nver > 300);
+
+  // The canonical spurious pseudo-Anosov of issue #2: six punctures,
+  // stratum 3 3 (2), the closed path 1,0,3,2,1,2 from vertex 36 with
+  // dilatation 2.01536 that the gate test rejects.  Its braid must have
+  // that growth and fix exactly one puncture, since it is the
+  // five-puncture minimum with an idle sixth.  The path runs through
+  // cyclically symmetric vertices, so it also guards the rule that each
+  // step continues from the automaton's copy of the track.
+  {
+    jlt::vector<traintrack> ttv = traintracks::build_traintrack_list(6);
+    ttgraph ttg(ttv[4]);
+    path p(ttg,36);
+    const int branches[6] = {1,0,3,2,1,2};
+    for (int i = 0; i < 6; ++i) p.push_back(branches[i]);
+    CHECK(p.closed());
+    CHECK(!p.gates().connected);
+    CHECK(std::fabs(ttauto::detail::perron_root(p.transition_matrix())
+                    - 2.01535718128) < 1e-8);
+    const braidword b = ttauto::folding_path_braid(p);
+    CHECK(b.strings() == 6);
+    CHECK(std::fabs(b.growth() - 2.01535718128) < 1e-8);
+    const std::vector<int> perm = b.permutation();
+    int fixed = 0;
+    for (int i = 0; i < 6; ++i) if (perm[i] == i+1) ++fixed;
+    CHECK(fixed == 1);
+  }
 
   // The gate-rejected class at four punctures: the closed path 1,1,2,2 from
   // vertex 0 of the stratum 1.1.1.1.(2), with characteristic polynomial

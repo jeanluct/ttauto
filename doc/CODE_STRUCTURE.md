@@ -486,15 +486,19 @@ rest of the library, and for a pseudo-Anosov path that growth must equal
 the Perron root of the path's transition matrix.  `folding_path_braid`
 reports the outcome through its `verified` flag.
 
-**Limitation.**  A small number of paths do not verify: none up to five
-punctures in the ranges tested (346 in the testsuite, several thousand in
-wider sweeps), about 2% at six punctures and longer lengths.  In those
-cases the permutation is still right -- it agrees with the composite
-`prong_image` of the path -- and the cross-check inside
-`fold_block_swap` passes at every step, so the error is in the handedness
-somewhere, and it is not a global sign: brute-forcing the sign of every
-individual fold finds no combination that verifies.  Failures are
-concentrated on paths where the two blocks straddle the cut (`fold_swap::rotate`
-is nonzero), but most such paths are fine, so that is a correlation and not
-the cause.  Until this is understood, treat an unverified braid as
-unreliable rather than as an answer.
+Two things the extraction has to get right that are easy to miss.  The
+branch indices of the automaton are not fold indices: `build_graph`
+numbers branches by their rank among the folds with a non-identity
+transition matrix and throws the fold index away, and a subgraph
+renumbers them again, so `fold_index_of_branch` identifies the fold by its
+transition matrix and the coding of the track it produces.  And each step
+must continue from the automaton's own copy of the track rather than from
+the one just folded: the two have the same coding, but at a cyclically
+symmetric vertex they need not be the same physical track, and it is the
+automaton's copy the next branch index refers to.  Getting that wrong
+gives a braid that is right up to a root of the full twist, which is
+enough to change the dilatation.
+
+Verified this way: 494 paths at three punctures to length 8, 1284 at four
+to length 6, 1062 at five to length 5 and 2070 at six to length 5, every
+vertex of every stratum, with no failures.
