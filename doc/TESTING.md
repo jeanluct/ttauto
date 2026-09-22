@@ -51,10 +51,26 @@ For header/component coverage mapping, see `testsuite/COVERAGE.md`.
 `examples/ttauto_count`   (2 minutes)
 `examples/ttauto_labels`   (100 minutes)
 
+## Braids from folding paths
+
+`examples/ttbraid <punctures> <stratum> <vertex> <branch>...` reads the
+braid off one closed folding path and says whether it checks out; the
+check is that the braid's growth under the Dynnikov action equals the
+Perron root of the path's transition matrix.  `examples/ttbraid_strata`
+does the same for the minimiser of every stratum up to seven punctures
+and compares each against the published table, writing the markdown that
+`examples/ttauto_strata_braids.md` holds; it takes about two and a half
+seconds and is regenerated in the testsuite.
+
 ## Measuring line coverage
 
 Use a separate Debug build with gcov instrumentation; never the in-place
-`build/` directory:
+`build/` directory.  A separate build directory is not enough on its own,
+though: the library and the example binaries are written to `lib/` and
+`examples/` whatever the build directory, so the coverage build leaves an
+instrumented `lib/libttauto.a` behind, and anything linked from `build/`
+afterwards fails with `undefined reference to __gcov_init`.  Delete
+`lib/libttauto.a` and rebuild when you are done measuring.
 
 ```bash
 cmake -S . -B build-cov -DCMAKE_BUILD_TYPE=Debug \
@@ -113,6 +129,7 @@ test; the expected rejections are recorded in
 `tests/test_traintrack`
 `tests/test_folding_path`
 `tests/test_badwords`
+`examples/ttbraid`
 `examples/ttauto_min_example`
 `examples/ttauto_torus`
 

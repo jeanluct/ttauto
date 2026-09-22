@@ -91,11 +91,13 @@ Two namespaces, two layers:
   branch choices that composes those into a path matrix and path map.
   `ttauto` runs a DFS over folding paths with pruning (norm bounds,
   `badwords`, length caps) and groups accepted closed paths into `pAclass`
-  objects keyed by characteristic polynomial.
+  objects keyed by characteristic polynomial.  `path_braid.hpp` reads the
+  braid of a closed path.
 
 Typical pipeline: `build_traintrack_list` -> pick a `traintrack` ->
 `ttfoldgraph<traintrack>` -> optional `subgraphs(...)` -> `ttauto::search`
--> `pA_list()`.  `examples/ttauto_min_example.cpp` is the shortest complete
+-> `pA_list()` -> `ttauto::folding_path_braid` for the braid of an
+accepted path.  `examples/ttauto_min_example.cpp` is the shortest complete
 instance.
 
 Conventions worth knowing:
@@ -111,7 +113,30 @@ Conventions worth knowing:
 - Mathematica post-processing lives in `mathematica/` (`TrainTracks.m`,
   saved `ttauto_output/`).  Notebooks go through the `dropoutput_nb` filter.
 
-## Current work: issue #2 (branch `iss002-spurious-pAs`)
+## Current work: issue #4 (branch `iss004-braid-from-path`)
+
+Issue #4: read the braid off a closed folding path.  Done.  A closed path
+defines a homeomorphism of the punctured disc; turning it into a word in
+the braid generators needs the punctures to have positions, which is what
+`traintracks::outer_embedding` (`embedding.hpp`) supplies: the multigons
+and main edges form a tree, so the coding's cyclic orders are a complete
+rotation system and the planar embedding is fixed up to reflection.  A
+fold onto an unpunctured multigon moves nothing; one onto a punctured
+monogon takes the moved edge round the puncture, and undoing that swaps
+two adjacent blocks of punctures (`traintracks::fold_block_swap`).
+`ttauto::folding_path_braid` (`path_braid.hpp`) accumulates those and
+reports a `verified` flag: `braidword::growth`, the growth under the
+Dynnikov action, must equal the Perron root of the path's own matrix.
+Two traps, both of which caused wrong braids before being found: a branch
+index is not a fold index, and each step must continue from the
+automaton's own copy of the track, since at a cyclically symmetric track
+that need not be the physical track you just folded.  See
+`doc/ttauto.tex` sections "The braid of a closed path" and "Reading the
+braid off a path", `examples/ttbraid`, and
+`examples/ttauto_strata_braids.md`, which checks the braid of every
+stratum minimiser for n=3..7 against the published table.
+
+## Earlier work: issue #2 (branch `iss002-spurious-pAs`)
 
 Issue #2: the search reported some pAs that are actually reducible.  An
 irreducible matrix and a plausible dilatation are not sufficient; the
@@ -146,14 +171,14 @@ in `testsuite/COVERAGE.md` and `doc/TESTING.md`.  Older material in
 The canonical bad case is `n=6`, `trk=4`, `sgidx=0`, cycle
 `{29,46,43,71,88,85,29}` (1-based; `{28,45,42,70,87,84,28}` in C++) with
 branch sequence `{1,0,3,2,1,2}`.  Braid `1 2 3 -5 -4 -3` on 6 strings;
-growth `2.01536` yet reducible.  `tests/test_issue2_bad_path.cpp` is the
-hardwired reproducer and current sandbox for the gate pipeline; it builds
-with the normal CMake build and runs in seconds.  Its gate-connectivity
-result is provisional: the `(multigon,prong)` vertex model does not yet
-match the switch-level vertex model of the `.train` output, so do not use
-its connectivity verdict as a classification criterion yet.  Treat `.train`
-edge numbering as display-only and keep canonical internal labels from
-`ttmap_labeler` for all logic.
+growth `2.01536` yet reducible.  That braid was worked out by hand in
+2009; since issue #4 the code reads its own braid off the same path and
+gets `1 2 1 2 3 4 5 5 -4 -3 -5 -5 -4 -3 -2 -1`, which Trains also calls
+reducible at `2.01536` and which fixes one puncture, so the two agree in
+everything conjugation preserves and differ only in which puncture is
+idle.  It is pinned in `testsuite/ttauto/test_braid_extraction.cpp`.
+Treat `.train` edge numbering as display-only and keep canonical internal
+labels from `ttmap_labeler` for all logic.
 
 Issue #3 (train track map) is closed and was the prerequisite; its word
 conventions were corrected as part of issue #2 (the side letter is now the

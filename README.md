@@ -20,6 +20,16 @@ full) are explained in `doc/ttauto.tex`; build it with `latexmk -pdf` in
 the [examples folder][8] for some basic examples.  The most complete program
 is [ttauto.cpp][9], an interactive program.
 
+A closed folding path defines a homeomorphism of the punctured disc, and
+`examples/ttbraid` reads it off as a braid word.  This needs the proper
+embedding of the train track, and so the order of the punctures along the
+real axis, which `traintracks::outer_embedding` computes from the coding.
+Every braid is checked against the path it came from by an independent
+route, the growth of its action on Dynnikov coordinates.
+`examples/ttauto_strata_braids.md` carries the braid of the minimiser of
+every stratum up to seven punctures, beside the word published in the
+companion paper.
+
 ### build (cmake)
 
 The project targets C++17 by default and now builds with CMake.
