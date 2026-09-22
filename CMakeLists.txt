@@ -161,4 +161,9 @@ if(TTAUTO_ENABLE_SLOW_TESTS)
     COMMAND bash "${CMAKE_SOURCE_DIR}/testsuite/ttauto/test_scan_strata_markdown.sh")
   set_tests_properties(testsuite_test_scan_strata_markdown PROPERTIES
     LABELS "deterministic;integration;slow")
+
+  add_test(NAME testsuite_test_strata_braids_markdown
+    COMMAND bash "${CMAKE_SOURCE_DIR}/testsuite/ttauto/test_strata_braids_markdown.sh")
+  set_tests_properties(testsuite_test_strata_braids_markdown PROPERTIES
+    LABELS "deterministic;integration")
 endif()
