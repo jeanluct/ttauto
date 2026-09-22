@@ -37,12 +37,15 @@
 
 #include <cmath>
 #include <iostream>
+#include <list>
+#include <sstream>
 #include <vector>
 #include "check.hpp"
 #include "traintracks/braid.hpp"
 #include "traintracks/build.hpp"
 #include "traintracks/traintrack.hpp"
 #include "ttauto/folding_path.hpp"
+#include "ttauto/ttauto.hpp"
 #include "ttauto/path_braid.hpp"
 #include "ttauto/ttfoldgraph.hpp"
 
@@ -219,6 +222,52 @@ int main()
     int fixed = 0;
     for (int i = 0; i < 4; ++i) if (perm[i] == i+1) ++fixed;
     CHECK(fixed == 1);
+  }
+
+  // Seven punctures, stratum 3 3 3 3 (1): the class at 2.02598 that only a
+  // search to length 10 reaches, and the one row of
+  // examples/ttauto_scan_strata.md that disagrees with the published
+  // table.  Its braid is short enough to read: -2 -1 3 4 3 4 5 6, with
+  // the seven punctures permuted in a single cycle.  Trains agrees that
+  // it is pseudo-Anosov at that dilatation.
+  {
+    jlt::vector<traintrack> ttv = traintracks::build_traintrack_list(7);
+    ttgraph full(ttv[11]);
+    std::list<ttgraph> sgs = ttauto::subgraphs(full);
+    const ttgraph& ttg = *sgs.begin();
+
+    // The search reports its progress on std::cout, which a test does not
+    // want; take the stream away from it for the duration.
+    ttauto::ttauto<traintrack> search(ttg);
+    search.max_pathlength(10);
+    {
+      std::ostringstream sink;
+      std::streambuf* const saved = std::cout.rdbuf(sink.rdbuf());
+      search.search();
+      std::cout.rdbuf(saved);
+    }
+
+    bool found = false;
+    for (auto it = search.pA_list().begin();
+         it != search.pA_list().end(); ++it)
+      {
+        if (std::fabs(it->second.dilatation() - 2.02598) > 1e-5) continue;
+        found = true;
+        CHECK(it->second.shortest() == 10);
+        const path& p = it->second.paths().begin()->first;
+        bool verified = false;
+        const braidword b = ttauto::folding_path_braid(p,&verified);
+        CHECK(verified);
+        CHECK(b.strings() == 7);
+        CHECK(b.word() == std::vector<int>({-2,-1,3,4,3,4,5,6}));
+        CHECK(std::fabs(b.growth() - 2.0259754) < 1e-6);
+        // One cycle through all seven punctures.
+        const std::vector<int> perm = b.permutation();
+        int at = 1, steps = 0;
+        do { at = perm[at-1]; ++steps; } while (at != 1 && steps <= 7);
+        CHECK(steps == 7);
+      }
+    CHECK(found);
   }
 
   std::cout << "\ntest_braid_extraction: " << nver << " braids verified against"

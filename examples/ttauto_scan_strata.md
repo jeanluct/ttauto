@@ -88,8 +88,14 @@
 > the shortest pseudo-Anosov.  Stratum 12 needs the longest search, to
 > length 10: its 2.02598 class, found by Lizi Guo, lies below anything
 > reachable at length 8, so this stratum in particular should be read as
-> an upper bound.  Its braid has not yet been read off the folding path
-> or confirmed with Trains.
+> an upper bound.  Its braid has now been read off the folding path
+> (`examples/ttbraid`, issue #4): the closed path of length 10 with branch
+> sequence `0 0 1 0 0 1 1 1 0 0` gives `-2 -1 3 4 3 4 5 6`, which Toby
+> Hall's Trains independently calls pseudo-Anosov with dilatation
+> 2.02598.  So the value no longer rests on ttauto alone.  The class at
+> length 8 on the same stratum gives a braid Trains calls pseudo-Anosov
+> with dilatation 2.21497, confirming the starred entry of
+> `devel/iss002/braids.tex` as the best reachable at that length.
 >
 > Every row agrees with the seven-puncture table of
 > `devel/iss002/braids.tex` except s_12, where that paper's starred
