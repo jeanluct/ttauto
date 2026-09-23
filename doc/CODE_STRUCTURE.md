@@ -20,9 +20,9 @@ In concrete terms, it does three main things:
 
 ## High-Level Layout
 
-- `include/traintracks/`: core train-track data model (traintrack/multigon/edge), map conversions, helper math structures.
+- `include/traintracks/`: core train-track data model (traintrack/multigon/edge), map conversions, the planar embedding, braid words, helper math structures.
 - `lib/traintracks/`: implementations of core transformation operations (construction, fold, relinking, normalization).
-- `include/ttauto/`: automaton graph, path representation, search algorithm, result grouping.
+- `include/ttauto/`: automaton graph, path representation, search algorithm, result grouping, braid of a closed path.
 - `examples/`: runnable programs showing interactive and scripted usage.
 - `tests/`: executable tests and consistency checks.
 - `testsuite/`: deterministic CTest targets (with optional slow integration checks).
@@ -39,6 +39,11 @@ In concrete terms, it does three main things:
 - **Folding automaton**: directed graph of train tracks connected by valid folds.
 - **Folding path**: a sequence of folds in a train track graph.
 - **Closed path**: folding path whose final vertex equals its initial vertex.
+- **Proper embedding**: the track drawn in the disc with the punctures on the real axis and no main edge crossing the segments below them; it is what gives the punctures an order.
+- **Boundary walk**: the walk around the complementary region that touches the boundary of the disc; it meets each main edge twice and each side once.
+- **Braid word**: a word in the generators `sigma_i`, held by `traintracks::braidword`, signed for inverses.
+- **Full twist**: `delta^n` where `delta = sigma_1 ... sigma_{n-1}`; central, and the ambiguity in the braid of a folding path.
+- **Dynnikov coordinates**: a coordinate system on measured loops whose growth under a braid gives its dilatation; used here only to check a braid against the path it came from.
 
 ## Typical End-to-End Execution Flow
 
@@ -50,6 +55,7 @@ Most programs follow this pipeline:
 4. Optionally decompose with `subgraphs(...)`.
 5. Configure and run `ttauto<traintrack>::search(...)`.
 6. Inspect results through `pA_list()` and print/export utilities.
+7. Read the braid of an accepted closed path with `ttauto::folding_path_braid`.
 
 ## Worked Example: One Fold Through the Stack
 
@@ -332,6 +338,33 @@ Public functions:
 
 Purpose: provide standard start states for automaton construction.
 
+### `include/traintracks/embedding.hpp` and `lib/traintracks/embedding.cpp`
+
+The proper embedding of a track, as far as it is combinatorial.
+
+- `outer_embedding(num, cut_dart = 0)`: walk the boundary region and
+  return a `tt_embedding` holding the walk, `puncture_order`,
+  `position_of`, the exterior cusps and `cut_dart`.  Pass `0` for the
+  canonical cut, the loop of the root monogon.
+- `all_directions_at_prong(num, q)`: like `ttnumbering::directions_at_prong`
+  but including the sides of unpunctured multigons, which face walking
+  needs and gates do not.
+- `transported_cut_dart(before, fm, cut_dart)`: carry a cut across a fold.
+
+Purpose: give the punctures an order along the real axis.
+
+### `include/traintracks/braid.hpp` and `lib/traintracks/braid.cpp`
+
+- `braidword`: a word in the braid generators, with `inverse()`,
+  `reduce()`, `permutation()`, `exponent_sum()`, `block_swap()`,
+  `delta()`, and `growth()`, the last from the action on Dynnikov
+  coordinates and independent of everything else here.
+- `fold_block_swap(before_num, fm, before)`: what one fold does to the
+  punctures, read off the track before it, as a `fold_swap`.
+- `fold_braid(...)`, `rotation_braid(n,k)`: the same as a braid word.
+
+Purpose: express a fold, and a whole path, as a braid.
+
 ## Automaton and Search Layer (`ttauto` namespace)
 
 This layer is template-based and generally instantiated as `TrTr = traintracks::traintrack`.
@@ -415,6 +448,16 @@ Key methods:
 
 Purpose: deduplicate and summarize search output.
 
+### `folding_path_braid` (`include/ttauto/path_braid.hpp`)
+
+- `folding_path_braids(p)`: every braid a closed path can stand for; more
+  than one only at a cyclically symmetric initial vertex.
+- `folding_path_braid(p, &verified)`: the braid, with `verified` saying
+  whether its growth matched the Perron root of the path's matrix.
+- `detail::fold_index_of_branch(ttg, v, branch)`: recover the fold index a
+  branch stands for, by matrix and target coding, since `ttfoldgraph` does
+  not record it.
+
 ### `path` (`include/ttauto/path.hpp`)
 
 Small bounded integer-sequence type used by `folding_path` for fold and vertex sequences.
@@ -440,6 +483,7 @@ Purpose: reduce search cost without changing the core fold graph.
 - `examples/ttauto.cpp`: interactive CLI driver (stratum selection, optional subgraph splitting, search, optional file export).
 - `examples/ttauto_min_example.cpp`: compact scripted driver for low-dilatation checks on small puncture counts.
 - `examples/ttauto_torus.cpp`, `examples/ttauto_count.cpp`, `examples/ttauto_labels.cpp`: additional scenarios/sweeps.
+- `examples/ttbraid.cpp`: the braid of a closed folding path (issue #4).
 
 ## Test Files Worth Reading First
 
@@ -448,6 +492,8 @@ Purpose: reduce search cost without changing the core fold graph.
 - `tests/test_ttmap.cpp`: consistency between fold maps, transition matrices, and composition conventions.
 - `tests/test_permplus1.cpp`: correctness of `mathmatrix_permplus1` representation and multiplication.
 - `tests/test_badwords.cpp`: construction and reporting of badword filters.
+- `testsuite/traintracks/test_embedding.cpp`: boundary-walk identities at every automaton vertex, and the puncture order of the two hand-drawn tracks of `doc/ttauto.tex`.
+- `testsuite/ttauto/test_braid_extraction.cpp`: braids of closed paths checked against the Perron root of their own path, plus three pinned words.
 
 ## Practical "Where to Change What"
 
@@ -457,3 +503,52 @@ Purpose: reduce search cost without changing the core fold graph.
 - Automaton construction/symmetry/decomposition: `include/ttauto/ttfoldgraph.hpp`.
 - DFS pruning and candidate acceptance logic: `include/ttauto/ttauto.hpp`, `include/ttauto/badwords.hpp`.
 - Result grouping/serialization: `include/ttauto/pAclass.hpp`.
+- Proper embedding, puncture positions, braid extraction: `include/traintracks/embedding.hpp`, `include/traintracks/braid.hpp`, `include/ttauto/path_braid.hpp`, `testsuite/traintracks/test_embedding.cpp`, `testsuite/ttauto/test_braid_extraction.cpp`.
+
+## Braids from Folding Paths (issue #4)
+
+A closed folding path defines a homeomorphism of the punctured disc, and
+`ttauto::folding_path_braid` reads it off as a word in the braid
+generators.  What makes that possible is that the multigons and main edges
+form a tree, so the cyclic order of prongs recorded by the coding is a
+complete rotation system and the track has one planar embedding up to
+reflection.  `traintracks::outer_embedding` walks the boundary region of
+that embedding and puts the punctures in the order they occupy along the
+real axis.  A fold that lands on an unpunctured multigon keeps the track
+properly embedded and moves nothing; a fold that lands on a punctured
+monogon takes the moved edge once around the puncture, and undoing that
+exchanges the punctures of the moved subtree with the target puncture,
+which are next to each other in the walk.
+
+Conventions that had to be calibrated rather than derived: the sense of the
+boundary walk, fixed by the two tracks drawn by hand in `doc/ttauto.tex`
+Fig. 2 and asserted in `testsuite/traintracks/test_embedding.cpp`; and the
+handedness of each swap, which follows the fold direction.
+
+Every braid is checked against the path it came from.  `braidword::growth`
+iterates the braid on Dynnikov coordinates, which shares nothing with the
+rest of the library, and for a pseudo-Anosov path that growth must equal
+the Perron root of the path's transition matrix.  `folding_path_braid`
+reports the outcome through its `verified` flag.
+
+Two things the extraction has to get right that are easy to miss.  The
+branch indices of the automaton are not fold indices: `build_graph`
+numbers branches by their rank among the folds with a non-identity
+transition matrix and throws the fold index away, and a subgraph
+renumbers them again, so `fold_index_of_branch` identifies the fold by its
+transition matrix and the coding of the track it produces.  And each step
+must continue from the automaton's own copy of the track rather than from
+the one just folded: the two have the same coding, but at a cyclically
+symmetric vertex they need not be the same physical track, and it is the
+automaton's copy the next branch index refers to.  Getting that wrong
+gives a braid that is right up to a root of the full twist, which is
+enough to change the dilatation.
+
+The braid is only ever defined up to the full twist, since nothing here
+records a framing at the boundary of the disc, so the final rotation takes
+whichever way round is shorter and the words come out with exponent sum
+zero.
+
+Verified this way: 494 paths at three punctures to length 8, 1284 at four
+to length 6, 1062 at five to length 5 and 2070 at six to length 5, every
+vertex of every stratum, with no failures.

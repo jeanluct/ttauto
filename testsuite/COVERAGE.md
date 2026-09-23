@@ -4,9 +4,18 @@ This file maps public headers to deterministic CTest programs in `testsuite/`.
 
 ## Measured line coverage (2026-09-19)
 
-gcov on a Debug build of the ten fast testsuite programs (see "Measuring
+gcov on a Debug build of the fast testsuite programs (see "Measuring
 line coverage" in `doc/TESTING.md`; header lines are merged over all
 translation units).  Before/after the coverage pass of 2026-09-19.
+
+The table below is that 2026-09-19 measurement and predates the braid
+work of issue #4; its totals do not include `embedding.cpp` or
+`braid.cpp`.  Measured on 2026-09-22 with the same recipe, those two come
+out at 57% and 90% of their lines.  What `embedding.cpp` leaves uncovered
+is its fail-fast paths: a dart that is not on the boundary region, a
+punctured multigon that is not a monogon, and a boundary walk of the
+wrong length.  None of those is reachable from a track the library builds,
+which is the point of them.
 
 | File | Lines | Before % | After % | Left uncovered |
 |---|---:|---:|---:|---|
@@ -118,6 +127,22 @@ added lines that the census, not the testsuite, exercises.
       reports how many accepted paths have a gate partition at an
       unpunctured multigon finer than its prongs (zero as of 2026-09-19)
 
+- `include/traintracks/embedding.hpp`
+  - Primary: `testsuite/traintracks/test_embedding.cpp`
+    - the three counting identities of the boundary walk, at every vertex
+      of every automaton for n=3..6
+    - the puncture order of the two tracks drawn by hand in
+      `doc/ttauto.tex`, which is what fixes the sense of the walk
+  - Also: `testsuite/ttauto/test_braid_extraction.cpp` (through the braid)
+
+- `include/traintracks/braid.hpp`
+  - Primary: `testsuite/ttauto/test_braid_extraction.cpp`
+    - `braidword` arithmetic: `delta`, `block_swap`, `permutation`,
+      `inverse`, `exponent_sum`, free reduction
+    - `growth` against values that do not depend on the library
+    - `fold_block_swap` through every closed path the test walks
+  - Also: `testsuite/ttauto/test_strata_braids_markdown.sh`
+
 - `include/traintracks/edge.hpp`
 - `include/traintracks/multigon.hpp`
   - Covered indirectly via `traintrack` mutation checks:
@@ -125,6 +150,17 @@ added lines that the census, not the testsuite, exercises.
     - `testsuite/traintracks/test_map_consistency.cpp`
 
 ## ttauto headers
+
+- `include/ttauto/path_braid.hpp`
+  - Primary: `testsuite/ttauto/test_braid_extraction.cpp`
+    - every closed path with a primitive matrix and connected gates, to
+      length 4, at every vertex of every stratum for n=3..5; each braid
+      checked against the Perron root of its own path
+    - three pinned words: the three-puncture minimum, the gate-rejected
+      four-puncture class, and the issue #2 bad path
+    - the seven-puncture stratum-12 class at 2.02598
+  - Also: `testsuite/ttauto/test_strata_braids_markdown.sh`, which
+    regenerates the braid of all 26 stratum minimisers
 
 - `include/ttauto/ttfoldgraph.hpp`
   - Primary: `testsuite/traintracks/test_map_consistency.cpp`

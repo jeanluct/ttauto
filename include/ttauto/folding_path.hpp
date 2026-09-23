@@ -72,6 +72,9 @@ public:
 
   folding_path& operator=(const folding_path& pp);
 
+  // The automaton the path runs in.
+  const ttfoldgraph<TrTr>& graph() const { return *ttg; }
+
   // Initial vertex where this path starts.
   int initial_vertex() const { return vp.front(); }
 

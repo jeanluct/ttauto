@@ -61,7 +61,7 @@
 
 \title[Notes on ttauto]{Notes on ttauto: mathematics and
   implementation}
-\date{20 September 2026.  Describes the code at commit \code{c5fc451}.}
+\date{22 September 2026.  Describes the code at commit \code{ae62bfd}.}
 
 \begin{document}
 
@@ -283,7 +283,12 @@ singularity data form a \emph{stratum}.
     loops of punctured monogons are red and labelled by their side
     letter, main edges are black with their orientation and number, sides
     of the unpunctured trigon are blue, and the small grey numbers are the
-    prong numbers.  Left: the stratum $1.\,1.\,1.\,1.\,(2)$
+    prong numbers.  Both are drawn with the punctures in their proper
+    left-to-right order, which is the sense in which the boundary walk of
+    \S\ref{sec:braid} runs; that convention is what fixes the handedness
+    of every braid read off a folding path, and
+    \texttt{test\_embedding.cpp} pins these two pictures for exactly that
+    reason.  Left: the stratum $1.\,1.\,1.\,1.\,(2)$
     (vertex~0 of Section~\ref{sec:example}); the central monogon carries
     three edges and two cusps, so the region between the track and the
     grey boundary has two prongs.  Right: the stratum $1.\,1.\,1.\,1.\,3\,(1)$,
@@ -893,6 +898,120 @@ is connected.
 
 
 %======================================================================
+\section{The braid of a closed path}
+\label{sec:braid}
+
+A closed folding path defines a homeomorphism of the punctured disc, and
+this section says how to read it off as a braid.  Everything up to here
+has treated the track as an abstract object with a cyclic order at each
+prong; a braid needs more, namely where the punctures sit.
+
+\subsection{Proper embedding}
+Identify the $\np$-punctured disc with the unit disc and put the
+punctures on the real axis at positions $1,\dots,\np$.  Let $U$ be the union of the vertical
+segments running down from each puncture to the boundary.  A track is
+\emph{properly embedded} when no main edge meets $U$ \cite{Song2002,
+Lanneau2011}.  The punctures then have a left-to-right order, and that is
+the only thing a braid needs.
+
+The order is almost free.  The multigons and main edges form a tree: a
+track has one more multigon than it has main edges, since
+\code{traintrack::edges()} returns \code{multigons()} minus one.  A tree carrying
+a cyclic order of the edges at each vertex embeds in the plane, uniquely
+up to isotopy and reflection, and the coding records exactly that cyclic
+order (\S\ref{sec:numbering}).  So the combinatorics already fix the
+picture, and with it the order of the punctures, up to one choice.
+
+\begin{Definition}
+The \emph{boundary walk} of a track is the walk along the boundary of the
+complementary region that contains the boundary of the disc.  Write it as a
+cyclic sequence of letters, each letter a side of an edge.
+\end{Definition}
+
+\begin{Lemma}
+\label{lem:walk}
+The boundary walk has length $2n + n_{\mathrm{s}}$.  It runs along each
+main edge twice and along each side once, meets each puncture exactly
+once, at the traversal of its loop, and has as many cusped corners as the
+track has boundary prongs.
+\end{Lemma}
+
+\begin{proof}
+Every main edge is a bridge, the graph being a tree, so the same
+complementary region lies on both of its sides.  Each side, by contrast,
+separates the boundary region from a complementary polygon or from a
+puncture, so the walk meets it once.  A puncture is met when the walk
+runs along the loop of its monogon.  A corner of the walk is a cusp when
+both its letters are main: at each prong the two corners where a main
+letter meets a side are smooth, which leaves $\sum_p (j_p - 1) = 2n -
+n_{\mathrm{s}}$ cusped corners, which is \code{traintrack::cusps()}.
+\end{proof}
+
+The walk therefore lists the punctures in a cyclic order.  Making it
+linear needs a cut, and the cut is not determined by the coding: two
+tracks with the same coding can sit in the disc with different punctures
+leftmost.  The canonical choice here is the loop of the root monogon of
+the coding, which makes that puncture number~$1$.  Figure~\ref{fig:tracks}
+is drawn with this convention, and fixes the sense in which the walk runs.
+
+\subsection{What one fold does to the punctures}
+A fold slides the end of the moved edge along \code{onto} to the target
+multigon $T$ and around one corner of it (\S\ref{sec:onefold}).  If $T$ is
+an unpunctured polygon the new route crosses only infinitesimal edges and
+the track stays properly embedded: nothing moves.  If $T$ is a punctured
+monogon then $t'=t$ and the edge goes once around the puncture, crossing
+its segment of $U$, and the punctures must be moved to undo that.
+
+\begin{Proposition}
+\label{prop:adjacent}
+Let $S$ be the set of punctures carried by the subtree the fold moves.
+In the boundary walk of the track before the fold, $S$ is consecutive,
+and the target puncture $T$ sits immediately after it when the fold direction is
+positive and immediately before it when it is negative.
+\end{Proposition}
+
+\begin{proof}
+$S$ is the puncture set of one component of the tree cut at the moved
+edge, and the walk enters that component, traverses it entirely, and
+leaves, so $S$ is consecutive.  For a positive fold direction the walk
+descends into the moved edge before \code{onto}, so it finishes $S$ and
+then crosses to $T$; and the fold is legal only when \code{onto} is the
+outermost edge at $T$, so the next direction at $T$ is its loop and the
+walk meets $T$ at once.  For a negative direction the two are interchanged.
+\end{proof}
+
+So restoring proper embedding exchanges two adjacent blocks of punctures,
+$S$ and $\set{T}$.  The braid that does this, moving the block at
+positions $i,\dots,i+a-1$ past the $b$ punctures after it, is
+\begin{equation}
+  \label{eq:blockswap}
+  \prod_{p=1}^{a} \sigma_{i+a-p} \sigma_{i+a-p+1} \cdots
+  \sigma_{i+a-p+b-1},
+\end{equation}
+all crossings of one sign, which the direction of the fold fixes.  With
+$a = 1$ this is $\sigma_i \sigma_{i+1} \cdots \sigma_{i+b-1}$, the braid
+of \cite[Prop.~2.4]{Lanneau2011}; that reference states only this case,
+but both blocks can be longer, in $38$ of the $1770$ folds with $\np \le
+6$ and $347$ of the $16630$ with $\np = 7$.
+
+Two blocks adjacent around the disc may straddle the cut, and then they
+are at opposite ends of the row.  The implementation moves the cut far
+enough that they do not, which costs a rotation
+$\delta = \sigma_1 \cdots \sigma_{\np-1}$, and works in the rotated frame
+thereafter.  That this is the right move is not proved here; it is
+justified by the checks of \S\ref{sec:impl-braid}.
+
+\subsection{Closing the path}
+Along a closed path the cut is carried from one track to the next.  At the
+end the automaton identifies the final track with the initial one by the
+canonical numbering, which puts the root monogon at position~$1$, so a
+final rotation $\delta^a$ is needed to bring it there.  Going all the way
+round is the full twist $\delta^{\np}$, which is central, and nothing here
+records a framing at the boundary of the disc; the braid of a closed folding
+path is therefore defined only modulo the full twist, and one may as well
+rotate whichever way round is shorter.
+
+%======================================================================
 \part{Implementation}
 
 The library has two namespaces.  \code{traintracks} holds everything
@@ -1064,6 +1183,73 @@ instead gives a different mapping class; the automaton does not
 enumerate those separately, and \cite[\S ``Cyclic symmetry'']{Lanneau2011}
 argues that folding at symmetry-related cusps already produces them.  The
 gate test inherits this convention.)
+
+%======================================================================
+\section{Reading the braid off a path}
+\label{sec:impl-braid}
+
+\code{traintracks::outer_embedding} (\code{embedding.hpp}) walks the
+boundary region of \S\ref{sec:braid} and returns a \code{tt_embedding}:
+the walk itself as signed letters, \code{puncture_order}, the prong
+numbers of the punctures in walk order, the inverse \code{position_of},
+the corners that are exterior cusps, and \code{cut_dart}, the dart the
+walk starts at.  Passing $0$ for the cut asks for the canonical choice,
+the loop of the root monogon; passing a dart instead is how a folding
+path carries the cut along, since a fold never destroys a letter.  The
+three identities of Lemma~\ref{lem:walk} are asserted, not assumed.
+
+\code{traintracks::fold_block_swap} (\code{braid.hpp}) turns one
+\code{fold_map_data} into a \code{fold_swap}: which block of positions
+changes places with which, how far the cut had to move first, and the
+dart to cut the folded track at.  It works from the track before the fold
+only, by Proposition~\ref{prop:adjacent}, and exits if the punctures it
+computes are not consecutive.  \code{fold_braid} turns that into a
+\code{braidword} through~\eqref{eq:blockswap}, with the sign taken from
+the fold direction.
+
+\code{ttauto::folding_path_braid} (\code{path_braid.hpp}) walks a
+closed path, accumulating the fold braids and the final rotation.  Two
+things are easy to get wrong here.
+
+First, a branch index is not a fold index.  \code{build_graph} numbers
+branches by their rank among the folds with a non-identity transition
+matrix and throws the fold index away, and taking a subgraph renumbers
+them again, so \code{fold_index_of_branch} identifies the fold by its
+transition matrix and by the coding of the track it produces, breaking
+ties by rank.
+
+Second, each step must continue from the automaton's own copy of the
+track, not from the one just folded.  The two always have the same
+coding, but at a cyclically symmetric track they need not be the same
+physical track: \code{minimise_coding} roots the coding at whichever of
+the tied monogons it meets first, and that depends on the object's
+history.  The branch index of the next step refers to the automaton's
+copy.  This is the one place where the remark closing
+\S\ref{sec:impl-gates} does not carry over: for the matrix and for the
+gate test the symmetry maps the numbering to itself and it makes no
+difference which minimiser lands in slot~$0$, but the braid sees the
+difference, and gets it wrong by a root of the full twist, which is
+enough to change the dilatation.
+
+\subsection{Checking the answer}
+\code{braidword::growth} iterates the braid on Dynnikov coordinates and
+measures how fast a loop grows.  For a pseudo-Anosov braid this is the
+dilatation; it shares nothing with the rest of the library, so it is what
+a braid read off a path is checked against.
+\code{folding_path_braid} reports through a \code{verified} flag
+whether the growth matches the Perron root of the path's own transition
+matrix, so a braid that does not check out is never mistaken for one that
+does.
+
+That check passes on every closed path with a primitive matrix and
+connected gates in the ranges tried: $494$ paths at three punctures to
+length~$8$, $1284$ at four to length~$6$, $1062$ at five and $2070$ at
+six to length~$5$, over every vertex of every stratum.  Independently,
+the braid of every stratum minimiser for $3 \le \np \le 7$ agrees with
+the published table of \cite{Lanneau2011b} on dilatation, on the cycle
+type of the permutation, and on the exponent sum modulo the full twist;
+\code{examples/ttauto_strata_braids.md} is that comparison, and
+\code{examples/ttbraid} reads the braid off a single path.
 
 \section{A four-puncture example, worked in full}
 \label{sec:example}
@@ -1420,6 +1606,18 @@ the numbering of any track by \code{tt.numbering().print(std::cout)}.
       \code{test_folding_path_and_badwords.cpp} \\
     rejection census over strata &
       \code{tests/ttauto_gate_census.cpp} & (diagnostic program) \\
+    proper embedding, boundary walk &
+      \code{include/traintracks/embedding.hpp} &
+      \code{testsuite/traintracks/test_embedding.cpp} \\
+    braid words, Dynnikov growth &
+      \code{include/traintracks/braid.hpp} &
+      \code{testsuite/ttauto/test_braid_extraction.cpp} \\
+    braid of a closed path &
+      \code{include/ttauto/path_braid.hpp} &
+      \code{testsuite/ttauto/test_braid_extraction.cpp} \\
+    braids of the stratum minimisers &
+      \code{examples/ttbraid_strata.cpp} &
+      \code{testsuite/ttauto/test_strata_braids_markdown.sh} \\
     \bottomrule
   \end{tabular}
 \end{center}
