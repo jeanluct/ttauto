@@ -26,6 +26,7 @@
 #define TRAINTRACKS_CODING_HPP
 
 #include <iosfwd>
+#include <string>
 #include <vector>
 #include <jlt/vector.hpp>
 
@@ -139,6 +140,28 @@ struct ttnumbering
   std::ostream& print(std::ostream& strm) const;
 };
 
+// Parse a printed coding, as produced by traintrack::print_coding(), into
+// the zero-based coding vector that traintrack(const intVec&) takes.
+//
+// One whitespace-separated token is one block, so the input carries the
+// block width rather than leaving it to be inferred from a global count:
+//
+//   compact (every field <= 9):   1111 1322 2311 1111
+//   general (any field >= 10):    1-1-12-1 1-15-2-2
+//
+// A token containing '-' splits on '-'; otherwise every character is a
+// field.  The number of fields is the width, which must be 4 or 5, and
+// every token must agree.  A four-field block is (prong, nprongs, edge,
+// nedges) and takes label 0; a five-field block carries the label third.
+// Fields read as printed, so one-based except nprongs and nedges, which
+// are counts.
+//
+// A bare list of one integer per token (1 1 1 1 1 3 2 2) is deliberately
+// not accepted: it is the only form whose width would have to be guessed,
+// and a coding has 2*nedges blocks, so the counts collide whenever nedges
+// is even.  Malformed input is fatal, as elsewhere in the library.
+jlt::vector<int> parse_coding(const std::string& s);
+
 namespace detail {
 
 // Fixed-size block encoding one directed edge-step in canonical coding.
@@ -190,10 +213,12 @@ public:
   // Compute branch permutation induced by cyclic coding symmetry.
   static mathmatrix_permplus1 cyclic_symmetry(traintrack& tt);
 
-  // Write canonical coding blocks to stream.
+  // Write canonical coding blocks to stream.  See traintrack::print_coding
+  // for the two forms and how the width is chosen.
   static std::ostream& print_coding(const traintrack& tt,
                                     std::ostream& strm,
-                                    int dir);
+                                    int dir,
+                                    bool force_label);
 
   // Canonical prong/edge numbering rooted at uncusped monogon mono.
   // Walks the raw structure; does not require the track to be normalised

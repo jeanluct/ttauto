@@ -65,9 +65,8 @@ added lines that the census, not the testsuite, exercises.
       idempotent `normalise()` (coding and numbering unchanged), coding
       round trip, mirror image from the reversed coding, symmetry
       accessors, prong/puncture/monogon/cusp counts
-    - `print_coding()` output parsed back to the coding vector (the
-      intended behaviour of the string constructor, which is not exercised
-      because it exits with "Broken?")
+    - `print_coding()` output parsed back by `parse_coding()` and by the
+      string constructor, in both orientations and at both block widths
     - `set_label()`, `pure_braid()`, `print()`, `print_singularity_data()`,
       `printMathematicaForm()`
     - weights set through the iterator are read back in the same order

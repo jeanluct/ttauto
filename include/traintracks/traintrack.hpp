@@ -84,12 +84,13 @@ public:
   // Make a train track from its coding.
   traintrack(const intVec& code);
 
-  // Make a train track from a string of its coding.
-  // Only works when the numbers are < 10.
-  // Train track must be one-indexed: e.g.:
+  // Make a train track from a string of its coding, as output by
+  // print_coding(), in either the compact form
   //   1111 1311 2311 1111 3312 1111 3322 1111
-  // as output by print_coding().
-  /* Update this example to new label coding format? */
+  // or, when some field reaches 10, the hyphenated form
+  //   1-1-12-1 1-15-2-2
+  // Blocks are one-indexed, and carry the label as a fifth field when
+  // labelling is in use.  See parse_coding() in coding.hpp.
   traintrack(const char* codes);
 
   // Assignment operator.
@@ -169,9 +170,15 @@ public:
   // The symmetry is Delta^order, where Delta = sigma_1 ... sigma_(n-1).
   mathmatrix_permplus1 cyclic_symmetry();
 
-  // Print coding.
+  // Print coding.  A block is four fields, (prong, nprongs, edge, nedges),
+  // which is the notation of the paper; it gains the label as a third
+  // field when some multigon carries one, or when force_label is set.
+  // Fields run together as digits while each is a single digit, and are
+  // separated by '-' otherwise; blocks are separated by a space.  The
+  // result reads back through traintrack(const char*).
   std::ostream& print_coding(std::ostream& strm = std::cout,
-			     const int dir = 1) const;
+			     const int dir = 1,
+			     const bool force_label = false) const;
 
   // Set label of multigon m, then renormalise coding order.
   void set_label(const int m, const int lb);
@@ -311,8 +318,10 @@ private:
   // Do two normalised tracks have the same multigons?
   bool same_multigons(const traintrack& tt) const;
 
-  // Recursively reconstruct a track from coding blocks.
-  void recursive_build(edgep& ee, intVec::const_iterator& cd);
+  // Recursively reconstruct a track from coding blocks.  cdend bounds the
+  // coding, so that a truncated one fails rather than reading past it.
+  void recursive_build(edgep& ee, intVec::const_iterator& cd,
+		       const intVec::const_iterator& cdend);
 
   // Sort ascending using the strict order relation for multigons.
   void sort();

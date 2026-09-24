@@ -102,9 +102,14 @@ instance.
 
 Conventions worth knowing:
 
-- Codings are printed as 5-digit units; the middle digit is the multigon
-  label controlled by `traintrack::label_multigons`.  The paper only uses
-  4 digits.  Only `print_coding` honours the flag; string input does not.
+- A printed coding is one whitespace-separated block per walk step.  A
+  block is four fields, `(prong, nprongs, edge, nedges)`, as in the paper;
+  it gains the label as a third field when some multigon carries one, or
+  when `print_coding(strm, dir, true)` forces it.  Fields run together as
+  digits while each is a single digit, and are hyphen-separated otherwise
+  (`1-1-12-1`), so the width is always carried per block and never
+  inferred.  `traintracks::parse_coding` and `traintrack(const char*)`
+  read both forms back; a bare list of integers is rejected.
 - User-facing output (the `ttauto` program, Mathematica files, the devel
   notes) is 1-based; C++ vertex, branch and fold indices are 0-based.
 - Per-class `static constexpr int debug = 0;` members gate verbose tracing.

@@ -310,7 +310,13 @@ monogons lexicographically singles out a smallest one.  A track in
 \emph{normal form} has been rotated and sorted so that this minimal
 coding is the one read from its first monogon; two tracks are isotopic if
 and only if their minimal codings agree, and the track can be rebuilt
-from the coding.  The same walk run in the opposite cyclic direction
+from the coding.  A coding prints as one block per step of the walk,
+blocks separated by spaces and fields run together as digits, or
+separated by hyphens once any field reaches ten.  The puncture label is
+part of every coding but is printed only when some multigon carries one,
+so an unlabelled track prints the four fields of the paper.
+\code{parse_coding} reads either form back.  The same walk run in the
+opposite cyclic direction
 codes the mirror image; a track is \emph{reflection symmetric} when the
 two codings agree, and \emph{cyclically symmetric} when several uncusped
 monogons give the same minimal coding.

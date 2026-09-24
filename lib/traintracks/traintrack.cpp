@@ -51,65 +51,31 @@ traintrack::traintrack(const traintrack::intVec& code)
   intVec::const_iterator ci(code.begin() + detail::coding_block::length);
 
   // Recurse down and build train track.
-  recursive_build(Multigon(0).Edge(0,0),ci);
+  recursive_build(Multigon(0).Edge(0,0),ci,code.end());
 
   normalise();
 }
 
-// Make a train track from a string of its coding.
-// Only works when the numbers are < 10.
-// Train track must be one-indexed: e.g.:
-//   1111 1311 2311 1111 3312 1111 3322 1111
-// as output by print_coding().
-traintrack::traintrack(const char* codes)
+// Make a train track from a string of its coding, in either of the two
+// printed forms (see parse_coding in coding.hpp).
+traintrack::traintrack(const char* codes) : traintrack(parse_coding(codes))
 {
-  isnormalised = false;
-
-  std::cerr << "traintrack(char *) constructor: Broken?: ";
-  std::cerr << "Reads in an \"old style\" (unlabeled) coding.";
-  exit(1);
-
-  intVec code;
-
-  int i = 0;
-  while (codes[i] != '\0')
-    {
-      // Make a number from 0 to 8 from char.
-      int num = (int)codes[i]-49;
-      // Skip characters that are not numbers.
-      if (num >= 0 && num <= 8) code.push_back(num);
-      ++i;
-    }
-  // Add 1 to the number of prongs/edges.
-  for (int i = 1; i < (int)code.size(); i+=2) ++code[i];
-
-  /* From here duplicate code from constructor from coding. */
-  /* This is not very nice but problems otherwise (tmp vector?). */
-  /* traintracl(code); */
-
-  // Train track always starts with an uncusped monogon.
-#if __cplusplus > 201103L && !defined(TRAINTRACKS_NO_SHARED_PTR)
-  // C++14 has make_unique.
-  mgv.push_back(mgonp(std::make_unique<multigon>(1)));
-#else
-  mgv.push_back(mgonp(new multigon(1)));
-#endif
-  Multigon(0).attach_edge();
-
-  // Iterator for coding: skip initial uncusped monogon marker.
-  intVec::const_iterator ci(code.begin() + detail::coding_block::length);
-
-  // Recurse down and build train track.
-  recursive_build(Multigon(0).Edge(0,0),ci);
-
-  normalise();
 }
 
 // Recursively consume coding blocks and attach descendant multigons.
 void traintrack::recursive_build(traintrack::edgep& ee,
-				 traintrack::intVec::const_iterator& ci)
+				 traintrack::intVec::const_iterator& ci,
+				 const traintrack::intVec::const_iterator& cend)
 {
   detail::coding_block outb;
+
+  // A truncated coding would otherwise be walked off the end.
+  if (cend - ci < detail::coding_block::length)
+    {
+      std::cerr << "Error in traintrack::recursive_build(): ";
+      std::cerr << "coding ends in the middle of the walk.\n";
+      exit(1);
+    }
 
   // Extract the block in the coding corresponding to the entry edge.
   // A block consists of detail::coding_block::length digits.
@@ -145,6 +111,12 @@ void traintrack::recursive_build(traintrack::edgep& ee,
     {
       // Extract the block in the coding corresponding to the next exit edge.
       // A block consists of detail::coding_block::length digits.
+      if (cend - ci < detail::coding_block::length)
+	{
+	  std::cerr << "Error in traintrack::recursive_build(): ";
+	  std::cerr << "coding ends in the middle of the walk.\n";
+	  exit(1);
+	}
       outb = detail::coding_block(ci);
 
       if (debug)
@@ -155,7 +127,7 @@ void traintrack::recursive_build(traintrack::edgep& ee,
 
       mgv[in_m]->attach_edge(outb.prong,outb.edge);
       // Recurse!
-      recursive_build(mgv[in_m]->Edge(outb.prong,outb.edge),ci);
+      recursive_build(mgv[in_m]->Edge(outb.prong,outb.edge),ci,cend);
 
       // Which edge is next?
       if (++outb.edge == outb.nedges)

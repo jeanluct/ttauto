@@ -32,6 +32,7 @@
 // reads an old, unlabelled coding.  Its intended behaviour is covered here
 // by parsing print_coding() output back into a coding vector.
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -45,28 +46,25 @@ using traintracks::multigon;
 using traintracks::traintrack;
 using traintracks::ttnumbering;
 
-// Parse print_coding() output (one-indexed 5-digit blocks) back into the
-// zero-based coding vector, as traintrack(const char*) was meant to.
-static traintrack::intVec parse_printed_coding(const std::string& s)
-{
-  CHECK(traintrack::label_multigons);
-  traintrack::intVec code;
-  std::string digits;
-  for (char c : s) if (c >= '0' && c <= '9') digits += c;
-  CHECK(digits.size() % 5 == 0);
-  for (size_t i = 0; i < digits.size(); i += 5)
-    {
-      code.push_back(digits[i]-'0'-1);
-      code.push_back(digits[i+1]-'0');
-      code.push_back(digits[i+2]-'0'-1);
-      code.push_back(digits[i+3]-'0'-1);
-      code.push_back(digits[i+4]-'0');
-    }
-  return code;
-}
-
 // Const view, so Multigon() resolves to the public accessor.
 static const multigon& MG(const traintrack& tt, const int m) { return tt.Multigon(m); }
+
+// Fields in the first block of a printed coding: digits when the blocks
+// run together, hyphen-separated parts otherwise.
+static int count_fields(const std::string& s)
+{
+  const std::string tok = s.substr(0,s.find(' '));
+  if (tok.find('-') == std::string::npos) return (int)tok.size();
+  return 1 + (int)std::count(tok.begin(),tok.end(),'-');
+}
+
+// Does any multigon carry a label?
+static bool tt_is_labelled(const traintrack& tt)
+{
+  for (int m = 0; m < tt.multigons(); ++m)
+    if (MG(tt,m).label() != 0) return true;
+  return false;
+}
 
 static int check_track(const traintrack& tt)
 {
@@ -122,13 +120,24 @@ static int check_track(const traintrack& tt)
   CHECK(N0.nprongs() == tt.total_prongs());
   CHECK(N0.ncusps() == tt.cusps());
 
-  // Printed coding parses back to the coding vector.
+  // Printed coding parses back to the coding vector, in both orientations
+  // and at both block widths, and rebuilds the same track.
   std::ostringstream oc;
   tt.print_coding(oc);
-  CHECK(parse_printed_coding(oc.str()) == tt.coding());
+  CHECK(traintracks::parse_coding(oc.str()) == tt.coding());
+  CHECK(traintrack(oc.str().c_str()) == tt);
   std::ostringstream ocr;
   tt.print_coding(ocr,-1);
-  CHECK(parse_printed_coding(ocr.str()) == tt.coding(-1));
+  CHECK(traintracks::parse_coding(ocr.str()) == tt.coding(-1));
+  std::ostringstream ocf;
+  tt.print_coding(ocf,1,true);
+  CHECK(traintracks::parse_coding(ocf.str()) == tt.coding());
+  CHECK(traintrack(ocf.str().c_str()) == tt);
+
+  // Forcing the label always gives five fields per block; without it the
+  // width follows the labels, and these tracks carry none.
+  CHECK(count_fields(ocf.str()) == 5);
+  CHECK(count_fields(oc.str()) == (tt_is_labelled(tt) ? 5 : 4));
 
   // Other printers produce something sensible.
   std::ostringstream os;

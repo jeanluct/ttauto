@@ -25,6 +25,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <sstream>
+#include <string>
 #include <vector>
 
 #include "traintracks/coding.hpp"
@@ -379,30 +381,166 @@ mathmatrix_permplus1 coding_engine::cyclic_symmetry(traintrack& tt)
   return perm;
 }
 
-// Stream canonical coding as contiguous printable blocks.
+// Stream canonical coding as printable blocks.
 std::ostream& coding_engine::print_coding(const traintrack& tt,
 					  std::ostream& strm,
-					  int dir)
+					  int dir,
+					  bool force_label)
 {
-  // Pretty-printer for coding blocks in canonical orientation dir.
-  int print_length = coding_block::length;
-  // If we're not labeling multigons, don't print the label, which
-  // means the coding blocks are shorter.
-  if (!traintrack::label_multigons) --print_length;
+  const coding_vec code = coding(tt,dir);
+  const int len = coding_block::length;
 
-  coding_vec code = coding(tt,dir);
-  for (int i = 0; i < (int)code.size(); i += coding_block::length)
+  // The label is worth printing only when it says something.  Label 0 is
+  // the unlabelled state, so a track that has never been through
+  // set_label() or pure_braid() prints the paper's four fields.
+  bool label = force_label;
+  for (int i = 2; i < (int)code.size() && !label; i += len)
+    if (code[i] != 0) label = true;
+
+  // Digits run together only while every field is a single digit; past
+  // that the fields have to be separated, or the block is ambiguous.
+  bool hyphen = false;
+  for (int i = 0; i < (int)code.size() && !hyphen; i += len)
+    if (code[i]+1 > 9 || code[i+1] > 9 || code[i+3]+1 > 9 || code[i+4] > 9
+	|| (label && code[i+2]+1 > 9))
+      hyphen = true;
+
+  for (int i = 0; i < (int)code.size(); i += len)
     {
-      if (traintrack::label_multigons)
-        strm << code[i]+1 << code[i+1] << code[i+2]+1 << code[i+3]+1 << code[i+4];
-      else
-        strm << code[i]+1 << code[i+1] << code[i+3]+1 << code[i+4];
-      if (i != ((int)code.size() - print_length)) strm << " ";
+      // Printed one-based, apart from the two counts.
+      int f[coding_block::length];
+      int nf = 0;
+      f[nf++] = code[i]+1;
+      f[nf++] = code[i+1];
+      if (label) f[nf++] = code[i+2]+1;
+      f[nf++] = code[i+3]+1;
+      f[nf++] = code[i+4];
+
+      if (i) strm << " ";
+      for (int j = 0; j < nf; ++j)
+	{
+	  if (hyphen && j) strm << "-";
+	  strm << f[j];
+	}
     }
   return strm;
 }
 
 } // namespace detail
+
+namespace {
+
+// Fatal error while reading a coding, quoting the offending input.
+[[noreturn]] void coding_error(const std::string& s, const std::string& why)
+{
+  std::cerr << "Error in traintracks::parse_coding(): " << why << ".\n";
+  std::cerr << "  while reading \"" << s << "\"\n";
+  std::exit(1);
+}
+
+// Value of a run of decimal digits.
+int coding_digits(const std::string& d, const std::string& s)
+{
+  if (d.empty()) coding_error(s,"empty field");
+  int v = 0;
+  for (std::string::const_iterator c = d.begin(); c != d.end(); ++c)
+    {
+      if (*c < '0' || *c > '9')
+	coding_error(s,"\"" + d + "\" is not a number");
+      v = 10*v + (*c - '0');
+    }
+  return v;
+}
+
+// Fields of one block.  A token containing '-' splits on '-'; otherwise
+// every character is a field of its own.
+std::vector<int> coding_fields(const std::string& tok, const std::string& s)
+{
+  std::vector<int> f;
+
+  if (tok.find('-') == std::string::npos)
+    {
+      for (std::string::const_iterator c = tok.begin(); c != tok.end(); ++c)
+	f.push_back(coding_digits(std::string(1,*c),s));
+      return f;
+    }
+
+  for (std::string::size_type b = 0;;)
+    {
+      std::string::size_type e = tok.find('-',b);
+      f.push_back(coding_digits(tok.substr(b, e == std::string::npos
+					      ? e : e - b), s));
+      if (e == std::string::npos) break;
+      b = e + 1;
+    }
+  return f;
+}
+
+} // namespace
+
+// Read a printed coding back into a coding vector (see coding.hpp).
+jlt::vector<int> parse_coding(const std::string& s)
+{
+  std::vector<std::string> tok;
+  {
+    std::istringstream iss(s);
+    std::string t;
+    while (iss >> t) tok.push_back(t);
+  }
+
+  if (tok.empty()) coding_error(s,"no coding blocks");
+  // A coding walks every edge twice, so it has an even number of blocks.
+  if (tok.size() % 2)
+    coding_error(s,"odd number of blocks (a coding has two per edge)");
+
+  jlt::vector<int> code;
+  int width = 0;
+
+  for (int i = 0; i < (int)tok.size(); ++i)
+    {
+      const std::string where = "block \"" + tok[i] + "\"";
+      std::vector<int> f = coding_fields(tok[i],s);
+
+      // The width is whatever the first block says, and the rest must
+      // agree: it is never inferred from the total number of fields.
+      if (width == 0)
+	{
+	  width = (int)f.size();
+	  if (width != 4 && width != 5)
+	    coding_error(s, where + " has " + std::to_string(width) +
+			 " fields, expected 4 or 5");
+	}
+      else if ((int)f.size() != width)
+	coding_error(s, where + " has " + std::to_string(f.size()) +
+		     " fields, but the coding is " + std::to_string(width) +
+		     " wide");
+
+      // As printed: prong+1, nprongs, [label+1,] edge+1, nedges.  A
+      // four-field block leaves out the label, which is then 0.
+      const int prong = f[0], nprongs = f[1];
+      const int label = (width == 5 ? f[2] : 1);
+      const int edge = f[width-2], nedges = f[width-1];
+
+      // Cheap validity check: a prong and an edge index their own counts.
+      // This is what catches a coding read at the wrong width.
+      if (prong < 1 || prong > nprongs)
+	coding_error(s, where + " has prong " + std::to_string(prong) +
+		     " of " + std::to_string(nprongs));
+      if (edge < 1 || edge > nedges)
+	coding_error(s, where + " has edge " + std::to_string(edge) +
+		     " of " + std::to_string(nedges));
+      if (label < 1)
+	coding_error(s, where + " has label 0, but labels print one-based");
+
+      code.push_back(prong-1);
+      code.push_back(nprongs);
+      code.push_back(label-1);
+      code.push_back(edge-1);
+      code.push_back(nedges);
+    }
+
+  return code;
+}
 
 // Public wrapper that delegates coding generation to coding_engine.
 //
@@ -558,9 +696,10 @@ mathmatrix_permplus1 traintrack::cyclic_symmetry()
 
 // Public wrapper that delegates coding formatting to coding_engine.
 std::ostream& traintrack::print_coding(std::ostream& strm,
-				       const int dir) const
+				       const int dir,
+				       const bool force_label) const
 {
-  return detail::coding_engine::print_coding(*this,strm,dir);
+  return detail::coding_engine::print_coding(*this,strm,dir,force_label);
 }
 
 } // namespace traintracks
