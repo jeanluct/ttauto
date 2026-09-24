@@ -32,6 +32,8 @@
 #include <stack>
 #include <vector>
 #include <cmath>
+#include <cstdlib>
+#include <limits>
 #include <jlt/matrix.hpp>
 #include <jlt/mathmatrix.hpp>
 #include <jlt/vector.hpp>
@@ -224,6 +226,11 @@ public:
 
   */
 
+  // Switch to the norm-bounded mode.  This recomputes max_path_length
+  // from the dilatation window (see find_maxnorm), discarding any value
+  // set by max_pathlength(); so does a later max_dilatation().  To keep
+  // an explicit length bound, call max_pathlength() after both.  Turning
+  // this back off does not restore a length bound it replaced.
   ttauto<TrTr>& check_norms(const bool do_check_norms_ = true)
   {
     do_check_norms = do_check_norms_;
@@ -264,7 +271,11 @@ public:
     return *this;
   }
 
-  // Set to 0 for infinite length.
+  // Set to 0 for no length bound, which is only usable together with
+  // check_norms(): the automaton has cycles, so the norm tests are what
+  // stop the search.  search() refuses the unbounded combination rather
+  // than hang.  Note check_norms() and, once it is on, max_dilatation()
+  // both overwrite this; call it after them.
   ttauto<TrTr>& max_pathlength(const int max_path_length_)
   {
     max_path_length = max_path_length_;
@@ -355,13 +366,23 @@ public:
 private:
   void find_maxnorm()
   {
-    // See Ham & Song, Exp. Math. 16 (2007), page 170.
+    // A bound on the norm (total entry sum) of a transition matrix whose
+    // spectral radius is at most lambdamax.  See Ham & Song, Exp. Math.
+    // 16 (2007), page 170.  Note n is the number of edges, so this grows
+    // very fast as the dilatation window widens.
     maxnorm = std::floor(std::pow(lambdamax,(double)n)) + n - 1;
     // Doesn't make much sense to manually limit the path length if
     // check_norms is on, so go as far as conceivable.  User will have
     // to override pathlength explicitly after calling check_norms()
     // if for some reason that's needed.
-    max_path_length = (int)maxnorm;
+    //
+    // This reuses a bound on the matrix norm as a bound on the path
+    // length.  They are different quantities, and the cap is only meant
+    // as a stop: the pruning in this mode is the row and column sum test
+    // in check_all_norms(), which grows monotonically along a path.
+    // Clamp, since lambdamax^n overflows an int for a wide window.
+    const double intmax = std::numeric_limits<int>::max();
+    max_path_length = (int)(maxnorm < intmax ? maxnorm : intmax);
   }
 
   // Build todo_list while removing one side of reflection-symmetric pairs.
@@ -507,6 +528,17 @@ void ttauto<TrTr>::search(const int tt00)
 {
   using std::cout;
   using std::endl;
+
+  // An unbounded path length only terminates because the norm tests stop
+  // it: the automaton has cycles, so with neither bound the search runs
+  // forever.  Catch that here rather than hang.
+  if (max_path_length == 0 && !do_check_norms)
+    {
+      std::cerr << "Error in ttauto::search(): ";
+      std::cerr << "max_pathlength(0) means no length bound, which only ";
+      std::cerr << "terminates with check_norms() on.\n";
+      std::exit(1);
+    }
 
   gatecandidates = 0;
   gaterejected = 0;
@@ -766,7 +798,9 @@ bool ttauto<TrTr>::descend_graph()
   /* Something's bothering me here... p is already greater that
      max_path_length, so why don't I see lengths larger than
      max_path_length printed? */
-  if ((int)p.length() > max_path_length)
+  // max_path_length 0 means no bound, as max_pathlength() documents and
+  // as the summary printout already assumed.
+  if (max_path_length != 0 && (int)p.length() > max_path_length)
     {
       if (debug)
 	std::cerr << "Exceeded max path length " << max_path_length << "\n";

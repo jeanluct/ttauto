@@ -412,10 +412,19 @@ Purpose: this is the central traversal state object used by the search engine.
 
 Public configuration knobs:
 
-- `check_norms(...)`: enable matrix-bound pruning mode.
+There are two search modes.  Length-bounded is the default: set
+`max_pathlength(...)` and leave `check_norms` off.  Norm-bounded needs
+`max_dilatation(...)` and `check_norms()`, and is the mode that reproduces
+the published minimum dilatations.
+
+- `check_norms(...)`: enable the norm-bounded mode.  It recomputes the
+  path-length bound from the dilatation window, so it discards any value
+  set by `max_pathlength(...)`; so does a later `max_dilatation(...)`.
 - `min_dilatation(...)`, `max_dilatation(...)`: acceptance window for candidate dilatation.
-- `max_pathlength(...)`: hard path-length bound.
-- `badword_length(...)`: configure repeated-pattern pruning.
+- `max_pathlength(...)`: path-length bound, 0 for none.  Set it after
+  `check_norms()` and `max_dilatation()` if you want it to survive.
+- `badword_length(...)`: configure repeated-pattern pruning.  Only
+  consulted in the norm-bounded mode (see issue #21).
 - `max_paths_to_save(...)`, `max_paths_to_print(...)`, `print_path_every(...)`.
 - `output_file(...)`: optional Mathematica-form output destination.
 
