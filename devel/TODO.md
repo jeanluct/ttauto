@@ -6,10 +6,6 @@ Remove ~ entries in tables
 
 Add comments to the code.  Big audit of the code.
 
-## Ham Song
-
-Ask AI: incorrect?  What follows from it?  Counterexample.
-
 ## Ask for a detailed latex file explaning the current state
 
 On issue 2 branch.
@@ -21,23 +17,6 @@ preferred.
 
 This is tough.  After a failed attempt, current suggestion is to use existing
 graph plotting.
-
-## Compile out or turn off the 5th digit of coding?
-
-Will this break things?  The `ttauto` paper right now only refers to 4 digits.
-
-Update: there is already a flag in the traintrack class:
-```
-  static const bool label_multiprongs = true;
-```
-I checked that everything still works fine when set to false, except for one
-unit test that tries to call set_label.  I moved the bool to the public
-section and skip the test of set to false.
-
-Does the string input respect this flag?  I don't think so.  It seems like
-only the print_coding method suppresses the middle label digit.
-
-Ask the AI to help improve this.
 
 ## Canonicalization issue 12
 
