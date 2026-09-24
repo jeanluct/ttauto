@@ -386,14 +386,14 @@ std::ostream& coding_engine::print_coding(const traintrack& tt,
 {
   // Pretty-printer for coding blocks in canonical orientation dir.
   int print_length = coding_block::length;
-  // If we're not labeling multiprongs, don't print the label, which
+  // If we're not labeling multigons, don't print the label, which
   // means the coding blocks are shorter.
-  if (!traintrack::label_multiprongs) --print_length;
+  if (!traintrack::label_multigons) --print_length;
 
   coding_vec code = coding(tt,dir);
   for (int i = 0; i < (int)code.size(); i += coding_block::length)
     {
-      if (traintrack::label_multiprongs)
+      if (traintrack::label_multigons)
         strm << code[i]+1 << code[i+1] << code[i+2]+1 << code[i+3]+1 << code[i+4];
       else
         strm << code[i]+1 << code[i+1] << code[i+3]+1 << code[i+4];

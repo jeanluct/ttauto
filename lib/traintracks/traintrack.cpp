@@ -44,7 +44,7 @@ traintrack::traintrack(const traintrack::intVec& code)
   mgv.push_back(mgonp(new multigon(1)));
 #endif
   Multigon(0).attach_edge();
-  if (label_multiprongs)
+  if (label_multigons)
     Multigon(0).set_label(code[2]); // Copy the label of first monogon.
 
   // Iterator for coding: skip initial uncusped monogon marker.
@@ -267,13 +267,13 @@ void traintrack::set_label(const int m, const int lb)
 {
   isnormalised = false;
 
-  // If this is called explicitly, then we are labeling multiprongs.
-  if (label_multiprongs)
+  // If this is called explicitly, then we are labeling multigons.
+  if (label_multigons)
     mgv[m]->set_label(lb);
   else
     {
       std::cerr << "Error in traintrack::traintrack::set_label(): ";
-      std::cerr << "flag label_multiprongs must be set.\n";
+      std::cerr << "flag label_multigons must be set.\n";
       exit(1);
     }
   normalise();
@@ -284,11 +284,11 @@ void traintrack::pure_braid()
 {
   isnormalised = false;
 
-  // If this is called explicitly, then we are labeling multiprongs.
-  if (!label_multiprongs)
+  // If this is called explicitly, then we are labeling multigons.
+  if (!label_multigons)
     {
       std::cerr << "Error in traintrack::traintrack::pure_braid(): ";
-      std::cerr << "flag label_multiprongs must be set.\n";
+      std::cerr << "flag label_multigons must be set.\n";
       exit(1);
     }
 

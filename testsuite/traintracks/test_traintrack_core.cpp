@@ -49,7 +49,7 @@ using traintracks::ttnumbering;
 // zero-based coding vector, as traintrack(const char*) was meant to.
 static traintrack::intVec parse_printed_coding(const std::string& s)
 {
-  CHECK(traintrack::label_multiprongs);
+  CHECK(traintrack::label_multigons);
   traintrack::intVec code;
   std::string digits;
   for (char c : s) if (c >= '0' && c <= '9') digits += c;
@@ -190,7 +190,7 @@ int main()
 
   // Puncture labels: set_label() changes the coding of a punctured monogon
   // and pure_braid() gives every puncture a distinct label.
-  if (traintrack::label_multiprongs)
+  if (traintrack::label_multigons)
     {
       traintrack tt(5,3);
       const traintrack::intVec code0 = tt.coding();
@@ -234,7 +234,7 @@ int main()
     jlt::vector<int> Kv(3);
     Kv[0] = 4; Kv[1] = 5; Kv[2] = 3;
     traintrack tt(9,Kv);
-    if (traintrack::label_multiprongs) tt.set_label(0,8);
+    if (traintrack::label_multigons) tt.set_label(0,8);
     check_track(tt);
     CHECK(tt.punctures() == 9);
   }

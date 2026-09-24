@@ -102,8 +102,8 @@ instance.
 
 Conventions worth knowing:
 
-- Codings are printed as 5-digit units; the middle digit is the multiprong
-  label controlled by `traintrack::label_multiprongs`.  The paper only uses
+- Codings are printed as 5-digit units; the middle digit is the multigon
+  label controlled by `traintrack::label_multigons`.  The paper only uses
   4 digits.  Only `print_coding` honours the flag; string input does not.
 - User-facing output (the `ttauto` program, Mathematica files, the devel
   notes) is 1-based; C++ vertex, branch and fold indices are 0-based.

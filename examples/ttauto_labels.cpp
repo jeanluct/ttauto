@@ -22,7 +22,7 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-// Set traintrack::label_multiprongs = true in traintrack.hpp.
+// Set traintrack::label_multigons = true in traintrack.hpp.
 
 #include <iostream>
 #include <jlt/vector.hpp>

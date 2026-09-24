@@ -42,7 +42,10 @@ namespace traintracks {
 class traintrack
 {
 public:
-  static const bool label_multiprongs = true;
+  // Whether multigons carry a distinguishing label (multigon::label()),
+  // set by set_label() or pure_braid().  The label is always part of the
+  // coding; this flag only controls whether print_coding() shows it.
+  static const bool label_multigons = true;
 
   using edgep = multigon::edgep;
 #if __cplusplus > 199711L && !defined(TRAINTRACKS_NO_SHARED_PTR)
