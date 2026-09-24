@@ -178,7 +178,7 @@ public:
       lambdamax(0),
       maxnorm(0),
       max_path_length(15),
-      max_badword_length(2),
+      max_badword_length(0),
       max_paths_save(1),
       max_paths_print(3),
       print_every(2000000),
@@ -212,17 +212,21 @@ public:
        do_check_norms = false
        max_path_length = 15
        maxnorm = 0 (not used)
-       max_badword_length = 2 (not used);
+       max_badword_length = 0 (no bad-word pruning)
 
      After calling check_norms(true):
 
        do_check_norms = true
        max_path_length = <set by find_maxnorm>
        maxnorm = <set by find_maxnorm>
-       max_badword_length = 2 (but not changed by check_norms)
+       max_badword_length = unchanged
 
      Calling check_norms(false) resets do_check_norms, but leaves
      everything else untouched (though only max_path_length will get used).
+
+     Bad-word pruning is independent of both modes: badword_length()
+     alone turns it on, in either.  It is off by default because it is
+     only valid when hunting a minimum -- see badword_length().
 
   */
 
@@ -234,11 +238,7 @@ public:
   ttauto<TrTr>& check_norms(const bool do_check_norms_ = true)
   {
     do_check_norms = do_check_norms_;
-    if (do_check_norms)
-      {
-	find_maxnorm();
-	badword_length(max_badword_length);
-      }
+    if (do_check_norms) find_maxnorm();
     return *this;
   }
 
@@ -282,6 +282,17 @@ public:
     return *this;
   }
 
+  // Prune folding paths that traverse a closed subpath twice in a row,
+  // when that subpath's transition matrix has the same pattern of zeros
+  // as its square.  Set to 0 (the default) to disable.
+  //
+  // This is only valid when looking for a MINIMUM dilatation.  Repeating
+  // such a loop can only raise the dilatation, so the minimiser never
+  // contains one; but the repeated path is usually a perfectly good
+  // pseudo-Anosov class of its own, just not a minimal one, and pruning
+  // silently drops it.  Do not use this when enumerating every class
+  // below a bound.  See doc/ttauto.tex and Ham & Song, Exp. Math. 16
+  // (2007).
   ttauto<TrTr>& badword_length(const int max_badword_length_)
   {
     max_badword_length = max_badword_length_;
@@ -338,6 +349,9 @@ public:
 
   // Candidates that passed the matrix test but failed the gate test.
   const pAlist& rejected_pA_list() const { return rejl; }
+
+  // How many branches the bad-word prune cut off in the last search.
+  llint badwords_omitted() const { return badwordsomitted; }
 
   // Gate-test statistics, cumulative over the whole search: candidates
   // that reached the test (closed path, primitive matrix, dilatation in
@@ -628,20 +642,29 @@ void ttauto<TrTr>::search(const int tt00)
 
   cout << endl;
 
-  // If the lowest eigenvalue is not close to the target min, then
-  // maybe the user was looking for all the pA's below a certain
-  // value.  In that case having max_badwords_length > 0 could be
-  // unwise, so print a warning.
-#if 0
-  if (do_check_norms && !pA_list().empty() && max_badword_length > 0)
+  // Bad-word pruning is only valid when hunting a minimum (see
+  // badword_length).  Say so when it was on.  With a dilatation window we
+  // can guess at the intent: if the lowest dilatation found is nowhere
+  // near the window, the user was probably collecting every class below
+  // it, and pruning may have cost them some.  Without a window there is
+  // nothing to compare against, so just state the caveat.
+  if (max_badword_length > 0)
     {
-      if ((lambdamax - pA_list().begin()->dilatation()) > tol)
+      if (lambdamax != 0)
 	{
-	  cout << "\nWarning: skipping badwords might miss some pAs";
-	  cout << " if not a strict minimum.\n";
+	  if (!pA_list().empty() &&
+	      (lambdamax - pA_list().begin()->second.dilatation()) > tol)
+	    {
+	      cout << "\nWarning: skipping badwords might miss some pAs";
+	      cout << " if not a strict minimum.\n";
+	    }
+	}
+      else
+	{
+	  cout << "\nNote: badwords were skipped, so pAs that are not";
+	  cout << " minimal may be missing.\n";
 	}
     }
-#endif
 }
 
 
@@ -761,7 +784,7 @@ bool ttauto<TrTr>::find_pAs()
       cout << symmetricnormexceeded << " times\n";
 #endif
     }
-  if (max_badword_length > 0 && do_check_norms)
+  if (max_badword_length > 0)
     {
       cout << "       Omitted bad words " << setw(9);
       cout << badwordsomitted << " times\n";
@@ -808,8 +831,9 @@ bool ttauto<TrTr>::descend_graph()
       return backtrack();
     }
 
-  // Check for bad words.
-  if (max_badword_length > 0 && do_check_norms)
+  // Check for bad words.  Controlled by badword_length() alone: see the
+  // caveat there about what this assumes.
+  if (max_badword_length > 0)
     {
       typedef typename badword_list::const_iterator cpit;
 

@@ -497,7 +497,10 @@ or column sum of the running matrix exceeds the dilatation being searched
 for, since that sum is a lower bound on the spectral radius and grows
 along the path.  Optionally \emph{bad words} are pruned: closed subpaths
 whose matrix has the same zero pattern as its square can be traversed
-once instead of repeatedly without lowering the dilatation.  When a path
+once instead of repeatedly without lowering the dilatation.  The prune
+is therefore valid only when the search is for a minimum: the repeated
+path is generally pseudo-Anosov in its own right, and discarding it
+loses that class.  It is off by default for that reason.  When a path
 closes, the criterion of Section~\ref{sec:criterion} decides whether it
 is a pseudo-Anosov; accepted paths are grouped into classes keyed by the
 characteristic polynomial of their matrix, and each class keeps its
@@ -1132,7 +1135,8 @@ The search of Section~\ref{sec:search} is the class
 \code{ttauto::ttauto<traintrack>}, run by \code{search()}.  \code{max_pathlength}
 sets the length bound; \code{check_norms()} together with
 \code{max_dilatation} selects the norm-bounded mode;
-\code{badword_length} enables bad-word pruning; \code{min_dilatation}
+\code{badword_length} enables bad-word pruning, in either mode and only
+when hunting a minimum; \code{min_dilatation}
 and \code{max_dilatation} set the acceptance window.  When a path closes,
 \code{record_pA} applies the criterion of
 Section~\ref{sec:criterion-summary}: \code{is_primitive} on the matrix,

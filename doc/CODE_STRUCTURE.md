@@ -423,8 +423,12 @@ the published minimum dilatations.
 - `min_dilatation(...)`, `max_dilatation(...)`: acceptance window for candidate dilatation.
 - `max_pathlength(...)`: path-length bound, 0 for none.  Set it after
   `check_norms()` and `max_dilatation()` if you want it to survive.
-- `badword_length(...)`: configure repeated-pattern pruning.  Only
-  consulted in the norm-bounded mode (see issue #21).
+- `badword_length(...)`: prune paths that traverse a closed loop twice,
+  in either mode; 0 (the default) disables it.  Valid only when hunting a
+  minimum: repeating such a loop can only raise the dilatation, so the
+  minimiser never contains one, but the repeated path is usually a
+  pseudo-Anosov class of its own that the prune silently drops.  Measured
+  in `devel/iss021/badwords.md`.
 - `max_paths_to_save(...)`, `max_paths_to_print(...)`, `print_path_every(...)`.
 - `output_file(...)`: optional Mathematica-form output destination.
 

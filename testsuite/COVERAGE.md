@@ -33,7 +33,7 @@ which is the point of them.
 | `include/traintracks/edge.hpp` | 53 | 91 | 91 | |
 | `include/traintracks/multigon.hpp` | 41 | 95 | 95 | |
 | `include/traintracks/util.hpp` | 17 | 100 | 100 | |
-| `include/ttauto/ttauto.hpp` | 329 | 78 | 89 | `debug` branches, badword pruning inside the search, symmetric-norm variant |
+| `include/ttauto/ttauto.hpp` | 329 | 78 | 89 | `debug` branches, symmetric-norm variant (badword pruning was uncovered when this was measured; `test_badword_pruning.cpp` now exercises it) |
 | `include/ttauto/folding_path.hpp` | 189 | 76 | 80 | error exits, `find_vertices` on a bad path |
 | `include/ttauto/pAclass.hpp` | 91 | 97 | 90 | print cap branches |
 | `include/ttauto/ttfoldgraph.hpp` | 183 | 95 | 95 | |
@@ -93,6 +93,17 @@ predates that test and the string constructor it exercises.
       digits are divisible by five as well as four
     - twelve malformed codings, each rejected with the expected message,
       run in a forked child since the reader reports by exiting
+
+- Bad-word pruning (`ttauto::badword_length`, the prune in
+  `ttauto::descend_graph`)
+  - Primary: `testsuite/ttauto/test_badword_pruning.cpp`
+  - Coverage focus:
+    - pruning is off by default, and `check_norms()` does not turn it on
+    - with it on, the minimum dilatation and its class are unchanged
+    - with it on, the class list is strictly smaller and is a subset of
+      the unpruned one by characteristic polynomial: the soundness limit,
+      executed rather than asserted in prose
+    - measured costs and savings are in `devel/iss021/badwords.md`
 
 - `include/traintracks/build.hpp`
   - Primary: `testsuite/traintracks/test_traintrack_core.cpp`
