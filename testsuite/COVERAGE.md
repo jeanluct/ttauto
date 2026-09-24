@@ -19,7 +19,7 @@ which is the point of them.
 
 | File | Lines | Before % | After % | Left uncovered |
 |---|---:|---:|---:|---|
-| `lib/traintracks/traintrack.cpp` | 182 | 64 | 88 | string constructor (exits "Broken?"), error exits |
+| `lib/traintracks/traintrack.cpp` | 182 | 64 | 88 | error exits (the string constructor was broken when this was measured) |
 | `lib/traintracks/coding.cpp` | 249 | 79 | 83 | `ttnumbering::print`, error exits |
 | `lib/traintracks/multigon.cpp` | 152 | 60 | 74 | `insert_edge(int,int)`, `print_details`, error exits |
 | `lib/traintracks/build.cpp` | 213 | 69 | 69 | 3- and 4-multigon constructors, `build_traintrack_list_sweep_bigons` |
@@ -42,9 +42,15 @@ which is the point of them.
 | **total** | 2416 | 80 | 86 | |
 
 Most of what remains uncovered is deliberate: fail-fast `exit(1)` paths,
-diagnostic printers, the broken string constructor, and builders the
-automaton never uses.  The `pAclass` figure dropped because `paths()`
-added lines that the census, not the testsuite, exercises.
+diagnostic printers, and builders the automaton never uses.  The
+`pAclass` figure dropped because `paths()` added lines that the census,
+not the testsuite, exercises.
+
+The exception is the coding reader.  Its `exit(1)` paths are reachable
+from user input, unlike the invariant guards elsewhere, so
+`test_coding_io.cpp` runs each of them in a forked child and checks the
+message; see "Reading and writing codings" below.  The table above
+predates that test and the string constructor it exercises.
 
 ## traintracks headers
 
@@ -70,6 +76,23 @@ added lines that the census, not the testsuite, exercises.
     - `set_label()`, `pure_braid()`, `print()`, `print_singularity_data()`,
       `printMathematicaForm()`
     - weights set through the iterator are read back in the same order
+
+- Reading and writing codings (`print_coding`, `traintracks::parse_coding`,
+  `traintrack(const char*)`)
+  - Primary: `testsuite/traintracks/test_coding_io.cpp`
+  - Coverage focus:
+    - every stratum for n=3..11, plain and after `pure_braid()`, printed
+      at its own width and with the label forced, read back by both
+      `parse_coding()` and the string constructor, and in the reversed
+      orientation against `coding(-1)`
+    - the width follows the labels, and the two widths of one track parse
+      to the same coding vector
+    - the hyphenated form, which no other test reaches: the eleven-puncture
+      star track has ten edges at one prong, and a label of 9 prints as 10
+    - the published four-wide coding of `ttauto_n=6_1.m`, whose forty
+      digits are divisible by five as well as four
+    - twelve malformed codings, each rejected with the expected message,
+      run in a forked child since the reader reports by exiting
 
 - `include/traintracks/build.hpp`
   - Primary: `testsuite/traintracks/test_traintrack_core.cpp`

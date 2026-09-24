@@ -41,6 +41,13 @@ To run only slow tests:
 ctest --test-dir build --output-on-failure -L slow
 ```
 
+Fail-fast paths are normally left untested, since they guard invariants a
+caller cannot reach.  The coding reader is the exception: its errors come
+from user input, so `testsuite/traintracks/test_coding_io.cpp` runs each
+bad coding in a forked child and checks the exit status and the message.
+That is the only test of its kind; it is skipped where `fork()` is
+unavailable.
+
 The `tests/` folder remains available for direct-run feature and exploratory
 programs.
 
