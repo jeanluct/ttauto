@@ -13,31 +13,28 @@ render_case() {
   local label="$1"
   local coding="$2"
   local idx="$3"
-  local center_order="$4"
   local snip="$OUTDIR/traintrack_${idx}.tex"
 
-  local cmd=(
-    ../examples/ttplot
-    --snippet
-    --no-punctures
-    --coding "$coding"
+  ../examples/ttplot \
+    --snippet \
+    --coding "$coding" \
     --output "$snip"
-    --relax-iters 300
-    --relax-step 0.1
-    --labels folds,multigons,edges
-  )
-  if [[ -n "$center_order" ]]; then
-    cmd+=(--center-order "$center_order")
-  fi
-
-  "${cmd[@]}"
 
   printf '%s|%s\n' "$label" "$snip" >> "$MANIFEST"
 }
 
 idx=0
-labels=(29 46 43 71 88 85)
+# The first case is the track of Figure 11 of the ttauto paper: six
+# punctures on one-edge monogons around a central trigon carrying two
+# edges at each prong.  It is vertex 1 of the second six-puncture
+# stratum, and is here so the output can be held against the published
+# tt3prong_pt figure.
+#
+# The rest are the tracks of the issue-2 bad path, vertices 29, 46, 43,
+# 71, 88 and 85.
+labels=("paper Fig.~11" 29 46 43 71 88 85)
 codings=(
+  "1111 1312 1322 1111 2312 1111 2322 1111 3312 1111 3322 1111"
   "11111 11113 11123 13111 23111 11111 33111 11111 11133 13111 23111 11111 33111 11111"
   "11111 13111 23111 11111 33111 11122 11112 11112 11122 13111 23111 11111 33111 11111"
   "11111 13111 23111 11111 33111 11122 11112 13112 13122 11111 23111 11111 33111 11111"
@@ -45,23 +42,15 @@ codings=(
   "11111 13111 23111 11111 33111 11112 11122 11122 11112 13111 23111 11111 33111 11111"
   "11111 13111 23111 11111 33111 11112 11122 13122 23111 11111 33111 11111 13112 11111"
 )
-center_orders=(
-  ""                    # 29: default order
-  "1,2,3,4,5,6,8,7"     # 46: swap m7/m8 to remove e6/e7 crossing
-  ""                    # 43: default order
-  ""                    # 71: default order
-  "1,2,3,4,5,6,8,7"     # 88: same m7/m8 swap improves self-crossing
-  ""                    # 85: default order
-)
 
-if [[ "${#labels[@]}" -ne "${#codings[@]}" || "${#labels[@]}" -ne "${#center_orders[@]}" ]]; then
-  echo "labels/codings/center_orders length mismatch" >&2
+if [[ "${#labels[@]}" -ne "${#codings[@]}" ]]; then
+  echo "labels/codings length mismatch" >&2
   exit 1
 fi
 
 for i in "${!codings[@]}"; do
   idx=$((idx+1))
-  render_case "${labels[$i]}" "${codings[$i]}" "$idx" "${center_orders[$i]}"
+  render_case "${labels[$i]}" "${codings[$i]}" "$idx"
 done
 
 if [[ "$idx" -eq 0 ]]; then
