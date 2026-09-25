@@ -353,6 +353,11 @@ public:
   // How many branches the bad-word prune cut off in the last search.
   llint badwords_omitted() const { return badwordsomitted; }
 
+  // How many branches the length cap cut off in the last search.  Zero
+  // means the cap never bound, so the norm tests ended every path on
+  // their own and the result is what an uncapped search would give.
+  llint path_length_exceeded() const { return maxpathlengthexceeded; }
+
   // Gate-test statistics, cumulative over the whole search: candidates
   // that reached the test (closed path, primitive matrix, dilatation in
   // the window), those rejected, and the rejection rate.

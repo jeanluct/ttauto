@@ -56,7 +56,15 @@ For header/component coverage mapping, see `testsuite/COVERAGE.md`.
 ## Programs that can be used as tests but take a long time to run
 
 `examples/ttauto_count`   (2 minutes)
-`examples/ttauto_labels`   (100 minutes)
+
+`examples/ttauto_labels` belonged here at about 100 minutes until it began
+capping its path length.  The cost was the bound `check_norms()` derives
+from the dilatation window, 734 folds on that stratum; searching to it is
+what makes the search complete for the window, so it was the price of
+completeness rather than waste.  The classes found are unchanged at every
+cap from 10 to 24, so the example caps at 12 and finishes in a fiftieth of
+a second.  That cap is measured, not proved -- see
+`devel/iss016/labelled_automaton.md`.
 
 ## Braids from folding paths
 

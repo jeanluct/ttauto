@@ -55,8 +55,11 @@ Tests are plain `main()` programs with no framework: they print and exit
 nonzero on failure.  Fast manual matrix after touching `include/` or `lib/`:
 `tests/test_traintrack`, `tests/test_folding_path`, `tests/test_permplus1`,
 `tests/test_badwords`, `examples/ttauto_min_example`, `examples/ttauto_torus`.
-`examples/ttauto_count` takes about 2 minutes and `examples/ttauto_labels`
-about 100; run them deliberately.
+`examples/ttauto_count` takes about 2 minutes; run it deliberately.
+`examples/ttauto_labels` took about 100 minutes until it capped its path
+length: `check_norms()` derives that bound from the dilatation window, and
+searching to it is what makes the result complete for the window, so the
+cost was real rather than waste.  See `devel/iss016/labelled_automaton.md`.
 
 `examples/ttauto` is interactive; feed it a defaults-only stdin
 (`examples/ttauto <<EOF` / `EOF`) or an answer file such as

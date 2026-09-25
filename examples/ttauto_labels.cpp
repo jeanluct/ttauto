@@ -22,7 +22,10 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-// Set traintrack::label_multigons = true in traintrack.hpp.
+// What labelling a multigon does to the automaton and to the
+// pseudo-Anosovs it finds.  This is a paired comparison: the same search
+// is run with and without a label on one of the two trigons, and the
+// point is the difference between them, not either count on its own.
 
 #include <iostream>
 #include <jlt/vector.hpp>
@@ -56,13 +59,26 @@ int main()
   ttv[trk].set_label(6,label);
   ttv[trk].print(cout) << endl;
 
-  // Find that the minimum dilatation is 2.015, as when the 3-prongs
-  // are identical, but there are far fewer pA's here.  To see this,
-  // recompile and run with set_label(6,0) above, rather than (6,1).
+  // Labelling one trigon eliminates some of the pseudo-Anosovs: those
+  // whose folding path permutes the two trigons no longer close up, so
+  // the classes that survive are a subset of the ones found without the
+  // label.  To see the other side of the comparison, recompile and run
+  // with set_label(6,0) above, rather than (6,1).
   //
-  // Find 8 pA's with dilatation <= 3 for identical 3-prongs, but only
-  // two for distinct 3-prongs.  This means that the six others
-  // permute the singularities.
+  // The minimum dilatation is the same either way, 2.01536 at path
+  // length 4, so it is the control here rather than the finding.
+  //
+  // Labelling also doubles the automaton, 9 vertices to 18: each
+  // unlabelled track corresponds to two labelled ones, according to
+  // which of its two trigons carries the label.
+  //
+  // Measured 2026-09-25, with dilmax = 3, badword_length 0 and the
+  // path-length cap below: 10 classes without the label, 6 with, so 4 of
+  // the 10 permute the trigons.  Quote the configuration whenever you
+  // quote the counts -- they move with the window, the cap and the
+  // pruning, which is how the previous version of this comment came to
+  // claim 8 and 2.  Those numbers could not be reproduced under any
+  // setting tried; see devel/iss016/labelled_automaton.md.
 
   cout << "Train track has " << ttv[trk].punctures() << " punctures and ";
   cout << ttv[trk].edges() << " edges\n";
@@ -83,6 +99,15 @@ int main()
 
       ttauto::ttauto<traintrack> tta(*i);
       tta.max_dilatation(dilmax).check_norms();
+      // check_norms() derives its own path-length bound from the
+      // dilatation window, and at dilmax = 3 on this stratum that is 734
+      // folds, which is why this example used to run for about a hundred
+      // minutes.  The classes found are unchanged at every cap from 10 to
+      // 24, so 12 is used here; set it after check_norms(), which would
+      // otherwise overwrite it.  This is a measured cap, not a proved
+      // one: tta.path_length_exceeded() is nonzero at 12, so the search
+      // is complete for the window only up to that length.
+      tta.max_pathlength(12);
       tta.search();
     }
 }
