@@ -31,6 +31,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "traintracks/coding.hpp"
 #include "traintracks/traintrack.hpp"
 
 namespace {
@@ -593,9 +594,9 @@ void usage(std::ostream& out)
     << "  --relax-step X        Layout relaxation step (default: 0.07)\n"
     << "  --help                Show this help\n"
     << "\n"
-    << "Input coding formats:\n"
-    << "  1) Compact printed blocks, e.g. \"11111 13111 23111 ...\"\n"
-    << "  2) Integer list, e.g. \"0 1 0 0 1 0 3 0 0 1 ...\"\n"
+    << "Input coding, as printed by traintrack::print_coding:\n"
+    << "  compact, e.g. \"1111 1311 2311 ...\" or \"11111 13111 ...\"\n"
+    << "  hyphenated when a field reaches ten, e.g. \"1-1-12-1 1-15-2-2\"\n"
     << "\n"
     << "To make PDF from standalone output:\n"
     << "  pdflatex ttplot.tex\n";
@@ -717,177 +718,6 @@ std::string read_file_text(const std::string& path)
   std::ostringstream s;
   s << in.rdbuf();
   return s.str();
-}
-
-bool all_digits(const std::string& t)
-{
-  if (t.empty()) return false;
-  for (char c : t)
-    {
-      if (!(c >= '0' && c <= '9')) return false;
-    }
-  return true;
-}
-
-std::vector<std::string> split_tokens(const std::string& text)
-{
-  std::string cleaned;
-  cleaned.reserve(text.size());
-  for (char c : text)
-    {
-      if (c == ',' || c == ';' || c == '[' || c == ']' || c == '{' || c == '}')
-        cleaned.push_back(' ');
-      else
-        cleaned.push_back(c);
-    }
-
-  std::istringstream in(cleaned);
-  std::vector<std::string> tok;
-  std::string t;
-  while (in >> t) tok.push_back(t);
-  return tok;
-}
-
-traintrack::intVec parse_coding(const std::string& text)
-{
-  const int labeled_block_len = 5;
-  const int unlabeled_block_len = 4;
-
-  std::vector<std::string> tok(split_tokens(text));
-  if (tok.empty())
-    {
-      std::cerr << "Empty coding input.\n";
-      std::exit(1);
-    }
-
-  int compact_len = 0;
-  bool compact_blocks = true;
-  for (const std::string& t : tok)
-    {
-      if (!all_digits(t))
-        {
-          compact_blocks = false;
-          break;
-        }
-      int tl = (int)t.size();
-      if (tl != labeled_block_len && tl != unlabeled_block_len)
-        {
-          compact_blocks = false;
-          break;
-        }
-      if (compact_len == 0) compact_len = tl;
-      if (compact_len != tl)
-        {
-          compact_blocks = false;
-          break;
-        }
-    }
-
-  std::vector<int> ints;
-  if (compact_blocks)
-    {
-      for (const std::string& t : tok)
-        {
-          for (char c : t) ints.push_back((int)(c - '0'));
-        }
-    }
-  else
-    {
-      for (const std::string& t : tok)
-        {
-          if (!all_digits(t))
-            {
-              std::cerr << "Non-numeric token in coding: " << t << "\n";
-              std::exit(1);
-            }
-          ints.push_back(std::atoi(t.c_str()));
-        }
-    }
-
-  int block_len = 0;
-  if ((int)ints.size() % labeled_block_len == 0)
-    block_len = labeled_block_len;
-  else if ((int)ints.size() % unlabeled_block_len == 0)
-    block_len = unlabeled_block_len;
-  else
-    {
-      std::cerr << "Coding length " << ints.size();
-      std::cerr << " is not divisible by 5 (labeled) or 4 (legacy unlabeled).\n";
-      std::exit(1);
-    }
-
-  traintrack::intVec code;
-  code.reserve((block_len == labeled_block_len)
-                 ? ints.size()
-                 : (ints.size()/unlabeled_block_len)*labeled_block_len);
-
-  bool one_based_pr_edge = true;
-  if (block_len == labeled_block_len)
-    {
-      for (int i = 0; i < (int)ints.size(); i += labeled_block_len)
-        {
-          if (ints[i+0] == 0 || ints[i+3] == 0)
-            {
-              one_based_pr_edge = false;
-              break;
-            }
-        }
-    }
-  else
-    {
-      for (int i = 0; i < (int)ints.size(); i += unlabeled_block_len)
-        {
-          if (ints[i+0] == 0 || ints[i+2] == 0)
-            {
-              one_based_pr_edge = false;
-              break;
-            }
-        }
-    }
-
-  if (block_len == labeled_block_len)
-    {
-      for (int i = 0; i < (int)ints.size(); i += labeled_block_len)
-        {
-          int pr = ints[i+0] - (one_based_pr_edge ? 1 : 0);
-          int np = ints[i+1];
-          int lb = ints[i+2] - 1;
-          int ed = ints[i+3] - (one_based_pr_edge ? 1 : 0);
-          int ne = ints[i+4];
-          if (pr < 0 || ed < 0)
-            {
-              std::cerr << "Printed coding must be 1-based in prong/edge fields.\n";
-              std::exit(1);
-            }
-          code.push_back(pr);
-          code.push_back(np);
-          code.push_back(lb);
-          code.push_back(ed);
-          code.push_back(ne);
-        }
-    }
-  else
-    {
-      for (int i = 0; i < (int)ints.size(); i += unlabeled_block_len)
-        {
-          int pr = ints[i+0] - (one_based_pr_edge ? 1 : 0);
-          int np = ints[i+1];
-          int ed = ints[i+2] - (one_based_pr_edge ? 1 : 0);
-          int ne = ints[i+3];
-          if (pr < 0 || ed < 0)
-            {
-              std::cerr << "Printed coding must be 1-based in prong/edge fields.\n";
-              std::exit(1);
-            }
-          code.push_back(pr);
-          code.push_back(np);
-          code.push_back(0);
-          code.push_back(ed);
-          code.push_back(ne);
-        }
-    }
-
-  return code;
 }
 
 const edge* edge_ptr(const multigon::edgep& ep)
@@ -1023,7 +853,11 @@ int main(int argc, char** argv)
   else
     coding_text = read_all_stdin();
 
-  traintrack::intVec code(parse_coding(coding_text));
+  // One parser, in the library: it takes each block's width from the
+  // block itself rather than from the total count, so it reads both
+  // the compact and the hyphenated forms and cannot mistake one
+  // width for the other.
+  traintrack::intVec code(traintracks::parse_coding(coding_text));
   traintrack tt(code);
   tt.check();
 
