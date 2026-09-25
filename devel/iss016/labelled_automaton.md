@@ -103,10 +103,17 @@ branches the cap truncated -- **grows** rather than falling to zero:
 | 24 | 9468958  | 10861282 | 70.0 s |
 
 A zero there would have proved the cap sufficient, since the norm tests
-would then have ended every path on their own.  It is nowhere near zero,
-so there is no cheap cap that is provably enough, and the example's cap
-of 12 rests on the table above rather than on an argument.  Say so when
-quoting its numbers.
+would then have ended every path on their own.  It is nowhere near zero
+at any of these caps, so no cheap cap is provably enough on its own.
+
+The uncapped run settles it from the other end.  Unlabelled, window 3,
+`badword_length(2)`, no length cap, it reports **10 classes** in 4050 s
+with `path_length_exceeded() == 0`.  The zero is the proof: the norm
+tests ended every path before the 734-fold bound, so that run is complete
+for the window.  Its ten characteristic polynomials are exactly the ten
+above.  The cap of 12 therefore gives the complete answer on the
+unlabelled side -- verified against the full search rather than argued
+from the table.
 
 ## The counts do not depend on pruning or on the gate test
 
@@ -121,13 +128,16 @@ At cap 12, every combination gives the same 10 and 6:
 
 ## The old 8 and 2
 
-The previous comment claimed 8 and 2.  Nothing tried reproduces it:
-neither the gate test, nor bad-word pruning at lengths 0 and 1, nor any
-cap from 10 to 24.  `badword_length(2)` -- the default in 2010, when
-`check_norms()` still rebuilt the table -- was being tested uncapped when
-this note was written; if it turns out to reproduce 8 and 2, that is the
-explanation, since pruning removes exactly the non-minimal classes a
-count of this kind is counting.
+The previous comment claimed 8 and 2.  Nothing reproduces it.  Not the
+gate test, not any cap from 10 to 24, and not bad-word pruning: the
+leading hypothesis was `badword_length(2)`, the default in 2010 when
+`check_norms()` still rebuilt the table, since pruning removes exactly
+the non-minimal classes a count of this kind is counting.  Run uncapped
+and complete, it gives **10**, the same as `badword_length` 0 and 1.
+
+So the old numbers remain unexplained.  They are not a pruning artefact,
+not a windowing artefact and not a truncation artefact, which leaves a
+plain error or a count of something else.
 
 Either way it does not affect what the example is for.  Labelling
 eliminating some classes is a *relative* statement, and both sides of the

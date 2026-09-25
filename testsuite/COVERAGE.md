@@ -105,6 +105,22 @@ predates that test and the string constructor it exercises.
       executed rather than asserted in prose
     - measured costs and savings are in `devel/iss021/badwords.md`
 
+- Braid extraction against the labelled automaton
+  (`ttauto::folding_path_braid`, `traintrack::pure_braid`)
+  - Primary: `testsuite/ttauto/test_labelled_braids.cpp`
+  - Coverage focus:
+    - after `pure_braid()` no vertex is cyclically symmetric, so
+      `folding_path_braids` returns a single candidate
+    - every closed path of a labelled automaton gives a braid whose
+      permutation is the identity, checked against the automaton's own
+      closure test, which shares no code with the extraction
+    - the control: unlabelled, the same strata give closed paths whose
+      braids do permute the punctures, and do have symmetric vertices
+    - at a symmetric vertex the candidates are several and distinct, and
+      the one chosen is the one whose growth matches the path's Perron
+      root: the structure that 653134f fixed, which the labelled parts
+      cannot reach because labelling removes the symmetry
+
 - `include/traintracks/build.hpp`
   - Primary: `testsuite/traintracks/test_traintrack_core.cpp`
   - Secondary: `testsuite/traintracks/test_map_consistency.cpp`

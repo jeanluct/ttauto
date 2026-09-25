@@ -104,9 +104,10 @@ int main()
       // folds, which is why this example used to run for about a hundred
       // minutes.  The classes found are unchanged at every cap from 10 to
       // 24, so 12 is used here; set it after check_norms(), which would
-      // otherwise overwrite it.  This is a measured cap, not a proved
-      // one: tta.path_length_exceeded() is nonzero at 12, so the search
-      // is complete for the window only up to that length.
+      // otherwise overwrite it.  The cap is checked rather than argued:
+      // the uncapped search reports the same classes, and its
+      // path_length_exceeded() is 0, so the norm tests ended every path
+      // on their own and that run is complete for the window.
       tta.max_pathlength(12);
       tta.search();
     }
