@@ -359,17 +359,17 @@ Outcome of Step 4 (2026-09-19):
   `gate_rejection_rate()`.
 
   Seven classes, 161 paths, none with an accepted representative.  Every
-  rejection is at a prong of a multi-edge punctured monogon split into
-  two main gates, except the two imprimitive ones, which are disconnected
-  at an unpunctured 4-gon.  Cross-check with `braids.tex` (in this
-  directory): with the gate test on, every n=6 row of the scan table
-  agrees with the paper's per-stratum table, and every n=7 row except
-  s12, where the paper's starred 2.21497 is superseded by 2.02598 at
+  rejection is at a prong of a multi-edge punctured monogon split into two
+  main gates, except the two imprimitive ones, which are disconnected at an
+  unpunctured 4-gon.  Cross-check with `braids.tex` (in the pubs/braids folder
+  of the main ttauto project): with the gate test on, every n=6 row of the
+  scan table agrees with the paper's per-stratum table, and every n=7 row
+  except s12, where the paper's starred 2.21497 is superseded by 2.02598 at
   search length 10.  The imprimitive classes were never candidates in the
-  paper: its enumeration requires a Perron root, and a polynomial in x^2
-  has +-lambda.  On the n=5 first stratum, 0 of the 726 primitive
-  closed paths of length <= 5 are disconnected.  So the bad path was NOT
-  the only spurious pA, but the mechanism is always the same one.
+  paper: its enumeration requires a Perron root, and a polynomial in x^2 has
+  +-lambda.  On the n=5 first stratum, 0 of the 726 primitive closed paths of
+  length <= 5 are disconnected.  So the bad path was NOT the only spurious pA,
+  but the mechanism is always the same one.
 - Consequence for the scan baseline `examples/ttauto_scan_strata.md`
   (three rows change; the old rows are kept struck through with a note,
   and the slow regression ignores such annotations):
