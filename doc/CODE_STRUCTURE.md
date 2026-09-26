@@ -353,6 +353,16 @@ The proper embedding of a track, as far as it is combinatorial.
 
 Purpose: give the punctures an order along the real axis.
 
+### `include/traintracks/collapsed_layout.hpp` and `lib/traintracks/collapsed_layout.cpp`
+
+- `make_collapsed_layout(num, emb)`: the collapsed drawing, every
+  multigon a point and every main edge one cubic arc, with the punctures
+  on the axis in `emb`'s order and each multigon's prongs equally spaced.
+- `cubic_point(c, t)`: a point of one of those arcs.
+
+Purpose: what `examples/ttplot` draws, kept in the library so that its
+planarity can be tested.
+
 ### `include/traintracks/braid.hpp` and `lib/traintracks/braid.cpp`
 
 - `braidword`: a word in the braid generators, with `inverse()`,

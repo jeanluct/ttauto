@@ -184,6 +184,14 @@ predates that test and the string constructor it exercises.
       `doc/ttauto.tex`, which is what fixes the sense of the walk
   - Also: `testsuite/ttauto/test_braid_extraction.cpp` (through the braid)
 
+- `include/traintracks/collapsed_layout.hpp`
+  - Primary: `testsuite/traintracks/test_collapsed_layout.cpp`
+    - a self-check that the crossing test sees two arcs crossing after
+      leaving the same point, the case an earlier checker skipped
+    - no crossings in the two tracks of Figure 4 of the ttauto paper
+    - the crossing count over every vertex of every automaton for n=3..6,
+      printed and not yet asserted, since the drawing is not yet planar
+
 - `include/traintracks/braid.hpp`
   - Primary: `testsuite/ttauto/test_braid_extraction.cpp`
     - `braidword` arithmetic: `delta`, `block_swap`, `permutation`,

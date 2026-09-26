@@ -51,17 +51,19 @@
 #include <string>
 #include <vector>
 #include "traintracks/coding.hpp"
+#include "traintracks/collapsed_layout.hpp"
 #include "traintracks/embedding.hpp"
 #include "traintracks/traintrack.hpp"
 
 namespace {
 
+using traintracks::collapsed_layout;
+using traintracks::cubic;
 using traintracks::multigon;
 using traintracks::traintrack;
 using traintracks::ttnumbering;
 using traintracks::tt_embedding;
-
-struct vec2 { double x; double y; };
+using traintracks::vec2;
 
 struct options
 {
@@ -76,178 +78,6 @@ struct options
   double dot = 0.055;               // radius of a collapsed multigon
   double line_width = 0.9;          // pt, to match the paper's line art
 };
-
-//
-// Layout
-//
-
-struct layout
-{
-  std::vector<vec2> mg;                       // by multigon index
-  std::vector<std::pair<int,int> > edge_mg;   // by edge: its two multigons
-  std::vector<std::pair<int,int> > edge_pr;   // by edge: its two prongs
-  std::vector<vec2> prong_dir;                // by prong: outgoing tangent
-  std::vector<int> puncture_pos;              // by multigon, 1..n, 0 if none
-};
-
-int multigon_of_prong(const ttnumbering& num, const int q)
-{
-  return num.prong[q].multigon;
-}
-
-// Place the multigons from the embedding.
-//
-// Punctures sit on the axis at the position the boundary walk gives them.
-// An unpunctured multigon sits over the middle of the puncture positions
-// in its subtree, at a height that grows with the width of that span.
-// The walk order is the planar order, so those spans nest instead of
-// interleaving, and a wider structure therefore sits above whatever it
-// contains.
-layout build_layout(const traintrack& tt, const tt_embedding& emb,
-                    const ttnumbering& num)
-{
-  const int M = tt.multigons(), E = num.nedges();
-
-  layout L;
-  L.mg.assign(M,{0.0,0.0});
-  L.puncture_pos.assign(M,0);
-  L.edge_mg.assign(E,std::make_pair(-1,-1));
-  L.edge_pr.assign(E,std::make_pair(-1,-1));
-  for (int e = 0; e < E; ++e)
-    {
-      L.edge_mg[e] = std::make_pair(multigon_of_prong(num,num.edge_tail[e]),
-                                    multigon_of_prong(num,num.edge_head[e]));
-      L.edge_pr[e] = std::make_pair(num.edge_tail[e],num.edge_head[e]);
-    }
-
-  for (int i = 0; i < emb.npunctures(); ++i)
-    L.puncture_pos[multigon_of_prong(num,emb.puncture_order[i])] = i+1;
-
-  std::vector<std::vector<int> > adj(M);
-  for (int e = 0; e < E; ++e)
-    {
-      adj[L.edge_mg[e].first].push_back(L.edge_mg[e].second);
-      adj[L.edge_mg[e].second].push_back(L.edge_mg[e].first);
-    }
-
-  // The multigons and main edges form a tree, so rooting it and taking
-  // the span of each subtree needs no search.
-  const int root = multigon_of_prong(num,emb.puncture_order[0]);
-  std::vector<int> lo(M,M+1), hi(M,0), parent(M,-2), order;
-  {
-    std::vector<int> stack(1,root);
-    parent[root] = -1;
-    while (!stack.empty())
-      {
-        const int m = stack.back(); stack.pop_back();
-        order.push_back(m);
-        for (int k = 0; k < (int)adj[m].size(); ++k)
-          if (parent[adj[m][k]] == -2)
-            { parent[adj[m][k]] = m; stack.push_back(adj[m][k]); }
-      }
-  }
-  for (int i = (int)order.size()-1; i >= 0; --i)
-    {
-      const int m = order[i];
-      if (L.puncture_pos[m])
-        {
-          lo[m] = std::min(lo[m],L.puncture_pos[m]);
-          hi[m] = std::max(hi[m],L.puncture_pos[m]);
-        }
-      if (parent[m] >= 0)
-        {
-          lo[parent[m]] = std::min(lo[parent[m]],lo[m]);
-          hi[parent[m]] = std::max(hi[parent[m]],hi[m]);
-        }
-    }
-
-  for (int m = 0; m < M; ++m)
-    {
-      if (L.puncture_pos[m])
-        L.mg[m] = { (double)L.puncture_pos[m], 0.0 };
-      else
-        L.mg[m] = { 0.5*(lo[m]+hi[m]), 0.55*(hi[m]-lo[m]) };
-    }
-
-  // A multigon's prongs are equally spaced by angle around it, and the
-  // edges are then attached to the prongs, with every edge at a prong
-  // leaving along that prong's direction.  Edges at the same prong are
-  // therefore tangent.
-  //
-  // Only the overall rotation of the star is free.  Pointing each prong
-  // at its own neighbours instead, which is what a naive fit does, lets
-  // the prongs bunch together and the multigon stops looking like a
-  // k-gon at all.
-  L.prong_dir.assign(num.nprongs(),{0.0,1.0});
-
-  // Where each prong would like to point, from the edges attached to it.
-  std::vector<vec2> want(num.nprongs(),{0.0,0.0});
-  for (int e = 0; e < E; ++e)
-    {
-      const int qt = L.edge_pr[e].first, qh = L.edge_pr[e].second;
-      const vec2 a = L.mg[L.edge_mg[e].first], b = L.mg[L.edge_mg[e].second];
-      want[qt].x += b.x-a.x; want[qt].y += b.y-a.y;
-      want[qh].x += a.x-b.x; want[qh].y += a.y-b.y;
-    }
-
-  // The sense in which the prong index runs round a multigon in the
-  // plane.  One convention for the whole picture, never per multigon.
-  const double sense = 1.0;
-
-  for (int m = 0; m < M; ++m)
-    {
-      // A puncture sits on the axis and the track lives above it, so its
-      // one prong points straight up and the loop hangs below.
-      if (L.puncture_pos[m]) continue;
-
-      // Circular mean of what the prongs want, each shifted back by the
-      // angle the equal spacing will give it.
-      double sx = 0.0, sy = 0.0;
-      int k = 0;
-      for (int q = 0; q < num.nprongs(); ++q)
-        {
-          if (num.prong[q].multigon != m) continue;
-          k = num.prong[q].nprongs;
-          const double n2 = std::sqrt(want[q].x*want[q].x + want[q].y*want[q].y);
-          if (n2 < 1e-9) continue;
-          const double a = std::atan2(want[q].y,want[q].x)
-                         - sense*2.0*M_PI*num.prong[q].prong/k;
-          sx += std::cos(a); sy += std::sin(a);
-        }
-      if (k == 0) continue;
-      const double theta = (sx*sx + sy*sy > 1e-18) ? std::atan2(sy,sx) : 0.5*M_PI;
-
-      for (int q = 0; q < num.nprongs(); ++q)
-        {
-          if (num.prong[q].multigon != m) continue;
-          const double a = theta + sense*2.0*M_PI*num.prong[q].prong/k;
-          L.prong_dir[q] = { std::cos(a), std::sin(a) };
-        }
-    }
-
-  return L;
-}
-
-// The control point at each end runs along that end's prong direction,
-// so edges sharing a prong are tangent there.  Its length grows with the
-// horizontal span, so an edge reaching over intervening structure still
-// arcs above it rather than cutting through.
-void edge_controls(const vec2& a, const vec2& b,
-                   const vec2& da, const vec2& db, vec2& c1, vec2& c2)
-{
-  const double h = 0.55*std::fabs(a.x-b.x) + 0.30;
-  c1 = { a.x + h*da.x, a.y + h*da.y };
-  c2 = { b.x + h*db.x, b.y + h*db.y };
-}
-
-vec2 cubic_point(const vec2& p0, const vec2& p1, const vec2& p2,
-                 const vec2& p3, const double t)
-{
-  const double u = 1.0-t;
-  const double w0 = u*u*u, w1 = 3*u*u*t, w2 = 3*u*t*t, w3 = t*t*t;
-  return { w0*p0.x + w1*p1.x + w2*p2.x + w3*p3.x,
-           w0*p0.y + w1*p1.y + w2*p2.y + w3*p3.y };
-}
 
 //
 // Command line
@@ -372,7 +202,7 @@ int main(int argc, char** argv)
 
   const ttnumbering num = tt.numbering();
   const tt_embedding emb = traintracks::outer_embedding(num);
-  const layout L = build_layout(tt,emb,num);
+  const collapsed_layout L = traintracks::make_collapsed_layout(num,emb);
 
   std::ofstream fout;
   std::ostream* os = &std::cout;
@@ -399,15 +229,12 @@ int main(int argc, char** argv)
   // Main edges first, so the dots sit on top of them.
   for (int e = 0; e < (int)L.edge_mg.size(); ++e)
     {
-      const vec2 a = L.mg[L.edge_mg[e].first], b = L.mg[L.edge_mg[e].second];
-      vec2 c1, c2;
-      edge_controls(a,b,L.prong_dir[L.edge_pr[e].first],
-                    L.prong_dir[L.edge_pr[e].second],c1,c2);
-      out << "  \\draw[ttedge] " << fmt(a) << " .. controls " << fmt(c1)
-          << " and " << fmt(c2) << " .. " << fmt(b) << ";\n";
+      const cubic& c = L.arc[e];
+      out << "  \\draw[ttedge] " << fmt(c.p0) << " .. controls " << fmt(c.p1)
+          << " and " << fmt(c.p2) << " .. " << fmt(c.p3) << ";\n";
       if (want(opt.labels,"edges"))
         {
-          vec2 mid = cubic_point(a,c1,c2,b,0.5);
+          vec2 mid = traintracks::cubic_point(c,0.5);
           mid.y += opt.label_offset;
           out << "  \\node[ttlab] at " << fmt(mid) << " {$e_{" << e+1 << "}$};\n";
         }
