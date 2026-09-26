@@ -142,53 +142,77 @@ collapsed_layout make_collapsed_layout(const ttnumbering& num,
   // therefore tangent.
   //
   // Only the overall rotation of the star is free.  Pointing each prong
-  // at its own neighbours instead, which is what a naive fit does, lets
-  // the prongs bunch together and the multigon stops looking like a
-  // k-gon at all.
+  // at its own neighbours instead lets the prongs bunch together, and the
+  // multigon stops looking like a k-gon at all.
   L.prong_dir.assign(num.nprongs(),{0.0,1.0});
 
-  // Where each prong would like to point, from the edges attached to it.
-  std::vector<vec2> want(num.nprongs(),{0.0,0.0});
-  for (int e = 0; e < E; ++e)
-    {
-      const int qt = L.edge_pr[e].first, qh = L.edge_pr[e].second;
-      const vec2 a = L.mg[L.edge_mg[e].first], b = L.mg[L.edge_mg[e].second];
-      want[qt].x += b.x-a.x; want[qt].y += b.y-a.y;
-      want[qh].x += a.x-b.x; want[qh].y += a.y-b.y;
-    }
-
   // The sense in which the prong index runs round a multigon in the
-  // plane.  One convention for the whole picture, never per multigon.
+  // plane.  It has to be the sense of the boundary walk that ordered the
+  // punctures, or the prongs come out mirrored while the edges within a
+  // prong do not, and no drawing avoids a crossing.
   const double sense = 1.0;
 
+  // The rotation comes from the gaps between the edges.  Going round a
+  // multigon anticlockwise, each edge leads to a block of consecutive
+  // punctures (the edge towards puncture 1 to all the rest, cyclically),
+  // so the gap between two consecutive edges faces a definite place:
+  // the stretch of axis between punctures i and i+1, or straight up for
+  // the gap between puncture n and puncture 1, where the walk is cut.
+  // The rotation is the circular mean of what those gaps ask for.
+  const int npunct = emb.npunctures();
   for (int m = 0; m < M; ++m)
     {
       // A puncture sits on the axis and the track lives above it, so its
       // one prong points straight up and the loop hangs below.
       if (L.puncture_pos[m]) continue;
 
-      // Circular mean of what the prongs want, each shifted back by the
-      // angle the equal spacing will give it.
-      double sx = 0.0, sy = 0.0;
-      int k = 0;
-      for (int q = 0; q < num.nprongs(); ++q)
+      // The edges at m anticlockwise, with the angle each leaves at
+      // relative to the star's rotation, and its block [first,last].
+      struct end_at { double angle; int first, last; };
+      std::vector<end_at> ends;
+      const int k = (int)num.prong_number[m].size();
+      for (int j = 0; j < k; ++j)
         {
-          if (num.prong[q].multigon != m) continue;
-          k = num.prong[q].nprongs;
-          const double n2 = std::sqrt(want[q].x*want[q].x + want[q].y*want[q].y);
-          if (n2 < 1e-9) continue;
-          const double a = std::atan2(want[q].y,want[q].x)
-                         - sense*2.0*M_PI*num.prong[q].prong/k;
-          sx += std::cos(a); sy += std::sin(a);
+          const int q = num.prong_number[m][j];
+          for (const int letter : num.prong_letters[q])
+            {
+              const int e = num.edge_of(letter);
+              const int o = (L.edge_mg[e].first == m ? L.edge_mg[e].second
+                                                     : L.edge_mg[e].first);
+              end_at x;
+              x.angle = sense*2.0*M_PI*j/k;
+              if (o == parent[m])
+                { x.first = hi[m]+1; x.last = lo[m]-1; }
+              else
+                { x.first = lo[o]; x.last = hi[o]; }
+              ends.push_back(x);
+            }
         }
-      if (k == 0) continue;
-      const double theta = (sx*sx + sy*sy > 1e-18) ? std::atan2(sy,sx) : 0.5*M_PI;
 
-      for (int q = 0; q < num.nprongs(); ++q)
+      double sx = 0.0, sy = 0.0;
+      for (int i = 0; i < (int)ends.size(); ++i)
         {
-          if (num.prong[q].multigon != m) continue;
-          const double a = theta + sense*2.0*M_PI*num.prong[q].prong/k;
-          L.prong_dir[q] = { std::cos(a), std::sin(a) };
+          const end_at& u = ends[i];
+          const end_at& w = ends[(i+1) % ends.size()];
+          double off = w.angle;
+          if (off < u.angle || (i+1 == (int)ends.size() && off == u.angle))
+            off += 2.0*M_PI*sense;
+          off = 0.5*(u.angle + off);
+          const vec2 at = L.mg[m];
+          double bearing;
+          if (u.last == npunct || w.first == 1 || w.first > npunct)
+            bearing = 0.5*M_PI;
+          else
+            bearing = std::atan2(-at.y,(u.last+0.5)-at.x);
+          const double t = bearing - off;
+          sx += std::cos(t); sy += std::sin(t);
+        }
+      const double theta = std::atan2(sy,sx);
+
+      for (int j = 0; j < k; ++j)
+        {
+          const double a = theta + sense*2.0*M_PI*j/k;
+          L.prong_dir[num.prong_number[m][j]] = { std::cos(a), std::sin(a) };
         }
     }
 
