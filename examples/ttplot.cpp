@@ -85,6 +85,8 @@ struct layout
 {
   std::vector<vec2> mg;                       // by multigon index
   std::vector<std::pair<int,int> > edge_mg;   // by edge: its two multigons
+  std::vector<std::pair<int,int> > edge_pr;   // by edge: its two prongs
+  std::vector<vec2> prong_dir;                // by prong: outgoing tangent
   std::vector<int> puncture_pos;              // by multigon, 1..n, 0 if none
 };
 
@@ -110,9 +112,13 @@ layout build_layout(const traintrack& tt, const tt_embedding& emb,
   L.mg.assign(M,{0.0,0.0});
   L.puncture_pos.assign(M,0);
   L.edge_mg.assign(E,std::make_pair(-1,-1));
+  L.edge_pr.assign(E,std::make_pair(-1,-1));
   for (int e = 0; e < E; ++e)
-    L.edge_mg[e] = std::make_pair(multigon_of_prong(num,num.edge_tail[e]),
-                                  multigon_of_prong(num,num.edge_head[e]));
+    {
+      L.edge_mg[e] = std::make_pair(multigon_of_prong(num,num.edge_tail[e]),
+                                    multigon_of_prong(num,num.edge_head[e]));
+      L.edge_pr[e] = std::make_pair(num.edge_tail[e],num.edge_head[e]);
+    }
 
   for (int i = 0; i < emb.npunctures(); ++i)
     L.puncture_pos[multigon_of_prong(num,emb.puncture_order[i])] = i+1;
@@ -162,17 +168,76 @@ layout build_layout(const traintrack& tt, const tt_embedding& emb,
       else
         L.mg[m] = { 0.5*(lo[m]+hi[m]), 0.55*(hi[m]-lo[m]) };
     }
+
+  // A multigon's prongs are equally spaced by angle around it, and the
+  // edges are then attached to the prongs, with every edge at a prong
+  // leaving along that prong's direction.  Edges at the same prong are
+  // therefore tangent.
+  //
+  // Only the overall rotation of the star is free.  Pointing each prong
+  // at its own neighbours instead, which is what a naive fit does, lets
+  // the prongs bunch together and the multigon stops looking like a
+  // k-gon at all.
+  L.prong_dir.assign(num.nprongs(),{0.0,1.0});
+
+  // Where each prong would like to point, from the edges attached to it.
+  std::vector<vec2> want(num.nprongs(),{0.0,0.0});
+  for (int e = 0; e < E; ++e)
+    {
+      const int qt = L.edge_pr[e].first, qh = L.edge_pr[e].second;
+      const vec2 a = L.mg[L.edge_mg[e].first], b = L.mg[L.edge_mg[e].second];
+      want[qt].x += b.x-a.x; want[qt].y += b.y-a.y;
+      want[qh].x += a.x-b.x; want[qh].y += a.y-b.y;
+    }
+
+  // The sense in which the prong index runs round a multigon in the
+  // plane.  One convention for the whole picture, never per multigon.
+  const double sense = 1.0;
+
+  for (int m = 0; m < M; ++m)
+    {
+      // A puncture sits on the axis and the track lives above it, so its
+      // one prong points straight up and the loop hangs below.
+      if (L.puncture_pos[m]) continue;
+
+      // Circular mean of what the prongs want, each shifted back by the
+      // angle the equal spacing will give it.
+      double sx = 0.0, sy = 0.0;
+      int k = 0;
+      for (int q = 0; q < num.nprongs(); ++q)
+        {
+          if (num.prong[q].multigon != m) continue;
+          k = num.prong[q].nprongs;
+          const double n2 = std::sqrt(want[q].x*want[q].x + want[q].y*want[q].y);
+          if (n2 < 1e-9) continue;
+          const double a = std::atan2(want[q].y,want[q].x)
+                         - sense*2.0*M_PI*num.prong[q].prong/k;
+          sx += std::cos(a); sy += std::sin(a);
+        }
+      if (k == 0) continue;
+      const double theta = (sx*sx + sy*sy > 1e-18) ? std::atan2(sy,sx) : 0.5*M_PI;
+
+      for (int q = 0; q < num.nprongs(); ++q)
+        {
+          if (num.prong[q].multigon != m) continue;
+          const double a = theta + sense*2.0*M_PI*num.prong[q].prong/k;
+          L.prong_dir[q] = { std::cos(a), std::sin(a) };
+        }
+    }
+
   return L;
 }
 
-// An edge is an arc whose control points rise with its horizontal span,
-// so an edge reaching over intervening structure passes above it.  This
-// is what keeps the drawing planar, and it is how the paper draws them.
-void edge_controls(const vec2& a, const vec2& b, vec2& c1, vec2& c2)
+// The control point at each end runs along that end's prong direction,
+// so edges sharing a prong are tangent there.  Its length grows with the
+// horizontal span, so an edge reaching over intervening structure still
+// arcs above it rather than cutting through.
+void edge_controls(const vec2& a, const vec2& b,
+                   const vec2& da, const vec2& db, vec2& c1, vec2& c2)
 {
-  const double h = 0.6*std::fabs(a.x-b.x) + 0.15;
-  c1 = { a.x, a.y + h };
-  c2 = { b.x, b.y + h };
+  const double h = 0.55*std::fabs(a.x-b.x) + 0.30;
+  c1 = { a.x + h*da.x, a.y + h*da.y };
+  c2 = { b.x + h*db.x, b.y + h*db.y };
 }
 
 vec2 cubic_point(const vec2& p0, const vec2& p1, const vec2& p2,
@@ -336,7 +401,8 @@ int main(int argc, char** argv)
     {
       const vec2 a = L.mg[L.edge_mg[e].first], b = L.mg[L.edge_mg[e].second];
       vec2 c1, c2;
-      edge_controls(a,b,c1,c2);
+      edge_controls(a,b,L.prong_dir[L.edge_pr[e].first],
+                    L.prong_dir[L.edge_pr[e].second],c1,c2);
       out << "  \\draw[ttedge] " << fmt(a) << " .. controls " << fmt(c1)
           << " and " << fmt(c2) << " .. " << fmt(b) << ";\n";
       if (want(opt.labels,"edges"))
