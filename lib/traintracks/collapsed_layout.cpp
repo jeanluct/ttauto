@@ -76,17 +76,52 @@ void order_curvatures(const ttnumbering& num, collapsed_layout& L)
           const double h = std::hypot(C->x-A->x,C->y-A->y);
           return (2.0/3.0)*lateral(letter)/(h*h);
         };
-      for (int i = 1; i < (int)letters.size(); ++i)
+      // Each end's control length may move between 0.2 and 3 times where
+      // it started.  A pair out of order is moved apart from both sides,
+      // the later end up and the earlier down, since one end alone often
+      // cannot get there: lengthening only takes a curvature towards zero,
+      // never past it.
+      const auto length = [&](const int letter)
         {
-          const double prev = curvature(letters[i-1]);
-          for (int it = 0; it < 40 && curvature(letters[i]) <= std::max(prev + 0.1,1.2*prev + 0.1); ++it)
+          vec2 *A, *C, *B;
+          end_of(letter,A,C,B);
+          return std::hypot(C->x-A->x,C->y-A->y);
+        };
+      const auto scale_by = [&](const int letter, const double f)
+        {
+          vec2 *A, *C, *B;
+          end_of(letter,A,C,B);
+          C->x = A->x + f*(C->x-A->x);
+          C->y = A->y + f*(C->y-A->y);
+        };
+      std::vector<double> h0(letters.size());
+      for (int i = 0; i < (int)letters.size(); ++i) h0[i] = length(letters[i]);
+      // Nudge the curvature of end i up (dir = +1) or down (dir = -1),
+      // unless that would take its control length out of bounds.
+      const auto nudge = [&](const int i, const int dir)
+        {
+          const double lat = lateral(letters[i]);
+          if (std::fabs(lat) < 1e-12) return;
+          // Shortening raises |curvature|, lengthening lowers it.
+          const bool shorten = (lat > 0) == (dir > 0);
+          const double f = shorten ? 0.85 : 1.2;
+          const double h = length(letters[i]);
+          if (h*f < 0.2*h0[i] || h*f > 3.0*h0[i]) return;
+          scale_by(letters[i],f);
+        };
+      for (int pass = 0; pass < 60; ++pass)
+        {
+          bool sorted = true;
+          for (int i = 1; i < (int)letters.size(); ++i)
             {
-              vec2 *A, *C, *B;
-              end_of(letters[i],A,C,B);
-              const double f = (lateral(letters[i]) > 0) ? 0.85 : 1.2;
-              C->x = A->x + f*(C->x-A->x);
-              C->y = A->y + f*(C->y-A->y);
+              const double prev = curvature(letters[i-1]);
+              const double k = curvature(letters[i]);
+              if (k > std::max(prev + 0.1,1.2*prev + 0.1)) continue;
+              sorted = false;
+              nudge(i,+1);
+              nudge(i-1,-1);
             }
+          if (sorted) break;
         }
     }
 }
@@ -302,9 +337,8 @@ collapsed_layout make_collapsed_layout(const ttnumbering& num,
           double hp = (dp.y > 0.2) ? std::max(0.25*ho,(Y - P.y)/dp.y) : ho;
 
           // That only aims the middle.  Check the whole piece against what
-          // it must stay out of or above -- every child's box, and the
-          // pieces already built -- and lengthen the controls while it
-          // dips into any of them.  Near the parent, where sibling pieces
+          // it must stay out of or above -- the axis, every child's box,
+          // and the pieces already built.  Near the parent, where sibling pieces
           // meet it by construction, only the boxes count.
           const auto dips = [&](const cubic& piece)
             {
@@ -312,6 +346,8 @@ collapsed_layout make_collapsed_layout(const ttnumbering& num,
                 {
                   const vec2 q = cubic_point(piece,(double)s/nsample);
                   const bool near_p = std::hypot(q.x-P.x,q.y-P.y) < 0.15;
+                  // The track lives in the upper half plane.
+                  if (q.y < 0.0) return true;
                   if (q.x > box_lo[c] && q.x < box_hi[c] && q.y < box_top[c]-1e-9)
                     return true;
                   for (int o : kids)
@@ -334,16 +370,46 @@ collapsed_layout make_collapsed_layout(const ttnumbering& num,
                 }
               return false;
             };
-          cubic outer;
-          for (int it = 0; it < 30; ++it)
+          // Search the two control lengths over a range of scales, both
+          // shorter and longer than the first guess, and keep the lowest
+          // piece that clears.  Only lengthening, as before, sent pieces
+          // hundreds of units up.  With nothing that clears, fall back on
+          // lengthening until something does.
+          const auto make = [&](const double a, const double b)
             {
-              outer.p0 = X;
-              outer.p1 = { X.x, X.y + hx };
-              outer.p2 = { P.x + hp*dp.x, P.y + hp*dp.y };
-              outer.p3 = P;
-              if (!dips(outer)) break;
+              cubic q;
+              q.p0 = X;
+              q.p1 = { X.x, X.y + a };
+              q.p2 = { P.x + b*dp.x, P.y + b*dp.y };
+              q.p3 = P;
+              return q;
+            };
+          const auto height = [&](const cubic& q)
+            {
+              double y = 0.0;
+              for (int s = 0; s <= nsample; ++s)
+                y = std::max(y,cubic_point(q,(double)s/nsample).y);
+              return y;
+            };
+          static const double scale[] =
+            { 0.2, 0.3, 0.45, 0.65, 1.0, 1.5, 2.2, 3.3, 5.0 };
+          cubic outer = make(hx,hp);
+          bool found = false;
+          double best = 0.0;
+          for (const double fa : scale)
+            for (const double fb : scale)
+              {
+                const cubic q = make(fa*hx,fb*hp);
+                if (dips(q)) continue;
+                const double y = height(q);
+                if (!found || y < best - 1e-9) { outer = q; best = y; found = true; }
+              }
+          for (int it = 0; !found && it < 30; ++it)
+            {
               hx *= 1.2;
               if (dp.y > 0.2) hp *= 1.2;
+              outer = make(hx,hp);
+              found = !dips(outer);
             }
           outer_of[c] = outer;
           done.push_back(c);

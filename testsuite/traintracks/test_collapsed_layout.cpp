@@ -161,10 +161,9 @@ int main()
   cout << "Figure 4 tracks: no crossings" << endl;
 
   //
-  // Every vertex of every automaton for n = 3..6.  At n = 7, 98 of 3272
-  // tracks still cross (2026-09-26): a prong carrying several children
-  // can be rotated to point up, and those edges then have to climb over
-  // everything to come back down.
+  // Every vertex of every automaton for n = 3..6.  At n = 7, 14 of 3272
+  // tracks still cross (2026-09-26), where a curve overshoots the point
+  // it is heading for and doubles back.
   //
   int ntracks = 0, nbad = 0, ncross = 0;
   for (int n = 3; n <= 6; ++n)
