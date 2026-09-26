@@ -109,7 +109,13 @@ static int crossings(const traintrack& tt)
   int n = 0;
   for (int i = 0; i < (int)L.arc.size(); ++i)
     for (int j = i+1; j < (int)L.arc.size(); ++j)
-      if (arcs_cross(L.arc[i],L.arc[j])) ++n;
+      {
+        bool x = false;
+        for (const cubic& a : L.arc[i])
+          for (const cubic& b : L.arc[j])
+            if (!x && arcs_cross(a,b)) x = true;
+        if (x) ++n;
+      }
   return n;
 }
 
@@ -155,7 +161,10 @@ int main()
   cout << "Figure 4 tracks: no crossings" << endl;
 
   //
-  // Every vertex of every automaton for n = 3..6.
+  // Every vertex of every automaton for n = 3..6.  At n = 7, 98 of 3272
+  // tracks still cross (2026-09-26): a prong carrying several children
+  // can be rotated to point up, and those edges then have to climb over
+  // everything to come back down.
   //
   int ntracks = 0, nbad = 0, ncross = 0;
   for (int n = 3; n <= 6; ++n)
@@ -174,6 +183,8 @@ int main()
     }
   cout << ntracks << " tracks for n = 3..6: " << nbad << " with crossings, "
        << ncross << " crossing pairs in all" << endl;
+  CHECK(ntracks == 428);
+  CHECK(nbad == 0);
 
   cout << "\ntest_collapsed_layout: all checks passed" << endl;
   return 0;

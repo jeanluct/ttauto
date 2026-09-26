@@ -33,8 +33,8 @@
 namespace traintracks {
 
 // A drawing of a train track in its collapsed representation: every
-// multigon shrunk to a point and every main edge drawn as one cubic Bezier
-// arc.  This is what examples/ttplot turns into TikZ; it lives here so
+// multigon shrunk to a point and every main edge drawn as a chain of
+// cubic Bezier arcs, joined smoothly.  This is what examples/ttplot turns into TikZ; it lives here so
 // that its planarity can be tested.
 //
 // The drawing is a proper embedding: the punctures lie on the real axis
@@ -43,6 +43,8 @@ namespace traintracks {
 // are equally spaced by angle about it, and every edge at a prong leaves
 // along that prong's direction, so edges sharing a prong are tangent
 // there.  Arcs should never cross; where they meet they are tangent.
+// That holds for every automaton vertex for n = 3..6, which the testsuite
+// checks, but not yet for all of n = 7.
 
 struct vec2 { double x; double y; };
 
@@ -58,7 +60,7 @@ struct collapsed_layout
   std::vector<std::pair<int,int> > edge_pr;   // by edge: its two prongs
   std::vector<vec2> prong_dir;                // by prong: outgoing tangent
   std::vector<int> puncture_pos;              // by multigon, 1..n, 0 if none
-  std::vector<cubic> arc;                     // by edge, tail to head
+  std::vector<std::vector<cubic> > arc;       // by edge: pieces, tail to head
 };
 
 // Requires every punctured multigon to be a monogon, as outer_embedding

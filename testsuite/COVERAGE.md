@@ -189,8 +189,8 @@ predates that test and the string constructor it exercises.
     - a self-check that the crossing test sees two arcs crossing after
       leaving the same point, the case an earlier checker skipped
     - no crossings in the two tracks of Figure 4 of the ttauto paper
-    - the crossing count over every vertex of every automaton for n=3..6,
-      printed and not yet asserted, since the drawing is not yet planar
+    - no crossings at any vertex of any automaton for n=3..6, 428 tracks
+      (n=7 is not yet planar, and is not tested)
 
 - `include/traintracks/braid.hpp`
   - Primary: `testsuite/ttauto/test_braid_extraction.cpp`

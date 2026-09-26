@@ -40,16 +40,55 @@ int multigon_of(const ttnumbering& num, const int q)
   return num.prong[q].multigon;
 }
 
-// The control point at each end runs along that end's prong direction,
-// so edges sharing a prong are tangent there.  Its length grows with the
-// horizontal span, so an edge reaching over intervening structure still
-// arcs above it rather than cutting through.
-void edge_controls(const vec2& a, const vec2& b,
-                   const vec2& da, const vec2& db, vec2& c1, vec2& c2)
+// Edges leaving one prong share their tangent there, so which of them
+// lies to the left of which is decided by their curvature at that point.
+// Slots run anticlockwise, which looking out along the prong is leftward,
+// so the curvature must increase along the slots.  For a cubic leaving
+// end point A along d with control length h and next control B, the
+// curvature there is (2/3) cross(d,B-A)/h^2, so it is put in order by
+// shortening h when B lies to the left, or lengthening it when to the
+// right.
+void order_curvatures(const ttnumbering& num, collapsed_layout& L)
 {
-  const double h = 0.55*std::fabs(a.x-b.x) + 0.30;
-  c1 = { a.x + h*da.x, a.y + h*da.y };
-  c2 = { b.x + h*db.x, b.y + h*db.y };
+  for (int q = 0; q < num.nprongs(); ++q)
+    {
+      const std::vector<int>& letters = num.prong_letters[q];
+      if (letters.size() < 2) continue;
+      const vec2 d = L.prong_dir[q];
+      const auto end_of = [&](const int letter, vec2*& A, vec2*& C, vec2*& B)
+        {
+          const int e = num.edge_of(letter);
+          if (letter > 0)
+            { cubic& c = L.arc[e].front(); A = &c.p0; C = &c.p1; B = &c.p2; }
+          else
+            { cubic& c = L.arc[e].back(); A = &c.p3; C = &c.p2; B = &c.p1; }
+        };
+      const auto lateral = [&](const int letter)
+        {
+          vec2 *A, *C, *B;
+          end_of(letter,A,C,B);
+          return d.x*(B->y-A->y) - d.y*(B->x-A->x);
+        };
+      const auto curvature = [&](const int letter)
+        {
+          vec2 *A, *C, *B;
+          end_of(letter,A,C,B);
+          const double h = std::hypot(C->x-A->x,C->y-A->y);
+          return (2.0/3.0)*lateral(letter)/(h*h);
+        };
+      for (int i = 1; i < (int)letters.size(); ++i)
+        {
+          const double prev = curvature(letters[i-1]);
+          for (int it = 0; it < 40 && curvature(letters[i]) <= std::max(prev + 0.1,1.2*prev + 0.1); ++it)
+            {
+              vec2 *A, *C, *B;
+              end_of(letters[i],A,C,B);
+              const double f = (lateral(letters[i]) > 0) ? 0.85 : 1.2;
+              C->x = A->x + f*(C->x-A->x);
+              C->y = A->y + f*(C->y-A->y);
+            }
+        }
+    }
 }
 
 } // namespace
@@ -62,18 +101,39 @@ vec2 cubic_point(const cubic& c, const double t)
            w0*c.p0.y + w1*c.p1.y + w2*c.p2.y + w3*c.p3.y };
 }
 
-// Place the multigons from the embedding.
+// The drawing is built as an arc diagram over the axis.
 //
-// Punctures sit on the axis at the position the boundary walk gives them.
-// An unpunctured multigon sits over the middle of the puncture positions
-// in its subtree, at a height that grows with the width of that span.
-// The walk order is the planar order, so those spans nest instead of
-// interleaving, and a wider structure therefore sits above whatever it
-// contains.
+// Rooted at puncture 1, where the boundary walk is cut, every other
+// multigon cuts off with the edge to its parent the block of punctures
+// lo..hi of its subtree.  Those blocks are nested or disjoint, and each
+// gets a box over its stretch of axis, narrowed a little more at each
+// depth so that a box lies strictly inside the box around it and
+// siblings do not touch.  A multigon sits inside its own box, above the
+// boxes of its children, and an edge crosses exactly one box boundary,
+// the top of its child's box, straight above the child and vertically.
+// Each edge is two cubics joined smoothly there, one inside the child's
+// box and one in the parent's, so curves in different boxes cannot meet.
+//
+// The boxes are built bottom up, since a box has to be tall enough for
+// what is drawn inside it: within the parent's box, the piece from a
+// child passes over every sibling between it and the parent, and must
+// clear both that sibling's box and that sibling's own piece.  So the
+// pieces at a parent are built nearest first, each raised above the
+// highest point actually reached, within its span, by what it passes
+// over, and the parent's box is then closed above all of them.
 collapsed_layout make_collapsed_layout(const ttnumbering& num,
                                        const tt_embedding& emb)
 {
   const int M = (int)num.prong_number.size(), E = num.nedges();
+  const double unit = 0.5;
+  const vec2 up = { 0.0, 1.0 };
+  const int nsample = 32;
+
+  // The sense in which the prong index runs round a multigon in the
+  // plane.  It has to be the sense of the boundary walk that ordered the
+  // punctures, or the prongs come out mirrored while the edges within a
+  // prong do not, and no drawing avoids a crossing.
+  const double sense = 1.0;
 
   collapsed_layout L;
   L.mg.assign(M,{0.0,0.0});
@@ -100,7 +160,7 @@ collapsed_layout make_collapsed_layout(const ttnumbering& num,
   // The multigons and main edges form a tree, so rooting it and taking
   // the span of each subtree needs no search.
   const int root = multigon_of(num,emb.puncture_order[0]);
-  std::vector<int> lo(M,M+1), hi(M,0), parent(M,-2), order;
+  std::vector<int> lo(M,M+1), hi(M,0), parent(M,-2), depth(M,0), order;
   {
     std::vector<int> stack(1,root);
     parent[root] = -1;
@@ -110,7 +170,11 @@ collapsed_layout make_collapsed_layout(const ttnumbering& num,
         order.push_back(m);
         for (int k = 0; k < (int)adj[m].size(); ++k)
           if (parent[adj[m][k]] == -2)
-            { parent[adj[m][k]] = m; stack.push_back(adj[m][k]); }
+            {
+              parent[adj[m][k]] = m;
+              depth[adj[m][k]] = depth[m]+1;
+              stack.push_back(adj[m][k]);
+            }
       }
   }
   for (int i = (int)order.size()-1; i >= 0; --i)
@@ -128,103 +192,179 @@ collapsed_layout make_collapsed_layout(const ttnumbering& num,
         }
     }
 
+  std::vector<int> edge_to_parent(M,-1);
+  for (int e = 0; e < E; ++e)
+    {
+      const int t = L.edge_mg[e].first, h = L.edge_mg[e].second;
+      edge_to_parent[parent[t] == h ? t : h] = e;
+    }
+
+  std::vector<double> box_lo(M), box_hi(M), box_top(M,0.0);
   for (int m = 0; m < M; ++m)
     {
+      const double shrink = 0.5*(1.0 - std::pow(0.7,depth[m]));
+      box_lo[m] = lo[m] - 0.5 + shrink;
+      box_hi[m] = hi[m] + 0.5 - shrink;
+    }
+
+  // A puncture sits on the axis and the track lives above it, so its one
+  // prong points straight up and the loop hangs below.
+  L.prong_dir.assign(num.nprongs(),up);
+  L.arc.assign(E,std::vector<cubic>());
+  std::vector<cubic> outer_of(M);
+
+  for (int i = (int)order.size()-1; i >= 0; --i)
+    {
+      const int m = order[i];
+      std::vector<int> kids;
+      for (int o : adj[m]) if (parent[o] == m) kids.push_back(o);
+
+      double kids_top = 0.0;
+      for (int o : kids) kids_top = std::max(kids_top,box_top[o]);
       if (L.puncture_pos[m])
         L.mg[m] = { (double)L.puncture_pos[m], 0.0 };
       else
-        L.mg[m] = { 0.5*(lo[m]+hi[m]), 0.55*(hi[m]-lo[m]) };
-    }
+        L.mg[m] = { 0.5*(lo[m]+hi[m]), kids_top + 0.5*unit };
 
-  // A multigon's prongs are equally spaced by angle around it, and the
-  // edges are then attached to the prongs, with every edge at a prong
-  // leaving along that prong's direction.  Edges at the same prong are
-  // therefore tangent.
-  //
-  // Only the overall rotation of the star is free.  Pointing each prong
-  // at its own neighbours instead lets the prongs bunch together, and the
-  // multigon stops looking like a k-gon at all.
-  L.prong_dir.assign(num.nprongs(),{0.0,1.0});
-
-  // The sense in which the prong index runs round a multigon in the
-  // plane.  It has to be the sense of the boundary walk that ordered the
-  // punctures, or the prongs come out mirrored while the edges within a
-  // prong do not, and no drawing avoids a crossing.
-  const double sense = 1.0;
-
-  // The rotation comes from the gaps between the edges.  Going round a
-  // multigon anticlockwise, each edge leads to a block of consecutive
-  // punctures (the edge towards puncture 1 to all the rest, cyclically),
-  // so the gap between two consecutive edges faces a definite place:
-  // the stretch of axis between punctures i and i+1, or straight up for
-  // the gap between puncture n and puncture 1, where the walk is cut.
-  // The rotation is the circular mean of what those gaps ask for.
-  const int npunct = emb.npunctures();
-  for (int m = 0; m < M; ++m)
-    {
-      // A puncture sits on the axis and the track lives above it, so its
-      // one prong points straight up and the loop hangs below.
-      if (L.puncture_pos[m]) continue;
-
-      // The edges at m anticlockwise, with the angle each leaves at
-      // relative to the star's rotation, and its block [first,last].
-      struct end_at { double angle; int first, last; };
-      std::vector<end_at> ends;
-      const int k = (int)num.prong_number[m].size();
-      for (int j = 0; j < k; ++j)
+      // A multigon's prongs are equally spaced by angle around it, and
+      // every edge at a prong leaves along that prong's direction, so
+      // edges at the same prong are tangent.  Only the rotation of the
+      // star is free, and it is the circular mean of where the edges go
+      // next: straight up for the edge to the parent, and to the point
+      // where it enters the child's box for the others.
+      if (!L.puncture_pos[m])
         {
-          const int q = num.prong_number[m][j];
-          for (const int letter : num.prong_letters[q])
+          const int k = (int)num.prong_number[m].size();
+          double sx = 0.0, sy = 0.0;
+          for (int j = 0; j < k; ++j)
             {
-              const int e = num.edge_of(letter);
-              const int o = (L.edge_mg[e].first == m ? L.edge_mg[e].second
-                                                     : L.edge_mg[e].first);
-              end_at x;
-              x.angle = sense*2.0*M_PI*j/k;
-              if (o == parent[m])
-                { x.first = hi[m]+1; x.last = lo[m]-1; }
-              else
-                { x.first = lo[o]; x.last = hi[o]; }
-              ends.push_back(x);
+              const int q = num.prong_number[m][j];
+              for (const int letter : num.prong_letters[q])
+                {
+                  const int e = num.edge_of(letter);
+                  const int o = (L.edge_mg[e].first == m ? L.edge_mg[e].second
+                                                         : L.edge_mg[e].first);
+                  const double bearing = (o == parent[m]) ? 0.5*M_PI
+                    : std::atan2(box_top[o]-L.mg[m].y,L.mg[o].x-L.mg[m].x);
+                  const double t = bearing - sense*2.0*M_PI*j/k;
+                  sx += std::cos(t); sy += std::sin(t);
+                }
+            }
+          const double theta = std::atan2(sy,sx);
+          for (int j = 0; j < k; ++j)
+            {
+              const double a = theta + sense*2.0*M_PI*j/k;
+              L.prong_dir[num.prong_number[m][j]] = { std::cos(a), std::sin(a) };
             }
         }
 
-      double sx = 0.0, sy = 0.0;
-      for (int i = 0; i < (int)ends.size(); ++i)
+      // The pieces from the children, nearest first.
+      std::sort(kids.begin(),kids.end(),[&](const int u, const int w)
+        { return std::fabs(L.mg[u].x-L.mg[m].x) < std::fabs(L.mg[w].x-L.mg[m].x); });
+      double top = std::max(kids_top,L.mg[m].y);
+      std::vector<int> done;
+      for (int c : kids)
         {
-          const end_at& u = ends[i];
-          const end_at& w = ends[(i+1) % ends.size()];
-          double off = w.angle;
-          if (off < u.angle || (i+1 == (int)ends.size() && off == u.angle))
-            off += 2.0*M_PI*sense;
-          off = 0.5*(u.angle + off);
-          const vec2 at = L.mg[m];
-          double bearing;
-          if (u.last == npunct || w.first == 1 || w.first > npunct)
-            bearing = 0.5*M_PI;
+          const int e = edge_to_parent[c];
+          const bool tail_is_child = (L.edge_mg[e].first == c);
+          const vec2 dc = L.prong_dir[tail_is_child ? L.edge_pr[e].first : L.edge_pr[e].second];
+          const vec2 dp = L.prong_dir[tail_is_child ? L.edge_pr[e].second : L.edge_pr[e].first];
+          const vec2 C = L.mg[c], P = L.mg[m], X = { C.x, box_top[c] };
+          const double a = std::min(C.x,P.x), b = std::max(C.x,P.x);
+
+          // The highest point of what this piece passes over.
+          double clear = X.y;
+          for (int o : done)
+            {
+              if (std::min(box_hi[o],b) <= std::max(box_lo[o],a)) continue;
+              clear = std::max(clear,box_top[o]);
+              for (int s = 0; s <= nsample; ++s)
+                {
+                  const vec2 q = cubic_point(outer_of[o],(double)s/nsample);
+                  if (q.x > a && q.x < b) clear = std::max(clear,q.y);
+                }
+            }
+          const double peak = clear + (clear > X.y ? 0.5*unit : 0.0);
+
+          cubic inner;
+          const double hi_ = 0.5*std::hypot(X.x-C.x,X.y-C.y);
+          inner.p0 = C;
+          inner.p1 = { C.x + hi_*dc.x, C.y + hi_*dc.y };
+          inner.p2 = { X.x - hi_*up.x, X.y - hi_*up.y };
+          inner.p3 = X;
+
+          // Controls at height Y put the middle of the cubic at the peak;
+          // with nothing to clear they stay short, so that the piece does
+          // not rise above what it has to.
+          const double ho = 0.5*std::hypot(P.x-X.x,P.y-X.y);
+          const double Y = (peak - (X.y+P.y)/8.0)/0.75;
+          double hx = std::max(0.25*ho,Y - X.y);
+          double hp = (dp.y > 0.2) ? std::max(0.25*ho,(Y - P.y)/dp.y) : ho;
+
+          // That only aims the middle.  Check the whole piece against what
+          // it must stay out of or above -- every child's box, and the
+          // pieces already built -- and lengthen the controls while it
+          // dips into any of them.  Near the parent, where sibling pieces
+          // meet it by construction, only the boxes count.
+          const auto dips = [&](const cubic& piece)
+            {
+              for (int s = 1; s < nsample; ++s)
+                {
+                  const vec2 q = cubic_point(piece,(double)s/nsample);
+                  const bool near_p = std::hypot(q.x-P.x,q.y-P.y) < 0.15;
+                  if (q.x > box_lo[c] && q.x < box_hi[c] && q.y < box_top[c]-1e-9)
+                    return true;
+                  for (int o : kids)
+                    if (o != c && q.x > box_lo[o] && q.x < box_hi[o] && q.y < box_top[o])
+                      return true;
+                  for (int o : done)
+                    {
+                      if (near_p) continue;
+                      for (int r = 0; r < nsample; ++r)
+                        {
+                          const vec2 u = cubic_point(outer_of[o],(double)r/nsample);
+                          const vec2 w = cubic_point(outer_of[o],(double)(r+1)/nsample);
+                          if ((u.x-q.x)*(w.x-q.x) <= 0 && std::fabs(w.x-u.x) > 1e-12)
+                            {
+                              const double yo = u.y + (w.y-u.y)*(q.x-u.x)/(w.x-u.x);
+                              if (q.y < yo + 0.1*unit) return true;
+                            }
+                        }
+                    }
+                }
+              return false;
+            };
+          cubic outer;
+          for (int it = 0; it < 30; ++it)
+            {
+              outer.p0 = X;
+              outer.p1 = { X.x, X.y + hx };
+              outer.p2 = { P.x + hp*dp.x, P.y + hp*dp.y };
+              outer.p3 = P;
+              if (!dips(outer)) break;
+              hx *= 1.2;
+              if (dp.y > 0.2) hp *= 1.2;
+            }
+          outer_of[c] = outer;
+          done.push_back(c);
+          for (int s = 0; s <= nsample; ++s)
+            top = std::max(top,cubic_point(outer,(double)s/nsample).y);
+
+          if (tail_is_child)
+            L.arc[e] = { inner, outer };
           else
-            bearing = std::atan2(-at.y,(u.last+0.5)-at.x);
-          const double t = bearing - off;
-          sx += std::cos(t); sy += std::sin(t);
+            {
+              std::swap(outer.p0,outer.p3); std::swap(outer.p1,outer.p2);
+              std::swap(inner.p0,inner.p3); std::swap(inner.p1,inner.p2);
+              L.arc[e] = { outer, inner };
+            }
         }
-      const double theta = std::atan2(sy,sx);
 
-      for (int j = 0; j < k; ++j)
-        {
-          const double a = theta + sense*2.0*M_PI*j/k;
-          L.prong_dir[num.prong_number[m][j]] = { std::cos(a), std::sin(a) };
-        }
+      // Close the box above everything drawn in it.
+      box_top[m] = top + (kids.empty() ? unit : 0.5*unit);
     }
 
-  L.arc.resize(E);
-  for (int e = 0; e < E; ++e)
-    {
-      cubic& c = L.arc[e];
-      c.p0 = L.mg[L.edge_mg[e].first];
-      c.p3 = L.mg[L.edge_mg[e].second];
-      edge_controls(c.p0,c.p3,L.prong_dir[L.edge_pr[e].first],
-                    L.prong_dir[L.edge_pr[e].second],c.p1,c.p2);
-    }
+  order_curvatures(num,L);
 
   return L;
 }

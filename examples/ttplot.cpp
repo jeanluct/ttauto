@@ -25,20 +25,20 @@
 
 // Draw a train track from its coding, as TikZ.
 //
-// This is the "collapsed" representation of the ttauto paper, Fig. 11(b):
+// This is the "collapsed" representation of the ttauto paper, Fig. 12(b):
 // every multigon is shrunk to a point and only the main edges are drawn,
 // which the paper calls "a simplified, simply-connected version" of the
 // track.  Style follows the paper's figures: plain black line art, no
 // outer boundary, sparse italic labels.
 //
-// The layout comes from traintracks::outer_embedding, so the picture is a
-// proper embedding: punctures lie on an invisible horizontal axis in the
-// order the boundary walk meets them, and the track sits in the upper
-// half plane.  That makes it planar by construction rather than by
-// searching for a layout with few crossings.  Checked over every vertex
-// of every stratum for n = 3..7, 3700 tracks, with no crossing.
+// The layout is traintracks::make_collapsed_layout: punctures lie on an
+// invisible horizontal axis in the order the boundary walk meets them,
+// the track sits in the upper half plane, and the edges are routed as an
+// arc diagram over the axis.  testsuite/traintracks/test_collapsed_layout
+// checks every vertex of every automaton for n = 3..6, 428 tracks, has no
+// crossing.  For n = 7 some tracks still cross.
 //
-// The full representation of Fig. 11(a), with the monogon loops and the
+// The full representation of Fig. 12(a), with the monogon loops and the
 // polygon sides drawn out, is not implemented here.
 
 #include <algorithm>
@@ -112,9 +112,10 @@ void usage(std::ostream& out)
     << "  compact, e.g. \"1111 1311 2311 ...\" or \"11111 13111 ...\"\n"
     << "  hyphenated when a field reaches ten, e.g. \"1-1-12-1 1-15-2-2\"\n"
     << "\n"
-    << "The multigons are drawn collapsed to points, as in Figure 11(b)\n"
+    << "The multigons are drawn collapsed to points, as in Figure 12(b)\n"
     << "of the ttauto paper.  Punctures lie on a horizontal axis and the\n"
-    << "track is drawn above it, so the picture has no crossings.\n"
+    << "track is drawn above it.  Tracks with up to six punctures are\n"
+    << "drawn without crossings; some with seven still cross.\n"
     << "\n"
     << "To make a PDF from standalone output:\n"
     << "  pdflatex ttplot.tex\n";
@@ -229,12 +230,14 @@ int main(int argc, char** argv)
   // Main edges first, so the dots sit on top of them.
   for (int e = 0; e < (int)L.edge_mg.size(); ++e)
     {
-      const cubic& c = L.arc[e];
-      out << "  \\draw[ttedge] " << fmt(c.p0) << " .. controls " << fmt(c.p1)
-          << " and " << fmt(c.p2) << " .. " << fmt(c.p3) << ";\n";
+      out << "  \\draw[ttedge] " << fmt(L.arc[e].front().p0);
+      for (const cubic& c : L.arc[e])
+        out << " .. controls " << fmt(c.p1) << " and " << fmt(c.p2)
+            << " .. " << fmt(c.p3);
+      out << ";\n";
       if (want(opt.labels,"edges"))
         {
-          vec2 mid = traintracks::cubic_point(c,0.5);
+          vec2 mid = L.arc[e].front().p3;
           mid.y += opt.label_offset;
           out << "  \\node[ttlab] at " << fmt(mid) << " {$e_{" << e+1 << "}$};\n";
         }
