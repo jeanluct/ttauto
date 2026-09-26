@@ -33,6 +33,7 @@
 // and the self-check below proves it sees a crossing between two arcs
 // leaving the same point.
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -72,6 +73,28 @@ static bool same_point(const vec2& p, const vec2& q)
 // the two arcs share are dropped: the arcs meet there by construction.
 static bool arcs_cross(const cubic& A, const cubic& B, const double r = 0.02)
 {
+  // A cubic lies within the box of its control points, so arcs whose
+  // boxes are disjoint cannot cross.
+  const auto lo = [](const double a, const double b, const double c, const double d)
+    { return std::min(std::min(a,b),std::min(c,d)); };
+  const auto hi = [](const double a, const double b, const double c, const double d)
+    { return std::max(std::max(a,b),std::max(c,d)); };
+  const double x0 = std::max(lo(A.p0.x,A.p1.x,A.p2.x,A.p3.x),
+                             lo(B.p0.x,B.p1.x,B.p2.x,B.p3.x));
+  const double x1 = std::min(hi(A.p0.x,A.p1.x,A.p2.x,A.p3.x),
+                             hi(B.p0.x,B.p1.x,B.p2.x,B.p3.x));
+  const double y0 = std::max(lo(A.p0.y,A.p1.y,A.p2.y,A.p3.y),
+                             lo(B.p0.y,B.p1.y,B.p2.y,B.p3.y));
+  const double y1 = std::min(hi(A.p0.y,A.p1.y,A.p2.y,A.p3.y),
+                             hi(B.p0.y,B.p1.y,B.p2.y,B.p3.y));
+  if (x0 > x1 || y0 > y1) return false;
+  // Only segments reaching into the overlap of the two boxes can meet.
+  const auto reaches = [&](const vec2& p, const vec2& q)
+    {
+      return std::max(p.x,q.x) >= x0 && std::min(p.x,q.x) <= x1 &&
+             std::max(p.y,q.y) >= y0 && std::min(p.y,q.y) <= y1;
+    };
+
   std::vector<vec2> shared;
   if (same_point(A.p0,B.p0) || same_point(A.p0,B.p3)) shared.push_back(A.p0);
   if (same_point(A.p3,B.p0) || same_point(A.p3,B.p3)) shared.push_back(A.p3);
@@ -88,20 +111,24 @@ static bool arcs_cross(const cubic& A, const cubic& B, const double r = 0.02)
       a[i] = traintracks::cubic_point(A,(double)i/samples);
       b[i] = traintracks::cubic_point(B,(double)i/samples);
     }
+  std::vector<int> ia, ib;
   for (int i = 0; i < samples; ++i)
     {
-      if (near(a[i]) || near(a[i+1])) continue;
-      for (int j = 0; j < samples; ++j)
-        {
-          if (near(b[j]) || near(b[j+1])) continue;
-          if (segments_cross(a[i],a[i+1],b[j],b[j+1])) return true;
-        }
+      if (!near(a[i]) && !near(a[i+1]) && reaches(a[i],a[i+1])) ia.push_back(i);
+      if (!near(b[i]) && !near(b[i+1]) && reaches(b[i],b[i+1])) ib.push_back(i);
     }
+  for (const int i : ia)
+    for (const int j : ib)
+      if (segments_cross(a[i],a[i+1],b[j],b[j+1])) return true;
   return false;
 }
 
 // Number of pairs of arcs of the track's drawing that cross.
-static int crossings(const traintrack& tt)
+// Number of pairs of arcs of the track's drawing that cross.  Also
+// counts, into overshoot and below, the pieces that run more than a
+// margin past the x-range of their own two ends (so double back on
+// themselves) and those that dip below the axis.
+static int crossings(const traintrack& tt, int& overshoot, int& below)
 {
   const traintracks::ttnumbering num = tt.numbering();
   const traintracks::collapsed_layout L =
@@ -116,7 +143,27 @@ static int crossings(const traintrack& tt)
             if (!x && arcs_cross(a,b)) x = true;
         if (x) ++n;
       }
+  for (const std::vector<cubic>& arc : L.arc)
+    for (const cubic& c : arc)
+      {
+        const double lo = std::min(c.p0.x,c.p3.x), hi = std::max(c.p0.x,c.p3.x);
+        bool over = false, under = false;
+        for (int i = 1; i < samples; ++i)
+          {
+            const vec2 q = traintracks::cubic_point(c,(double)i/samples);
+            if (q.x < lo - 0.1 - 1e-9 || q.x > hi + 0.1 + 1e-9) over = true;
+            if (q.y < -1e-9) under = true;
+          }
+        overshoot += over;
+        below += under;
+      }
   return n;
+}
+
+static int crossings(const traintrack& tt)
+{
+  int overshoot = 0, below = 0;
+  return crossings(tt,overshoot,below);
 }
 
 int main()
@@ -161,12 +208,12 @@ int main()
   cout << "Figure 4 tracks: no crossings" << endl;
 
   //
-  // Every vertex of every automaton for n = 3..6.  At n = 7, 14 of 3272
-  // tracks still cross (2026-09-26), where a curve overshoots the point
-  // it is heading for and doubles back.
+  // Every vertex of every automaton for n = 3..7.  Before control lengths
+  // were capped so that a curve cannot run past the point it is heading
+  // for, 14 of the 3272 tracks for n = 7 crossed.
   //
-  int ntracks = 0, nbad = 0, ncross = 0;
-  for (int n = 3; n <= 6; ++n)
+  int ntracks = 0, nbad = 0, ncross = 0, nover = 0, nbelow = 0;
+  for (int n = 3; n <= 7; ++n)
     {
       jlt::vector<traintrack> ttv = traintracks::build_traintrack_list(n);
       for (int s = 0; s < (int)ttv.size(); ++s)
@@ -174,16 +221,19 @@ int main()
           const ttauto::ttfoldgraph<traintrack> ttg(ttv[s]);
           for (int v = 0; v < ttg.vertices(); ++v)
             {
-              const int x = crossings(ttg.traintrack(v));
+              const int x = crossings(ttg.traintrack(v),nover,nbelow);
               ++ntracks;
               if (x) { ++nbad; ncross += x; }
             }
         }
     }
-  cout << ntracks << " tracks for n = 3..6: " << nbad << " with crossings, "
-       << ncross << " crossing pairs in all" << endl;
-  CHECK(ntracks == 428);
+  cout << ntracks << " tracks for n = 3..7: " << nbad << " with crossings, "
+       << ncross << " crossing pairs in all; " << nover
+       << " pieces overshoot, " << nbelow << " dip below the axis" << endl;
+  CHECK(ntracks == 3700);
   CHECK(nbad == 0);
+  CHECK(nover == 0);
+  CHECK(nbelow == 0);
 
   cout << "\ntest_collapsed_layout: all checks passed" << endl;
   return 0;

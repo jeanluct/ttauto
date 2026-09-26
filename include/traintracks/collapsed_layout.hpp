@@ -43,8 +43,8 @@ namespace traintracks {
 // are equally spaced by angle about it, and every edge at a prong leaves
 // along that prong's direction, so edges sharing a prong are tangent
 // there.  Arcs should never cross; where they meet they are tangent.
-// That holds for every automaton vertex for n = 3..6, which the testsuite
-// checks, but not yet for all of n = 7.
+// That holds for every automaton vertex for n = 3..7, which the testsuite
+// checks, but not yet for all of n = 8.
 
 struct vec2 { double x; double y; };
 

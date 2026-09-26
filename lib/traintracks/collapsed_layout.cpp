@@ -40,6 +40,18 @@ int multigon_of(const ttnumbering& num, const int q)
   return num.prong[q].multigon;
 }
 
+// The longest control length along d from end A that keeps the control
+// point within the x-range of the piece's two ends A and Z, widened by a
+// margin.  A cubic lies within the hull of its control points, so with
+// both controls inside that range it cannot run past Z and double back.
+double max_control(const vec2& A, const vec2& d, const vec2& Z)
+{
+  const double margin = 0.1;
+  if (std::fabs(d.x) < 1e-12) return 1e300;
+  const double lo = std::min(A.x,Z.x) - margin, hi = std::max(A.x,Z.x) + margin;
+  return ((d.x > 0 ? hi : lo) - A.x)/d.x;
+}
+
 // Edges leaving one prong share their tangent there, so which of them
 // lies to the left of which is decided by their curvature at that point.
 // Slots run anticlockwise, which looking out along the prong is leftward,
@@ -55,13 +67,16 @@ void order_curvatures(const ttnumbering& num, collapsed_layout& L)
       const std::vector<int>& letters = num.prong_letters[q];
       if (letters.size() < 2) continue;
       const vec2 d = L.prong_dir[q];
-      const auto end_of = [&](const int letter, vec2*& A, vec2*& C, vec2*& B)
+      const auto end_of = [&](const int letter, vec2*& A, vec2*& C, vec2*& B,
+                              vec2** Z = nullptr)
         {
           const int e = num.edge_of(letter);
+          vec2* z;
           if (letter > 0)
-            { cubic& c = L.arc[e].front(); A = &c.p0; C = &c.p1; B = &c.p2; }
+            { cubic& c = L.arc[e].front(); A = &c.p0; C = &c.p1; B = &c.p2; z = &c.p3; }
           else
-            { cubic& c = L.arc[e].back(); A = &c.p3; C = &c.p2; B = &c.p1; }
+            { cubic& c = L.arc[e].back(); A = &c.p3; C = &c.p2; B = &c.p1; z = &c.p0; }
+          if (Z) *Z = z;
         };
       const auto lateral = [&](const int letter)
         {
@@ -107,6 +122,9 @@ void order_curvatures(const ttnumbering& num, collapsed_layout& L)
           const double f = shorten ? 0.85 : 1.2;
           const double h = length(letters[i]);
           if (h*f < 0.2*h0[i] || h*f > 3.0*h0[i]) return;
+          vec2 *A, *C, *B, *Z;
+          end_of(letters[i],A,C,B,&Z);
+          if (f > 1 && h*f > max_control(*A,d,*Z)) return;
           scale_by(letters[i],f);
         };
       for (int pass = 0; pass < 60; ++pass)
@@ -324,7 +342,8 @@ collapsed_layout make_collapsed_layout(const ttnumbering& num,
           cubic inner;
           const double hi_ = 0.5*std::hypot(X.x-C.x,X.y-C.y);
           inner.p0 = C;
-          inner.p1 = { C.x + hi_*dc.x, C.y + hi_*dc.y };
+          const double hc = std::min(hi_,max_control(C,dc,X));
+          inner.p1 = { C.x + hc*dc.x, C.y + hc*dc.y };
           inner.p2 = { X.x - hi_*up.x, X.y - hi_*up.y };
           inner.p3 = X;
 
@@ -380,7 +399,8 @@ collapsed_layout make_collapsed_layout(const ttnumbering& num,
               cubic q;
               q.p0 = X;
               q.p1 = { X.x, X.y + a };
-              q.p2 = { P.x + b*dp.x, P.y + b*dp.y };
+              const double bb = std::min(b,max_control(P,dp,X));
+              q.p2 = { P.x + bb*dp.x, P.y + bb*dp.y };
               q.p3 = P;
               return q;
             };

@@ -35,8 +35,8 @@
 // invisible horizontal axis in the order the boundary walk meets them,
 // the track sits in the upper half plane, and the edges are routed as an
 // arc diagram over the axis.  testsuite/traintracks/test_collapsed_layout
-// checks every vertex of every automaton for n = 3..6, 428 tracks, has no
-// crossing.  For n = 7 some tracks still cross.
+// checks every vertex of every automaton for n = 3..7, 3700 tracks, has
+// no crossing.  For n = 8 some tracks still cross.
 //
 // The full representation of Fig. 12(a), with the monogon loops and the
 // polygon sides drawn out, is not implemented here.
@@ -114,8 +114,8 @@ void usage(std::ostream& out)
     << "\n"
     << "The multigons are drawn collapsed to points, as in Figure 12(b)\n"
     << "of the ttauto paper.  Punctures lie on a horizontal axis and the\n"
-    << "track is drawn above it.  Tracks with up to six punctures are\n"
-    << "drawn without crossings; some with seven still cross.\n"
+    << "track is drawn above it.  Tracks with up to seven punctures are\n"
+    << "drawn without crossings; some with eight still cross.\n"
     << "\n"
     << "To make a PDF from standalone output:\n"
     << "  pdflatex ttplot.tex\n";
