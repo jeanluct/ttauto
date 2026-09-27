@@ -33,7 +33,7 @@ which is the point of them.
 | `include/traintracks/edge.hpp` | 53 | 91 | 91 | |
 | `include/traintracks/multigon.hpp` | 41 | 95 | 95 | |
 | `include/traintracks/util.hpp` | 17 | 100 | 100 | |
-| `include/ttauto/ttauto.hpp` | 329 | 78 | 89 | `debug` branches, symmetric-norm variant (badword pruning was uncovered when this was measured; `test_badword_pruning.cpp` now exercises it) |
+| `include/ttauto/ttauto.hpp` | 329 | 78 | 89 | `debug` branches, symmetric-norm variant (since removed; badword pruning was uncovered when this was measured; `test_badword_pruning.cpp` now exercises it) |
 | `include/ttauto/folding_path.hpp` | 189 | 76 | 80 | error exits, `find_vertices` on a bad path |
 | `include/ttauto/pAclass.hpp` | 91 | 97 | 90 | print cap branches |
 | `include/ttauto/ttfoldgraph.hpp` | 183 | 95 | 95 | |
@@ -268,7 +268,8 @@ predates that test and the string constructor it exercises.
     - seven norm-bounded searches (n=3 at windows 5 and 10, both n=4 strata,
       n=5 strata 2 and 3): paths tried, paths abandoned by each of the norm,
       column-sum and row-sum tests, and the class polynomials, pinned to the
-      values before the restructuring of issue #23
+      values before the restructuring of issue #23; `pruned()` must agree
+      with the printed per-vertex counts added up
 
 - `include/ttauto/ttauto.hpp` (gate test in the search)
   - Primary: `testsuite/ttauto/test_ttauto_gates.cpp`

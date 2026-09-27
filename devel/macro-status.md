@@ -26,9 +26,11 @@ This file tracks build/runtime feature macros used in the main `ttauto` codebase
   - Default: **not defined**
   - Effect: enables optional Fortran-backed norm checks in `ttauto` search logic.
 
-- `TTAUTO_CHECK_SYMMETRIC_NORM`
-  - Default: **not defined**
-  - Effect: enables extra symmetric-norm consistency checks in `ttauto` pruning.
+`TTAUTO_CHECK_SYMMETRIC_NORM` was removed in issue #23: its test (the
+symmetrised norm) is safe only when no fold carries a permutation, which
+fails in most strata from four punctures on, and where it is safe the
+prefix's own dilatation is a stronger test.  See
+`devel/iss023/pruning_bounds.tex`, section 3.4.
 
 ## Example-local macro
 
@@ -47,10 +49,6 @@ Examples:
 # raw-pointer compatibility path
 cmake -S . -B build-macro-nosptr -DCMAKE_CXX_FLAGS='-DTRAINTRACKS_NO_SHARED_PTR'
 cmake --build build-macro-nosptr --target test_test_traintrack -j
-
-# optional symmetric norm checks in automaton layer
-cmake -S . -B build-macro-symnorm -DCMAKE_CXX_FLAGS='-DTTAUTO_CHECK_SYMMETRIC_NORM'
-cmake --build build-macro-symnorm --target test_test_badwords -j
 
 # optional Fortran-enabled path (compile-time check)
 cmake -S . -B build-macro-fortran -DCMAKE_CXX_FLAGS='-DTTAUTO_USE_FORTRAN'
