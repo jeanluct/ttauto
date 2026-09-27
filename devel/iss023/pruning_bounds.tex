@@ -577,7 +577,59 @@ this is cheap.  In \ttauto's automata it is not: Table~\ref{tab:census}
 shows that $\Pos$ is every off-diagonal position and $\Hgp$ is all of
 $S_d$ or half of it, so the count is $2^{d(d-1)}\,d!/2$ or more, already
 about $6\times10^7$ at $d=5$.  The test works; it has to be computed
-differently (open question~1).
+differently.
+
+\subsection*{Computing the bound faster}
+
+The test only has to decide whether some pair $(Q',S)$ gives
+$\rho(Q'(I+E_S)N)\le\Lam$, and most pairs can be ruled out without a
+spectral bound.  A nonnegative matrix has $\rho$ at least its largest
+diagonal entry, and the diagonal of $Q'X$ is $X_{\sigma(k),k}$ with
+$\sigma=Q'^{-1}$ and $X\ge N$.  So a permutation that puts an entry of $N$
+above $\Lam$ on the diagonal can be skipped whatever $S$ is; the others are
+found by backtracking over $\sigma$ one column at a time.  For each, only
+minimal admissible $S$ are tried; a unit $e_{ab}$ is skipped if $b$ already
+reaches $a$ (it then changes no reachability, for this $S$ or any larger
+one), or if it pushes a diagonal entry above $\Lam$; and quantities that
+only grow with $S$ (the diagonal, the $2$-cycles
+$\sqrt{Y_{ij}Y_{ji}}$, the smallest row and column sums of $Y=Q'X$) reject
+whole branches before any spectral bound.  Everything skipped has
+$\rho>\Lam$, so this, $C_3$ in \code{bounds\_toy.cpp}, makes exactly the
+decisions of $C_2$: in every case of Tables~\ref{tab:RL}--\ref{tab:sym3} it
+visits the same prefixes and accepts the same words.
+
+\begin{center}
+  \small
+  \begin{tabular}{llrrrr}
+    \toprule
+    set & $\Lam$ & $C_0$ visits & $C_0$ time & $C_3$ visits & $C_3$ time \\
+    \midrule
+    full $S_3$ & 3.0 & 1\,373\,198 & 0.94\,s & 394 & $<0.01$\,s \\
+    full $S_4$ & 2.0 & 1\,306\,439 & 1.95\,s & 424 & 0.74\,s \\
+    full $S_4$ & 2.5 & & over 60\,s & 7\,027 & 4.95\,s \\
+    full $S_5$ & 1.6 & 154\,631 & 0.38\,s & & over 50\,s \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+(``Full $S_d$'': shears $e_{i,i+1}$ along a chain, plus one fold carrying a
+$d$-cycle and one a transposition, so that the permutations generate all of
+$S_d$; \code{symD} in the program.)  In dimension four $C_3$ is faster than
+the current tests as well as visiting three thousand times fewer prefixes.
+In dimension five it is not: with 120 permutations and 20 positions, ruling
+out every pair for one prefix costs far more than the current tests spend on
+the whole search.
+
+Capping the effort per evaluation, and keeping the prefix whenever the cap
+runs out, is safe, since keeping a prefix only costs time.  But it makes
+things much worse (a cap of 1\,000 steps did not finish in ten minutes on
+the $S_4$, $\Lam=2.5$ case that takes 5\,s uncapped): the prefixes whose
+refutation is expensive are mostly ones that should be abandoned, and
+keeping them multiplies the work below them.
+
+So the bound is strong even when the completion's permutation is almost
+free, but evaluating it exactly does not scale to \ttauto's dimensions,
+which reach $d=8$; open question~1 is now the question.
 
 \begin{table}[ht]
   \centering
@@ -623,13 +675,14 @@ differently (open question~1).
 \label{sec:open}
 
 \begin{enumerate}
-\item \emph{The cost of the new test.}  Only minimal admissible sets
-  matter.  When $\D(A)$ is nearly strongly connected there are few; when it
-  is sparse there are many, but then the bound tends to be small and to
-  abandon little, so it could be skipped.  Better: is there a single
-  matrix, computable in polynomial time, lying below $(I+E_S)A$ for every
-  admissible $S$?  The strongly connected components of $\D(A)$ suggest
-  one, since every admissible $S$ must cross each cut between them.
+\item \emph{The cost of the new test.}  Exact evaluation is exponential
+  in $d$ even in the fast form above.  What is needed is a single lower
+  bound on $\rho(Q'(I+E_S)N)$, valid for every permutation $Q'$ and every
+  admissible $S$ at once, and computable in time polynomial in $d$.  Pieces
+  that may help: the permutations keeping the diagonal at most $\Lam$ are
+  the solutions of a bottleneck assignment problem; cycle bounds beyond the
+  diagonal and $2$-cycles; and the strongly connected components that every
+  admissible $S$ must join.
 \item \emph{Permutations in a real automaton.}  $\Hgp$ and $\Pos$ come from
   the automaton lifted to (vertex, permutation) states
   (\code{include/ttauto/completion\_bound.hpp}).  The census of

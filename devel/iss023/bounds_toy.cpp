@@ -20,9 +20,9 @@
 // x <- (B + I) x tightens both.
 //
 // Build:  g++ -std=c++17 -O2 -o bounds_toy bounds_toy.cpp
-// Run:    ./bounds_toy SET LAMBDA CRITERION
-//         SET is RL, rauzy3, perm3 or sym3; CRITERION is HS, C0, C1, C2
-//         or BAD.
+// Run:    ./bounds_toy SET LAMBDA CRITERION [BUDGET]
+//         SET is RL, rauzy3, perm3 or sym3; CRITERION is HS, C0, C1, C2,
+//         C3 (the C2 decision computed fast) or BAD.
 // Prints: accepted words, cyclic classes, visited, wasted, longest prefix,
 // longest accepted word, and a hash of the accepted set for comparison.
 
@@ -38,7 +38,7 @@
 
 namespace {
 
-const int NMAX = 4;
+const int NMAX = 8;
 typedef std::array<std::array<long long,NMAX>,NMAX> Mat;
 typedef std::array<int,NMAX> Perm;
 
@@ -104,6 +104,36 @@ void bracket(const Mat& B, double& lo, double& hi, const int iters = 60)
       for (int i = 0; i < n; ++i) x[i] /= s;
       for (int i = 0; i < n; ++i) if (x[i] < 1e-300) x[i] = 1e-300;
     }
+}
+
+// Is rho(B) > L?  Iterates like bracket(), but stops as soon as the lower
+// end passes L (a lower bound, so the answer "yes" is always right), or
+// the bracket has converged below it.
+bool rho_exceeds(const Mat& B, const double L, const int iters = 60)
+{
+  std::array<double,NMAX> x;
+  for (int i = 0; i < n; ++i) x[i] = 1.0;
+  double hi = INFINITY;
+  for (int it = 0; it < iters; ++it)
+    {
+      std::array<double,NMAX> y{};
+      for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j) y[i] += B[i][j]*x[j];
+      double l = INFINITY, h = 0;
+      for (int i = 0; i < n; ++i)
+        {
+          const double r = y[i]/x[i];
+          l = std::min(l,r); h = std::max(h,r);
+        }
+      if (l > L) return true;
+      hi = std::min(hi,h);
+      if (hi <= L) return false;   // converged below: rho <= hi <= L
+      double s = 0;
+      for (int i = 0; i < n; ++i) { x[i] = x[i] + y[i]; s += x[i]; }
+      for (int i = 0; i < n; ++i) x[i] /= s;
+      for (int i = 0; i < n; ++i) if (x[i] < 1e-300) x[i] = 1e-300;
+    }
+  return false;
 }
 
 bool primitive(const Mat& M)
@@ -208,6 +238,21 @@ void setup(const std::string& set)
       gens.push_back(make_gen("c",cyc,1,2));
       gens.push_back(make_gen("d",swp,2,0));
     }
+  else if (set.size() == 4 && set.compare(0,3,"sym") == 0 && set[3] >= '4'
+           && set[3] <= '8')
+    {
+      // symD, D = 4..8: shears e_{i,i+1} along a chain, plus a shear
+      // followed by the D-cycle and one followed by a transposition, so
+      // that the permutations generate all of S_D.
+      n = set[3] - '0';
+      for (int i = 0; i+1 < n; ++i)
+        gens.push_back(make_gen("s" + std::to_string(i),pident(),i,i+1));
+      Perm cyc{}, swp = pident();
+      for (int c = 0; c < n; ++c) cyc[c] = (c+1) % n;
+      std::swap(swp[0],swp[1]);
+      gens.push_back(make_gen("c",cyc,1,n-1));
+      gens.push_back(make_gen("t",swp,n-1,0));
+    }
   else { std::cerr << "unknown set " << set << "\n"; std::exit(1); }
 
   // Group closure.
@@ -279,6 +324,177 @@ bool beta_exceeds(const Mat& N)
   return true;
 }
 
+// The same decision as beta_exceeds, computed without trying every pair.
+//
+// A nonnegative matrix has rho at least its largest diagonal entry.  The
+// diagonal of Q'X is X_{sigma(k),k}, k = 0..n-1, with sigma = Q'^{-1}, and
+// X = (I + E_S) N >= N.  So a pair whose diagonal has an entry above
+// Lambda has rho above Lambda and can be skipped: only permutations sigma
+// with every N_{sigma(k),k} <= Lambda need be tried (found by
+// backtracking, column by column), and for each only the minimal
+// admissible S whose diagonal stays <= Lambda (found by growing S one
+// position at a time, and stopping as soon as it is admissible).  Each
+// candidate left is then bracketed as before.  Everything skipped has rho
+// above Lambda, so the decision is the same as beta_exceeds'.
+long long fast_candidates = 0;   // spectral brackets computed, for the cost
+
+// Effort budget per evaluation, in calls to grow() (0: unlimited).  When it
+// runs out the evaluation gives up and keeps the prefix, which is always
+// safe: the search just does more work than it had to.
+long long budget = 0, spent = 0, gaveup = 0;
+struct out_of_budget {};
+
+// A cheap lower bound on rho(Q'X), from quantities that only grow as
+// entries of X grow: the largest diagonal entry, the 2-cycles
+// sqrt(Y_ij Y_ji), and the smallest row and column sums.  Since X only
+// grows as S grows, once this exceeds Lambda no larger S can fit either.
+bool cheap_exceeds(const Mat& X, const Perm& q)
+{
+  const double L = lam*(1+1e-12);
+  Mat Y{};
+  for (int i = 0; i < n; ++i)
+    for (int j = 0; j < n; ++j) Y[q[i]][j] = X[i][j];
+  long long rmin = -1, cmin = -1;
+  for (int i = 0; i < n; ++i)
+    {
+      if (Y[i][i] > L) return true;
+      long long r = 0, c = 0;
+      for (int j = 0; j < n; ++j)
+        {
+          r += Y[i][j]; c += Y[j][i];
+          if (j > i && (double)Y[i][j]*Y[j][i] > L*L) return true;
+        }
+      if (rmin < 0 || r < rmin) rmin = r;
+      if (cmin < 0 || c < cmin) cmin = c;
+    }
+  return rmin > L || cmin > L;
+}
+
+// Reachability in D(S) as bitmasks: bit k of reach[i] is set when k
+// reaches i (every vertex reaching itself).  Adding the edge b -> a of
+// e_ab: everything that reaches b now reaches everything a reaches.
+typedef std::array<unsigned,NMAX> Reach;
+
+Reach reach_identity()
+{
+  Reach r{};
+  for (int i = 0; i < n; ++i) r[i] = 1u << i;
+  return r;
+}
+
+void reach_add(Reach& r, const int a, const int b)
+{
+  const unsigned from = r[b];
+  for (int i = 0; i < n; ++i) if (r[i] & (1u << a)) r[i] |= from;
+}
+
+// Is G_{Q',S} strongly connected?  It has an edge j -> q(i) whenever
+// N_kj > 0 and k reaches i; ncol[j] has bit k set when N_kj > 0.
+bool admissible(const std::array<unsigned,NMAX>& ncol, const Perm& q,
+                const Reach& r)
+{
+  std::array<unsigned,NMAX> out{}, in{};
+  for (int i = 0; i < n; ++i)
+    for (int j = 0; j < n; ++j)
+      if (ncol[j] & r[i]) { out[j] |= 1u << q[i]; in[q[i]] |= 1u << j; }
+  const unsigned all = (1u << n) - 1;
+  for (int dir = 0; dir < 2; ++dir)
+    {
+      const std::array<unsigned,NMAX>& e = dir ? in : out;
+      unsigned seen = 1u, frontier = 1u;
+      while (frontier)
+        {
+          unsigned next = 0;
+          for (int u = 0; u < n; ++u) if (frontier & (1u << u)) next |= e[u];
+          frontier = next & ~seen;
+          seen |= next;
+        }
+      if (seen != all) return false;
+    }
+  return true;
+}
+
+// Grow S from position index `from`, with X = (I + E_S) N already formed
+// and r the reachability of D(S).  Returns true if some minimal
+// admissible S found this way has rho <= Lambda.
+bool grow(const Mat& N, const std::array<unsigned,NMAX>& ncol, const Perm& q,
+          const Perm& sigma, Mat& X, const Reach& r,
+          std::vector<std::pair<int,int> >& S, const std::size_t from)
+{
+  if (budget > 0 && ++spent > budget) throw out_of_budget();
+  if (cheap_exceeds(X,q)) return false;
+  if (admissible(ncol,q,r))
+    {
+      // Minimal only: if some element can be dropped and the rest is still
+      // admissible, that smaller set is tried too and gives a smaller rho.
+      for (std::size_t drop = 0; drop < S.size(); ++drop)
+        {
+          Reach t = reach_identity();
+          for (std::size_t u = 0; u < S.size(); ++u)
+            if (u != drop) reach_add(t,S[u].first,S[u].second);
+          if (admissible(ncol,q,t)) return false;
+        }
+      ++fast_candidates;
+      return !rho_exceeds(mul(pmat(q),X),lam*(1+1e-12));
+    }
+  for (std::size_t t = from; t < positions.size(); ++t)
+    {
+      const int a = positions[t].first, b = positions[t].second;
+      // If b already reaches a, adding e_ab changes no reachability, now
+      // or for any larger S: no minimal admissible set contains it.
+      if (r[a] & (1u << b)) continue;
+      // Adding e_ab adds row b of N to row a of X.  Row a meets the
+      // diagonal of Q'X in column k with sigma(k) = a.
+      int kk = -1;
+      for (int k = 0; k < n; ++k) if (sigma[k] == a) kk = k;
+      if (X[a][kk] + N[b][kk] > lam*(1+1e-12)) continue;
+      for (int j = 0; j < n; ++j) X[a][j] += N[b][j];
+      Reach r2 = r;
+      reach_add(r2,a,b);
+      S.push_back(positions[t]);
+      const bool ok = grow(N,ncol,q,sigma,X,r2,S,t+1);
+      S.pop_back();
+      for (int j = 0; j < n; ++j) X[a][j] -= N[b][j];
+      if (ok) return true;
+    }
+  return false;
+}
+
+// Backtrack over sigma, column by column, keeping N_{sigma(k),k} <= Lambda.
+bool some_pair_fits(const Mat& N, Perm& sigma, std::array<bool,NMAX>& used,
+                    const int k)
+{
+  if (k == n)
+    {
+      const Perm q = pinverse(sigma);
+      if (std::find(H.begin(),H.end(),q) == H.end()) return false;
+      Mat X = N;
+      std::array<unsigned,NMAX> ncol{};
+      for (int j = 0; j < n; ++j)
+        for (int k = 0; k < n; ++k) if (N[k][j] > 0) ncol[j] |= 1u << k;
+      std::vector<std::pair<int,int> > S;
+      return grow(N,ncol,q,sigma,X,reach_identity(),S,0);
+    }
+  for (int row = 0; row < n; ++row)
+    {
+      if (used[row] || N[row][k] > lam*(1+1e-12)) continue;
+      used[row] = true; sigma[k] = row;
+      const bool ok = some_pair_fits(N,sigma,used,k+1);
+      used[row] = false;
+      if (ok) return true;
+    }
+  return false;
+}
+
+bool beta_exceeds_fast(const Mat& N)
+{
+  Perm sigma{};
+  std::array<bool,NMAX> used{};
+  spent = 0;
+  try { return !some_pair_fits(N,sigma,used,0); }
+  catch (const out_of_budget&) { ++gaveup; return false; }   // keep: safe
+}
+
 bool prune(const Mat& A, const Mat& N)
 {
   if (criterion == "HS")
@@ -294,6 +510,7 @@ bool prune(const Mat& A, const Mat& N)
       if (lo > lam*(1+1e-12)) return true;
     }
   if (criterion == "C2" && beta_exceeds(N)) return true;
+  if (criterion == "C3" && beta_exceeds_fast(N)) return true;
   return false;
 }
 
@@ -340,6 +557,7 @@ int main(int argc, char** argv)
   setup(argv[1]);
   lam = std::atof(argv[2]);
   criterion = argv[3];
+  if (argc > 4) budget = std::atoll(argv[4]);
   std::vector<int> word;
   walk(word,ident(),pident(),ident());
 
@@ -361,6 +579,7 @@ int main(int argc, char** argv)
             << " accepted=" << accepted.size() << " classes=" << classes.size()
             << " visited=" << visited << " wasted=" << wasted
             << " longest_prefix=" << maxlen << " longest_accepted=" << maxacc
-            << " hash=" << std::hex << h << std::dec << "\n";
+            << " hash=" << std::hex << h << std::dec
+            << " brackets=" << fast_candidates << " gaveup=" << gaveup << "\n";
   return 0;
 }
