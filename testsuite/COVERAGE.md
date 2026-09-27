@@ -259,7 +259,16 @@ predates that test and the string constructor it exercises.
       polynomial (x-1)(x^2-3x+1) and the same dilatation, which the gate
       test moves to `rejected_pA_list()`; with `check_gates(false)` it is
       reported as a pA
-    - `check_all_norms()` and `find_maxnorm()` are exercised only here
+    - `check_all_norms()` and `find_maxnorm()` are exercised here and in
+      `test_prune_counts.cpp`
+
+- `include/ttauto/ttauto.hpp` (pruning tests)
+  - Primary: `testsuite/ttauto/test_prune_counts.cpp`
+  - Coverage focus:
+    - seven norm-bounded searches (n=3 at windows 5 and 10, both n=4 strata,
+      n=5 strata 2 and 3): paths tried, paths abandoned by each of the norm,
+      column-sum and row-sum tests, and the class polynomials, pinned to the
+      values before the restructuring of issue #23
 
 - `include/ttauto/ttauto.hpp` (gate test in the search)
   - Primary: `testsuite/ttauto/test_ttauto_gates.cpp`
