@@ -104,6 +104,9 @@ predates that test and the string constructor it exercises.
       the unpruned one by characteristic polynomial: the soundness limit,
       executed rather than asserted in prose
     - measured costs and savings are in `devel/iss021/badwords.md`
+    - `badwords_omitted()` and `path_length_exceeded()` equal the printed
+      per-vertex counts added up, on an automaton with three initial
+      vertices (before issue #23 they counted only the last one)
 
 - Braid extraction against the labelled automaton
   (`ttauto::folding_path_braid`, `traintrack::pure_braid`)

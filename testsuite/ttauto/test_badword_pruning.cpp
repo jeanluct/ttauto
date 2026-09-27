@@ -61,6 +61,10 @@ struct outcome
   int classes = 0;
   double lowest = -1;
   long long omitted = 0;
+  long long capped = 0;
+  // The same two, added up from the statistics the search prints once per
+  // initial vertex.  The accessors must cover the whole search.
+  long long printed_omitted = 0, printed_capped = 0;
   // Keyed by characteristic polynomial, which is what pAclass itself is
   // keyed on.  Comparing dilatations instead would be wrong: the same
   // class reached by a different path differs in the last few digits.
@@ -81,6 +85,22 @@ static outcome search_with(const ttgraph& ttg, const int bwl, const int len)
   outcome o;
   o.classes = (int)tta.pA_list().size();
   o.omitted = tta.badwords_omitted();
+  o.capped = tta.path_length_exceeded();
+  std::istringstream in(sink.str());
+  std::string line;
+  while (std::getline(in,line))
+    {
+      const std::string label[2] = { "Omitted bad words", "Exceeded max path length" };
+      for (int k = 0; k < 2; ++k)
+        {
+          const std::size_t at = line.find(label[k]);
+          if (at == std::string::npos) continue;
+          std::istringstream num(line.substr(at + label[k].size()));
+          long long v = 0;
+          num >> v;
+          (k == 0 ? o.printed_omitted : o.printed_capped) += v;
+        }
+    }
   if (!tta.pA_list().empty())
     o.lowest = tta.pA_list().begin()->second.dilatation();
   for (auto it = tta.pA_list().begin(); it != tta.pA_list().end(); ++it)
@@ -119,6 +139,17 @@ int main()
   // The prune has to actually fire, or nothing below means anything.
   CHECK(off.omitted == 0);
   CHECK(on.omitted > 0);
+
+  // badwords_omitted() and path_length_exceeded() count the whole search,
+  // every initial vertex, not just the last one searched (issue #23).
+  CHECK(ttg.vertices() > 1);
+  CHECK_MSG(on.omitted == on.printed_omitted,
+            on.omitted << " vs " << on.printed_omitted);
+  CHECK_MSG(on.capped == on.printed_capped,
+            on.capped << " vs " << on.printed_capped);
+  CHECK_MSG(off.capped == off.printed_capped,
+            off.capped << " vs " << off.printed_capped);
+  CHECK(off.capped > 0);
 
   // What it buys: the minimum is untouched.  This is the claim the paper
   // makes (a repeated loop can only raise the dilatation) and it had
