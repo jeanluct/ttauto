@@ -115,8 +115,20 @@ int main()
 
   int fg = jlt::read_number("\nSubgraph to search",1,(int)ttg.size(),1);
   --fg;
-  int len = jlt::read_number("\nMax path length in graph",0,100,5);
-  if (len == 0) exit(0);
+  // A path length of 0 bounds the search by dilatation instead: every
+  // path is followed until the matrix-norm tests show it cannot close up
+  // below the bound, so the search is complete for that window.  Bad
+  // words then only speed up a search for the minimum: a list of classes
+  // below the bound may lack some that are not the minimum (issue #21).
+  int len = jlt::read_number("\nMax path length in graph "
+                             "(0 to bound by dilatation instead)",0,100,5);
+  double lam = 0;
+  int bwl = 0;
+  if (len == 0)
+    {
+      lam = jlt::read_number("\nMax dilatation",1.0,100.0,2.0);
+      bwl = jlt::read_number("\nBad word length (0 for none)",0,10,0);
+    }
   auto ifg = ttg.begin();
   std::advance(ifg,fg);		// Go to the correct position.
 
@@ -128,7 +140,10 @@ int main()
 
   ttauto::ttauto<traintrack> tta(*ifg);
   tta.output_file(pAfile.c_str());
-  tta.max_pathlength(len);
+  if (len > 0)
+    tta.max_pathlength(len);
+  else
+    tta.max_dilatation(lam).check_norms().badword_length(bwl);
   tta.search();
 
   cout << "\nThe pseudo-Anosov candidates are in file " << pAfile << endl;
