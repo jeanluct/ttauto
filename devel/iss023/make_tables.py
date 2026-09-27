@@ -22,6 +22,9 @@ CONFIGS = [
     ("rauzy3", "all $I+e_{ab}$, $d=3$", [2.2, 2.5], ["HS", "C0", "C1", "C2"]),
     ("perm3", "shears and a 3-cycle, $d=3$", [2.0, 2.5, 3.0],
      ["HS", "C0", "C2", "BAD"]),
+    ("sym3", "shears, a 3-cycle and a transposition, $d=3$: the folds' "
+     "permutations generate all of $S_3$, as in \\ttauto's automata",
+     [2.0, 2.5, 3.0], ["HS", "C0", "C2"]),
 ]
 
 NAMES = {"HS": "norm only", "C0": "$C_0$ (current)", "C1": "$C_1$",

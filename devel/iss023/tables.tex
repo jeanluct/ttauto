@@ -88,3 +88,28 @@ $\Lambda$ & test & accepted & classes & visited & wasted & than $C_0$ & prefix &
 \label{tab:perm3}
 \end{table}
 
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{rlrrrrrrrl}
+\toprule
+& & & & & & fewer & longest & longest & \\
+$\Lambda$ & test & accepted & classes & visited & wasted & than $C_0$ & prefix & word & check \\
+\midrule
+2.0 & norm only & 8 & 5 & 802 & 790 &  & 7 & 2 & reference \\
+ & $C_0$ (current) & 8 & 5 & 777 & 765 &  & 7 &  & finds all \\
+ & $C_2$ (new) & 8 & 5 & \good{23} & 11 & \good{33.8$\times$} & 3 &  & finds all \\
+\midrule
+2.5 & norm only & 28 & 12 & 28\,300 & 28\,264 &  & 14 & 4 & reference \\
+ & $C_0$ (current) & 28 & 12 & 21\,177 & 21\,141 &  & 14 &  & finds all \\
+ & $C_2$ (new) & 28 & 12 & \good{105} & 69 & \good{202$\times$} & 5 &  & finds all \\
+\midrule
+3.0 & norm only & 112 & 32 & 1\,760\,607 & 1\,760\,465 &  & 26 & 6 & reference \\
+ & $C_0$ (current) & 112 & 32 & 1\,373\,198 & 1\,373\,056 &  & 26 &  & finds all \\
+ & $C_2$ (new) & 112 & 32 & \good{394} & 252 & \good{3\,485$\times$} & 8 &  & finds all \\
+\bottomrule
+\end{tabular}
+\caption{shears, a 3-cycle and a transposition, $d=3$: the folds' permutations generate all of $S_3$, as in \ttauto's automata.  Each row is a separate search; the columns are explained in Section~\ref{sec:check}.  Shaded green: where the new test $C_2$ stands out.}
+\label{tab:sym3}
+\end{table}
+

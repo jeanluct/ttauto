@@ -21,7 +21,8 @@
 //
 // Build:  g++ -std=c++17 -O2 -o bounds_toy bounds_toy.cpp
 // Run:    ./bounds_toy SET LAMBDA CRITERION
-//         SET is RL, rauzy3, or perm3; CRITERION is HS, C0, C1, C2 or BAD.
+//         SET is RL, rauzy3, perm3 or sym3; CRITERION is HS, C0, C1, C2
+//         or BAD.
 // Prints: accepted words, cyclic classes, visited, wasted, longest prefix,
 // longest accepted word, and a hash of the accepted set for comparison.
 
@@ -195,6 +196,17 @@ void setup(const std::string& set)
       gens.push_back(make_gen("a",pident(),0,1));
       gens.push_back(make_gen("b",pident(),1,2));
       gens.push_back(make_gen("c",cyc,1,2));
+    }
+  else if (set == "sym3")
+    {
+      // As perm3, plus a shear followed by a transposition, so that the
+      // folds' permutations generate all of S_3, as in ttauto's automata.
+      n = 3;
+      const Perm cyc = {1,2,0}, swp = {1,0,2};
+      gens.push_back(make_gen("a",pident(),0,1));
+      gens.push_back(make_gen("b",pident(),1,2));
+      gens.push_back(make_gen("c",cyc,1,2));
+      gens.push_back(make_gen("d",swp,2,0));
     }
   else { std::cerr << "unknown set " << set << "\n"; std::exit(1); }
 

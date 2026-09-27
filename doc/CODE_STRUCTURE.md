@@ -496,6 +496,29 @@ Key API:
 
 Purpose: reduce search cost without changing the core fold graph.
 
+### `completion_sets` (`include/ttauto/completion_bound.hpp`)
+
+What the completion bound of issue #23 needs to know about an automaton
+(`devel/iss023/pruning_bounds.tex`, Section 5.2).  Not yet used by the
+search.
+
+Key API:
+
+- `decompose_fold(ttg, v, f)`: a fold matrix as P (I + e), returning the
+  permutation P and the position of the unit e.
+- `advance_frame(fold, s)`: one step of Lemma 5.5, moving a fold's
+  permutation to the left of the path's matrix; returns the unit's new
+  position and updates the frame permutation.
+- `completion_sets(ttg, v0)`: for each vertex v, `completion_perms(v)`,
+  the permutation products of the paths from v back to v0, and
+  `unit_positions(v)`, the units met on them, both relative to v; found on
+  the automaton lifted to (vertex, permutation) states.
+- `fold_group_order(ttg)`: order of the group the folds' permutations
+  generate.
+
+Purpose: the precomputation behind the completion bound, and the census
+of `devel/iss023/census.cpp`.
+
 ## Entry Points in `examples/`
 
 - `examples/ttauto.cpp`: interactive CLI driver (stratum selection, optional subgraph splitting, search, optional file export).

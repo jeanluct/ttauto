@@ -232,6 +232,18 @@ predates that test and the string constructor it exercises.
     - closed-path cyclic equality and hash behaviour; open paths compare
       directly
 
+- `include/ttauto/completion_bound.hpp`
+  - Primary: `testsuite/ttauto/test_completion_bound.cpp`
+  - Coverage focus:
+    - every fold matrix for n=3..5 reassembles as P (I + e) from
+      `decompose_fold`
+    - Lemma 5.5 along every path of length at most 6 from every vertex for
+      n=4, 5: the frame and units from `advance_frame` rebuild the path's
+      matrix (catches the frame being applied the wrong way round)
+    - n=3: R = {identity}, two unit positions; n=4, every start vertex:
+      `completion_perms` and `unit_positions` equal a brute-force
+      enumeration of the paths back to the start
+
 - `include/ttauto/badwords.hpp`
   - Primary: `testsuite/ttauto/test_folding_path_and_badwords.cpp`
   - Coverage focus:

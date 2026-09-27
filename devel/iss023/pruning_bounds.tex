@@ -501,7 +501,7 @@ the complete list, against which each other test is judged.
   expected outcome.
 \end{description}
 
-\emph{The columns of Tables~\ref{tab:RL}--\ref{tab:perm3}.}
+\emph{The columns of Tables~\ref{tab:RL}--\ref{tab:sym3}.}
 \emph{Accepted} and \emph{classes} count the words found and their classes
 up to cyclic rotation.  \emph{Visited} counts the prefixes the search
 enters, and \emph{wasted} those among them that begin no accepted word:
@@ -553,6 +553,16 @@ prefixes, because it must allow for every possible total permutation, but
 at $\Lam=3$ it still visits 173 prefixes where $C_0$ visits 47\,084, 272
 times fewer.
 
+\emph{With the full symmetric group} (Table~\ref{tab:sym3}).  In
+\ttauto's automata the folds' permutations generate all of $S_d$
+(Table~\ref{tab:census}), so the final permutation of a closed path is
+barely constrained, and one might fear that the bound then loses its
+force: a completion can choose a permutation that makes the matrix
+irreducible without adding any units.  It does not.  With four folds whose
+permutations generate $S_3$, $C_2$ visits 394 prefixes at $\Lam=3$ where
+$C_0$ visits 1\,373\,198, about 3\,500 times fewer, and finds the same 112
+words.
+
 \emph{$C_1$.}  Proposition~\ref{prop:rhomono} gains a factor of about two
 in dimension two and little in dimension three: along a run of shears the
 prefix's own dilatation stays near one.  The C++ bracket is also cautious
@@ -562,9 +572,52 @@ eigenvalues, visits 36\,721 prefixes against 40\,561 here.  Both find the
 complete list; the C++ one just abandons fewer hopeless prefixes.
 
 \emph{Cost.}  $C_2$ as implemented tries every subset of $\Pos$ and every
-element of $\Hgp$ at every prefix.  Here $|\Pos|\le6$ and $|\Hgp|\le3$, so
-this is cheap.  In \ttauto's automata $d$ reaches~8, so $\Pos$ can have up
-to $d(d-1)=56$ positions and $\Hgp$ can be large.
+element of $\Hgp$ at every prefix.  Here $|\Pos|\le6$ and $|\Hgp|\le6$, so
+this is cheap.  In \ttauto's automata it is not: Table~\ref{tab:census}
+shows that $\Pos$ is every off-diagonal position and $\Hgp$ is all of
+$S_d$ or half of it, so the count is $2^{d(d-1)}\,d!/2$ or more, already
+about $6\times10^7$ at $d=5$.  The test works; it has to be computed
+differently (open question~1).
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{rrrrrrrr}
+    \toprule
+    $n$ & stratum & $d$ & vertices & group & $|R(v)|$ & $|U(v)|$ &
+      $d(d-1)$ \\
+    \midrule
+    4 & 1 & 3 & 4 & 6 & 6 & 6 & 6 \\
+    4 & 2 & 4 & 3 & 24 & 12 & 12 & 12 \\
+    5 & 1 & 4 & 11 & 24 & 12 & 12 & 12 \\
+    5 & 2 & 5 & 21 & 120 & 120 & 20 & 20 \\
+    5 & 3 & 5 & 3 & 120 & 120 & 20 & 20 \\
+    5 & 4 & 6 & 9 & 720 & 360 & 30 & 30 \\
+    6 & 1 & 5 & 49 & 120 & 120 & 20 & 20 \\
+    6 & 2 & 6 & 138 & 720 & 1--360 & 2--30 & 30 \\
+    6 & 3 & 6 & 27 & 720 & 720 & 30 & 30 \\
+    6 & 4 & 6 & 3 & 720 & 360 & 30 & 30 \\
+    6 & 5 & 7 & 110 & 5\,040 & 5\,040 & 42 & 42 \\
+    6 & 6 & 7 & 21 & 5\,040 & 5\,040 & 42 & 42 \\
+    6 & 7 & 8 & 28 & 40\,320 & 20\,160 & 56 & 56 \\
+    7 & 1 & 6 & 204 & 720 & 360 & 30 & 30 \\
+    7 & 3 & 7 & 190 & 5\,040 & 1--5\,040 & 2--42 & 42 \\
+    7 & 4 & 7 & 30 & 5\,040 & 5\,040 & 42 & 42 \\
+    7 & 5 & 7 & 3 & 5\,040 & 5\,040 & 42 & 42 \\
+    7 & 8 & 8 & 24 & 40\,320 & 20\,160 & 56 & 56 \\
+    7 & 9 & 8 & 12 & 40\,320 & 40\,320 & 56 & 56 \\
+    \bottomrule
+  \end{tabular}
+  \caption{The census (\code{devel/iss023/census.cpp}), from start vertex
+    $0$, over the vertices that can return to it.  \emph{Group}: the order
+    of the group the folds' permutations generate, which is always all of
+    $S_d$.  $R(v)$, from which $\Hgp$ comes, is all of it or half of it;
+    $U(v)$, from which $\Pos$ comes, is every off-diagonal position.  The
+    ranges in strata $6.2$ and $7.3$ come from a single vertex each.  The
+    other $n=7$ strata, where $d\ge7$ and there are hundreds of vertices,
+    have the same group and were not computed further.}
+  \label{tab:census}
+\end{table}
 
 \section{Open questions}
 \label{sec:open}
@@ -578,13 +631,18 @@ to $d(d-1)=56$ positions and $\Hgp$ can be large.
   admissible $S$?  The strongly connected components of $\D(A)$ suggest
   one, since every admissible $S$ must cross each cut between them.
 \item \emph{Permutations in a real automaton.}  $\Hgp$ and $\Pos$ come from
-  the automaton lifted to (vertex, permutation) states.  How large are they
-  for \ttauto's strata?  A cheaper bound, $\min_{Q'\in\Hgp}\rho(Q'N)$,
-  needs no irreducibility and already extends $C_1$ to folds with
-  permutations, since $M=Q'N'N\ge Q'N$.
+  the automaton lifted to (vertex, permutation) states
+  (\code{include/ttauto/completion\_bound.hpp}).  The census of
+  Table~\ref{tab:census} answers how large they are: as large as they can
+  be.  So the structure of the automaton does not help, and a fast
+  evaluation of $\beta$ has to exploit instead that $\Hgp$ is a whole
+  group ($S_d$ or its even half) and $\Pos$ everything.  A cheaper bound,
+  $\min_{Q'\in\Hgp}\rho(Q'N)$, needs no irreducibility and already extends
+  $C_1$ to folds with permutations, since $M=Q'N'N\ge Q'N$.
 \item \emph{The norm test.}  Does $\beta(A)>\Lam$ whenever the norm of
-  $A$ exceeds the Ham--Song bound (Remark~\ref{rem:norm})?  A positive answer would make the new
-  test a single statement containing all the others.
+  $A$ exceeds the Ham--Song bound (Remark~\ref{rem:norm})?  A positive
+  answer would make the new test a single statement containing all the
+  others.
 \item \emph{A length cap.}  Theorem~\ref{thm:d2} caps an accepted word at
   $T-1$ in dimension two.  No cap logarithmic in $\Lam$ is possible in
   general, since a run of shears grows only linearly.  Is the longest
