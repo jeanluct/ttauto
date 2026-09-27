@@ -102,6 +102,11 @@ branches the cap truncated -- **grows** rather than falling to zero:
 | 22 | 3482710  | 3780492  | 21.6 s |
 | 24 | 9468958  | 10861282 | 70.0 s |
 
+(These counts are from `path_length_exceeded()` before issue #23, which
+counted only the last initial vertex of the search, so they understate
+the whole search; the point, that they are far from zero, only gets
+stronger.)
+
 A zero there would have proved the cap sufficient, since the norm tests
 would then have ended every path on their own.  It is nowhere near zero
 at any of these caps, so no cheap cap is provably enough on its own.
@@ -110,7 +115,10 @@ The uncapped run settles it from the other end.  Unlabelled, window 3,
 `badword_length(2)`, no length cap, it reports **10 classes** in 4050 s
 with `path_length_exceeded() == 0`.  The zero is the proof: the norm
 tests ended every path before the 734-fold bound, so that run is complete
-for the window.  Its ten characteristic polynomials are exactly the ten
+for the window.  (That accessor then counted only the last initial vertex,
+but the zero holds for all of them: in norm-bounded mode with no explicit
+cap the length cap is the norm bound restated, and never cuts a path the
+norm test has not already cut; see `devel/iss023/pruning_bounds.tex`.)  Its ten characteristic polynomials are exactly the ten
 above.  The cap of 12 therefore gives the complete answer on the
 unlabelled side -- verified against the full search rather than argued
 from the table.

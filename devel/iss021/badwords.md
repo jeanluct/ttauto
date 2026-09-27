@@ -33,10 +33,14 @@ Length-bounded search, no dilatation window, four punctures, stratum 2
 
 | length | classes off | classes on | omitted | time off | time on |
 |---:|---:|---:|---:|---:|---:|
-| 8  | 21  | 15  | 29  | 0.005 s | 0.003 s |
-| 10 | 62  | 39  | 93  | 0.028 s | 0.011 s |
-| 12 | 181 | 98  | 293 | 0.141 s | 0.041 s |
-| 14 | 526 | 267 | 917 | 0.637 s | 0.148 s |
+| 8  | 21  | 15  | 63   | 0.005 s | 0.003 s |
+| 10 | 62  | 39  | 199  | 0.028 s | 0.011 s |
+| 12 | 181 | 98  | 623  | 0.141 s | 0.041 s |
+| 14 | 526 | 267 | 1951 | 0.637 s | 0.148 s |
+
+(The "omitted" column was re-measured for issue #23.  It first read 29,
+93, 293 and 917, because `badwords_omitted()` then counted only the last
+initial vertex of the search.  The class counts are unchanged.)
 
 Roughly half the classes disappear at the longer lengths.  Checked by
 characteristic polynomial, the pruned set is always a proper subset of
@@ -61,6 +65,10 @@ Six punctures, stratum 2 (`traintrack(6,3)`, 138 vertices), norm-bounded:
 | 5   | 6 | 11 | 11 | 1586  |
 | 20  | 6 | 11 | 11 | 1586  |
 | 2.5 | 8 | 5  | 5  | 49824 |
+
+The "omitted" counts in this table are from `badwords_omitted()` before
+issue #23, so they count only the last of the initial vertices searched,
+and understate the whole search.  The class counts are unaffected.
 
 No class is lost at any of these.  The reason is that a path traversing
 a loop twice has a higher dilatation than the collapsed one, so a window

@@ -170,10 +170,12 @@ private:
   llint primitive;		// Total closed paths with primitive matrix?
   llint pseudoAnosov;		// Total pA paths encountered?
   llint maxpathlengthexceeded;	// Total times exceeded max_path_length?
+  llint maxpathlengthexceededtotal;	// The same, over the whole search.
   llint prunedv[n_prune_tests];	// Paths each prune test abandoned,
 				// from the current initial vertex.
   llint prunedtotal[n_prune_tests];	// The same, over the whole search.
   llint badwordsomitted;	// Total times we omitted bad words?
+  llint badwordsomittedtotal;	// The same, over the whole search.
   llint gatecandidates;		// Candidates reaching the gate test (closed,
 				// primitive, inside the dilatation window),
 				// cumulative over the whole search (the
@@ -206,6 +208,7 @@ public:
       gaterejected(0)
   {
     for (int t = 0; t < n_prune_tests; ++t) prunedv[t] = prunedtotal[t] = 0;
+    maxpathlengthexceededtotal = badwordsomittedtotal = 0;
     eliminate_pairs();
     if (debug)
       {
@@ -374,13 +377,17 @@ public:
   // call to search(), all initial vertices together.
   llint pruned(const int t) const { return prunedtotal[t]; }
 
-  // How many branches the bad-word prune cut off in the last search.
-  llint badwords_omitted() const { return badwordsomitted; }
+  // How many branches the bad-word prune cut off, over the whole of the
+  // last call to search(), all initial vertices together.  (Before issue
+  // #23 this counted only the last initial vertex.)
+  llint badwords_omitted() const { return badwordsomittedtotal; }
 
-  // How many branches the length cap cut off in the last search.  Zero
-  // means the cap never bound, so the norm tests ended every path on
-  // their own and the result is what an uncapped search would give.
-  llint path_length_exceeded() const { return maxpathlengthexceeded; }
+  // How many branches the length cap cut off, over the whole of the last
+  // call to search(), all initial vertices together.  Zero means the cap
+  // never bound, so the norm tests ended every path on their own and the
+  // result is what an uncapped search would give.  (Before issue #23 this
+  // counted only the last initial vertex.)
+  llint path_length_exceeded() const { return maxpathlengthexceededtotal; }
 
   // Gate-test statistics, cumulative over the whole search: candidates
   // that reached the test (closed path, primitive matrix, dilatation in
@@ -593,6 +600,7 @@ void ttauto<TrTr>::search(const int tt00)
   gaterejected = 0;
   rejl.clear();
   for (int t = 0; t < n_prune_tests; ++t) prunedtotal[t] = 0;
+  maxpathlengthexceededtotal = badwordsomittedtotal = 0;
 
   // Loop over selected vertices as initial vertex to search for pAs,
   // starting from tt00.
@@ -866,6 +874,7 @@ bool ttauto<TrTr>::descend_graph()
       if (debug)
 	std::cerr << "Exceeded max path length " << max_path_length << "\n";
       ++maxpathlengthexceeded;
+      ++maxpathlengthexceededtotal;
       return backtrack();
     }
 
@@ -893,6 +902,7 @@ bool ttauto<TrTr>::descend_graph()
 	      // It matches!  Backtrack by half the length of
 	      // the bad word.
 	      ++badwordsomitted;
+	      ++badwordsomittedtotal;
 	      return backtrack(bwl);
 	    }
 #else
@@ -906,6 +916,7 @@ bool ttauto<TrTr>::descend_graph()
 		  // It matches!  Backtrack by half the length of
 		  // the bad word.
 		  ++badwordsomitted;
+		  ++badwordsomittedtotal;
 		  return backtrack(bwl);
 		}
 	    }
