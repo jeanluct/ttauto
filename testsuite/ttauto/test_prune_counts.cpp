@@ -30,8 +30,9 @@
 // smallest column sum or row sum exceeds the window.  For each search
 // below this records how many paths it tried, how many each test
 // abandoned, and the characteristic polynomials of the classes it found,
-// all read from the statistics the search prints.  The expected values
-// are those of the code before the restructuring of issue #23.
+// read from the statistics the search prints, and checks that
+// ttauto::pruned() agrees with them.  The expected values are those of the
+// code before the restructuring of issue #23.
 
 #include <iostream>
 #include <list>
@@ -50,6 +51,8 @@ typedef ttauto::ttfoldgraph<traintrack> ttgraph;
 struct counts
 {
   long long tried = 0, norm = 0, colsum = 0, rowsum = 0;
+  // The same three, from ttauto::pruned() rather than the printout.
+  long long pnorm = 0, pcolsum = 0, prowsum = 0;
   std::set<std::string> polys;
 };
 
@@ -81,6 +84,10 @@ static counts run(const int n, const int s, const double lam)
       std::streambuf* saved = std::cout.rdbuf(out.rdbuf());
       tta.search();
       std::cout.rdbuf(saved);
+      typedef ttauto::ttauto<traintrack> tt;
+      c.pnorm += tta.pruned(tt::prune_norm);
+      c.pcolsum += tta.pruned(tt::prune_colsum);
+      c.prowsum += tta.pruned(tt::prune_rowsum);
 
       std::istringstream in(out.str());
       std::string line;
@@ -134,6 +141,11 @@ int main()
       CHECK(c.norm == e.norm);
       CHECK(c.colsum == e.colsum);
       CHECK(c.rowsum == e.rowsum);
+      // pruned() counts the whole search, all initial vertices together,
+      // so it must equal the printed per-vertex counts added up.
+      CHECK(c.pnorm == c.norm);
+      CHECK(c.pcolsum == c.colsum);
+      CHECK(c.prowsum == c.rowsum);
       std::string joined;
       for (const std::string& p : c.polys)
         joined += (joined.empty() ? "" : "; ") + p;

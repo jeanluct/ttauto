@@ -141,6 +141,28 @@ private:
   int print_every;		// How often to print the current path.
   const char *pAfile;		// Filename for pA data file.
 
+public:
+  // The tests that abandon a path in norm-bounded mode (check_norms()),
+  // in the order they are tried.  Each bounds from below the dilatation
+  // of every closed path that begins with the current one, and never
+  // decreases along a path, which is what makes abandoning safe; see
+  // devel/iss023/pruning_bounds.tex.  A path is credited to the first test
+  // that abandons it.
+  enum prune_test {
+    prune_norm,		// Ham-Song: norm above lambdamax^n + n - 1.
+    prune_colsum,	// Smallest column sum above lambdamax.
+    prune_rowsum,	// Smallest row sum above lambdamax.
+    n_prune_tests
+  };
+
+  static const char* prune_test_name(const int t)
+  {
+    static const char* const name[n_prune_tests] =
+      { "matrix norm", "column sum", "row sum" };
+    return name[t];
+  }
+
+private:
   // Counters.
   llint totalpathstried;	// How many total paths tried?
   double totalpathlength;	// Total pathlength traversed?
@@ -148,12 +170,9 @@ private:
   llint primitive;		// Total closed paths with primitive matrix?
   llint pseudoAnosov;		// Total pA paths encountered?
   llint maxpathlengthexceeded;	// Total times exceeded max_path_length?
-  llint normexceeded;		// Total times exceeded matrix norm?
-  llint colsumexceeded;		// Total times exceeded matrix column sum?
-  llint rowsumexceeded;		// Total times exceeded matrix row sum?
-#ifdef TTAUTO_CHECK_SYMMETRIC_NORM
-  llint symmetricnormexceeded;	// Total times exceeded matrix symmetric norm?
-#endif
+  llint prunedv[n_prune_tests];	// Paths each prune test abandoned,
+				// from the current initial vertex.
+  llint prunedtotal[n_prune_tests];	// The same, over the whole search.
   llint badwordsomitted;	// Total times we omitted bad words?
   llint gatecandidates;		// Candidates reaching the gate test (closed,
 				// primitive, inside the dilatation window),
@@ -186,6 +205,7 @@ public:
       gatecandidates(0),
       gaterejected(0)
   {
+    for (int t = 0; t < n_prune_tests; ++t) prunedv[t] = prunedtotal[t] = 0;
     eliminate_pairs();
     if (debug)
       {
@@ -350,6 +370,10 @@ public:
   // Candidates that passed the matrix test but failed the gate test.
   const pAlist& rejected_pA_list() const { return rejl; }
 
+  // How many paths prune test t abandoned, over the whole of the last
+  // call to search(), all initial vertices together.
+  llint pruned(const int t) const { return prunedtotal[t]; }
+
   // How many branches the bad-word prune cut off in the last search.
   llint badwords_omitted() const { return badwordsomitted; }
 
@@ -416,12 +440,7 @@ private:
     primitive = 0;
     pseudoAnosov = 0;
     maxpathlengthexceeded = 0;
-    normexceeded = 0;
-    colsumexceeded = 0;
-    rowsumexceeded = 0;
-#ifdef TTAUTO_CHECK_SYMMETRIC_NORM
-    symmetricnormexceeded = 0;
-#endif
+    for (int t = 0; t < n_prune_tests; ++t) prunedv[t] = 0;
     badwordsomitted = 0;
   }
 
@@ -431,10 +450,21 @@ private:
   // Advance one DFS step, including pruning and closed-path checks.
   bool descend_graph();
 
-  // Apply matrix-based lower-bound pruning for current path.
+  // Apply the prune tests to the current path; false if one abandons it.
   bool check_all_norms();
 
-  void check_OstrovskiSchneider();
+  // Credit test t with abandoning the current path, and return false.
+  bool abandon(const int t)
+  {
+    if (debug)
+      {
+	std::cerr << "Exceeded " << prune_test_name(t) << " at pathlength ";
+	std::cerr << p.length() << "\n";
+      }
+    ++prunedv[t];
+    ++prunedtotal[t];
+    return false;
+  }
 
   bool backtrack(const int stps = 1)
   {
@@ -562,6 +592,7 @@ void ttauto<TrTr>::search(const int tt00)
   gatecandidates = 0;
   gaterejected = 0;
   rejl.clear();
+  for (int t = 0; t < n_prune_tests; ++t) prunedtotal[t] = 0;
 
   // Loop over selected vertices as initial vertex to search for pAs,
   // starting from tt00.
@@ -778,16 +809,18 @@ bool ttauto<TrTr>::find_pAs()
 #endif
   if (lambdamax != 0 && do_check_norms)
     {
-      cout << "\n       Exceeded max norm " << setw(9);
-      cout << normexceeded << " times\n";
-      cout << "     Exceeded column sum " << setw(9);
-      cout << colsumexceeded << " times\n";
-      cout << "        Exceeded row sum " << setw(9);
-      cout << rowsumexceeded << " times\n";
-#ifdef TTAUTO_CHECK_SYMMETRIC_NORM
-      cout << " Exceeded symmetric norm " << setw(9);
-      cout << symmetricnormexceeded << " times\n";
-#endif
+      // Labels padded by hand rather than with setw, whose alignment
+      // depends on flags new_vertex() leaves set.
+      static const char* const label[n_prune_tests] =
+	{ "       Exceeded max norm ",
+	  "     Exceeded column sum ",
+	  "        Exceeded row sum " };
+      cout << "\n";
+      for (int t = 0; t < n_prune_tests; ++t)
+	{
+	  cout << label[t] << setw(9);
+	  cout << prunedv[t] << " times\n";
+	}
     }
   if (max_badword_length > 0)
     {
@@ -986,13 +1019,10 @@ bool ttauto<TrTr>::descend_graph()
 template<class TrTr>
 bool ttauto<TrTr>::check_all_norms()
 {
-  // Check column sums, row sums, norm of TM.
-#ifdef TTAUTO_CHECK_SYMMETRIC_NORM
-  // Also check norm of G_ij = sqrt(TM_ij TM_ji).
-  // This only works for Rauzy classes, where all the matrices are of
-  // the form Identity+1.
-  double Gnorm = 0;
-#endif
+  // One pass over the matrix gives its norm and its smallest column and
+  // row sums.  The norm is checked as it accumulates, so a path far over
+  // the bound is abandoned early; the tests are then tried in the order
+  // of prune_test, and the first to fire is credited.
   int Mnorm = 0, colsummin = 0, rowsummin = 0;
   for (int i = 0; i < n; ++i)
     {
@@ -1001,61 +1031,17 @@ bool ttauto<TrTr>::check_all_norms()
 	{
 	  colsum += TMl.top()(j,i);
 	  rowsum += TMl.top()(i,j);
-#ifdef TTAUTO_CHECK_SYMMETRIC_NORM
-	  Gnorm += std::sqrt((double)TMl.top()(i,j)*TMl.top()(j,i));
-#endif
 	}
       Mnorm += colsum;
-      if (Mnorm > maxnorm)
-	{
-	  if (debug)
-	    {
-	      std::cerr << "Exceeded matrix norm at pathlength ";
-	      std::cerr << p.length() << "\n";
-	    }
-	  ++normexceeded;
-	  return false;
-	}
+      if (Mnorm > maxnorm) return abandon(prune_norm);
       if (colsum < colsummin || colsummin == 0) colsummin = colsum;
       if (rowsum < rowsummin || rowsummin == 0) rowsummin = rowsum;
     }
 
-  // The minimum column sum is a lower bound on the spectral radius.
-  if (colsummin > lambdamax)
-    {
-      if (debug)
-	{
-	  std::cerr << "Exceeded column sum at pathlength ";
-	  std::cerr << p.length() << "\n";
-	}
-      ++colsumexceeded;
-      return false;
-    }
-  // The minimum row sum is also a lower bound on the spectral radius.
-  if (rowsummin > lambdamax)
-    {
-      if (debug)
-	{
-	  std::cerr << "Exceeded row sum at pathlength ";
-	  std::cerr << p.length() << "\n";
-	}
-      ++rowsumexceeded;
-      return false;
-    }
-#ifdef TTAUTO_CHECK_SYMMETRIC_NORM
-  // Bound on the norm of the symmetrised form G_ij = sqrt(TM_ij TM_ji).
-  Gnorm /= n;
-  if (Gnorm > lambdamax)
-    {
-      if (debug)
-	{
-	  std::cerr << "Exceeded symmetrised norm bound at pathlength ";
-	  std::cerr << p.length() << "\n";
-	}
-      ++symmetricnormexceeded;
-      return false;
-    }
-#endif
+  // The smallest column sum and the smallest row sum are lower bounds on
+  // the spectral radius, and never decrease along a path.
+  if (colsummin > lambdamax) return abandon(prune_colsum);
+  if (rowsummin > lambdamax) return abandon(prune_rowsum);
   return true;
 }
 

@@ -191,8 +191,8 @@ the ttauto paper.
 \subsection{The symmetrised norm}
 \label{sec:symnorm}
 
-With the macro \code{TTAUTO\_CHECK\_SYMMETRIC\_NORM}, the code also
-abandons a prefix when $\frac1d\sum_{ij}\sqrt{A_{ij}A_{ji}}>\Lam$, with the
+With the macro \code{TTAUTO\_CHECK\_SYMMETRIC\_NORM}, the code used to
+abandon a prefix also when $\frac1d\sum_{ij}\sqrt{A_{ij}A_{ji}}>\Lam$, with the
 comment that this works only for Rauzy classes.  Here is why it is a lower
 bound, and what the restriction amounts to.  Put
 $G_{ij}=\sqrt{A_{ij}A_{ji}}$, the entrywise geometric mean of $A$ and
@@ -210,6 +210,9 @@ result of Karlin and Ost.  So it is a lower bound on $\rho(A)$ for
 in~\eqref{eq:fold}, is the growth along a path: only then is $FA\ge A$, so
 that $G$ never decreases.  In that case, though, $\rho(A)$ itself never
 decreases (Proposition~\ref{prop:rhomono}), and it is the stronger test.
+From four punctures on most folds do carry permutations, so there the test
+could abandon a prefix that leads to an accepted path; it has therefore
+been removed from the code (issue~\#23).
 
 \subsection{Bad words}
 
