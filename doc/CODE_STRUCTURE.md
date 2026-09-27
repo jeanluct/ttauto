@@ -447,7 +447,8 @@ Important internal flow:
   smallest column sum, smallest row sum); each abandoned path is credited
   to the first that fires.  `pruned(t)` gives the counts over the whole
   search, and the statistics block prints them per initial vertex.  The
-  tests and why each is safe are in `devel/iss023/pruning_bounds.tex`.
+  tests and why each is safe are in issue #23 and its note
+  `devel/iss023/pruning_bounds.tex`, on branch `iss023-pathlength-bound`.
 - `record_pA()`: apply the dilatation window and the gate test, then insert/update the result class keyed by characteristic polynomial (`add_current_path`).
 - `check_gates(bool)`: enable/disable the gate test (default on); `rejected_pA_list()`, `gate_candidates()`, `gate_rejected()` and `gate_rejection_rate()` expose the rejections (cumulative over the search); the statistics block prints "Gate test = R rejected of C candidates (P%)".
 

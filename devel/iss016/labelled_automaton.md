@@ -118,8 +118,10 @@ tests ended every path before the 734-fold bound, so that run is complete
 for the window.  (That accessor then counted only the last initial vertex,
 but the zero holds for all of them: in norm-bounded mode with no explicit
 cap the length cap is the norm bound restated, and never cuts a path the
-norm test has not already cut; see `devel/iss023/pruning_bounds.tex`.)  Its ten characteristic polynomials are exactly the ten
-above.  The cap of 12 therefore gives the complete answer on the
+norm test has not already cut; see issue #23 and its note
+`devel/iss023/pruning_bounds.tex`, on branch `iss023-pathlength-bound`.)
+Its ten characteristic polynomials are exactly the ten above.  The cap
+of 12 therefore gives the complete answer on the
 unlabelled side -- verified against the full search rather than argued
 from the table.
 

@@ -146,8 +146,9 @@ public:
   // in the order they are tried.  Each bounds from below the dilatation
   // of every closed path that begins with the current one, and never
   // decreases along a path, which is what makes abandoning safe; see
-  // devel/iss023/pruning_bounds.tex.  A path is credited to the first test
-  // that abandons it.
+  // issue #23 and its note devel/iss023/pruning_bounds.tex, on branch
+  // iss023-pathlength-bound.  A path is credited to the first test that
+  // abandons it.
   enum prune_test {
     prune_norm,		// Ham-Song: norm above lambdamax^n + n - 1.
     prune_colsum,	// Smallest column sum above lambdamax.

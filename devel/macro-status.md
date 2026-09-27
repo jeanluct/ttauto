@@ -29,8 +29,9 @@ This file tracks build/runtime feature macros used in the main `ttauto` codebase
 `TTAUTO_CHECK_SYMMETRIC_NORM` was removed in issue #23: its test (the
 symmetrised norm) is safe only when no fold carries a permutation, which
 fails in most strata from four punctures on, and where it is safe the
-prefix's own dilatation is a stronger test.  See
-`devel/iss023/pruning_bounds.tex`, section 3.4.
+prefix's own dilatation is a stronger test.  See issue #23 and section
+3.4 of its note `devel/iss023/pruning_bounds.tex`, on branch
+`iss023-pathlength-bound`.
 
 ## Example-local macro
 
