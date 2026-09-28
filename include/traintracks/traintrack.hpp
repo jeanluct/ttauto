@@ -348,11 +348,11 @@ bool compare_strata(const jlt::vector<int>& first,
 		    const jlt::vector<int>& second);
 
 // How many prongs on the boundary for singularity data sdata?
-int boundary_prongs(jlt::vector<int> sdata);
+int boundary_prongs(const jlt::vector<int>& sdata);
 
 // How many prongs on the boundary for N punctures and multigons given
 // by the vector K?
-int boundary_prongs(const int N, const jlt::vector<int> K);
+int boundary_prongs(const int N, const jlt::vector<int>& K);
 
 
 //

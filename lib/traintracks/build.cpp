@@ -519,7 +519,7 @@ bool compare_strata(const traintrack::intVec& first,
 }
 
 // How many prongs on the boundary for singularity data sdata?
-int boundary_prongs(traintrack::intVec sdata)
+int boundary_prongs(const traintrack::intVec& sdata)
 {
   const int EC_disk = 1;
   int id = 0;
@@ -531,7 +531,7 @@ int boundary_prongs(traintrack::intVec sdata)
 
 // How many prongs on the boundary for N punctures and multigons given
 // by the vector Kv?
-int boundary_prongs(const int N, const traintrack::intVec Kv)
+int boundary_prongs(const int N, const traintrack::intVec& Kv)
 {
   const int EC_sphere = 2;
 

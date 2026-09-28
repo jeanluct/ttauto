@@ -26,6 +26,7 @@
 #include <string>
 #include <cstdlib>
 #include <cmath>
+#include <utility>
 #include "traintracks/edge.hpp"
 #include "traintracks/multigon.hpp"
 #include "traintracks/util.hpp"
@@ -416,8 +417,13 @@ void swap(multigon& m1, multigon& m2)
       m2.print_details(std::cerr);
     }
 
-  // Swap their contents.
-  std::swap(m1,m2);
+  // Swap their contents member by member.  std::swap(m1,m2) would copy
+  // the edge lists three times, since multigon declares copy operations
+  // and so has no move operations.
+  std::swap(m1.k,m2.k);
+  m1.egv.swap(m2.egv);
+  std::swap(m1.lab,m2.lab);
+  std::swap(m1.punct,m2.punct);
 
   // Update the edge pointers for m1.
   m1.update_edge_prong_pointers(pm2);

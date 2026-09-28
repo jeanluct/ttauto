@@ -55,7 +55,7 @@ Tests are plain `main()` programs with no framework: they print and exit
 nonzero on failure.  Fast manual matrix after touching `include/` or `lib/`:
 `tests/test_traintrack`, `tests/test_folding_path`, `tests/test_permplus1`,
 `tests/test_badwords`, `examples/ttauto_min_example`, `examples/ttauto_torus`.
-`examples/ttauto_count` takes about 2 minutes; run it deliberately.
+`examples/ttauto_count` builds every automaton up to n=9 in about 2 s.
 `examples/ttauto_labels` took about 100 minutes until it capped its path
 length: `check_norms()` derives that bound from the dilatation window, and
 searching to it is what makes the result complete for the window, so the
