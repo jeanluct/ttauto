@@ -60,6 +60,8 @@
 
 \maketitle
 
+\tableofcontents
+
 \section{Summary}
 
 The search spends most of its time on partial paths that can never close
@@ -273,6 +275,8 @@ a sort of $d$ numbers per prefix on top of~$C_0$.  It is much weaker than
 the completion bound~$\beta$ of Theorem~\ref{thm:general}, but it is
 polynomial in~$d$, so it can go into \ttauto\ as it stands, and it can
 serve as a cheap filter in front of~$\beta$.
+Other lower bounds on the Perron root from the literature, and why they
+cannot be used here, are collected in Appendix~\ref{app:unusable}.
 
 \begin{table}[ht]
 \centering
@@ -627,7 +631,7 @@ intended.
 
 \input{tables}
 
-\subsection*{What the tables show}
+\subsection{What the tables show}
 
 \emph{Nothing is missed.}  $C_0$, $C_1$ and $C_2$ find exactly the
 reference list in every case.  The faulty test misses 6 of the 69 accepted
@@ -686,7 +690,7 @@ $S_d$ or half of it, so the count is $2^{d(d-1)}\,d!/2$ or more, already
 about $6\times10^7$ at $d=5$.  The test works; it has to be computed
 differently.
 
-\subsection*{Computing the bound faster}
+\subsection{Computing the bound faster}
 
 The test only has to decide whether some pair $(Q',S)$ gives
 $\rho(Q'(I+E_S)N)\le\Lam$, and most pairs can be ruled out without a
@@ -824,16 +828,118 @@ which reach $d=8$; open question~1 is now the question.
   issue~\#16, and complete windows at four punctures.
 \end{enumerate}
 
-\begin{thebibliography}{9}
+\appendix
+
+\section{Bounds that do not help}
+\label{app:unusable}
+
+This appendix records lower bounds on the Perron root that were examined
+for issue~\#23 and found unusable, with the reason, so that they need not
+be examined again.
+
+\emph{What a usable bound needs.}  A test must hold for every completion,
+so it can use only two kinds of information.  The first is quantities of
+the prefix that never decrease along a path (Lemma~\ref{lem:grow}): the
+norm, and the sorted row sums and sorted column sums.  The second is what
+acceptance guarantees about the closed path's matrix~$X$: integer entries,
+irreducibility, and $\rho(X)\le\Lam$.  A lower bound on $\rho(A)$ for the
+prefix itself is safe only when no fold carries a permutation, and then
+$\rho(A)$ itself is the stronger test (Proposition~\ref{prop:rhomono}).
+So a bound in terms of individual entries of~$A$, or of its diagonal, is of
+no use: folds move entries between rows, and a completion can add to any
+entry.
+
+\emph{Ostrowski--Schneider is already optimal for row sums.}  Once the
+Perron weights are confined to the box $[\delta,1]^d$, the value
+$\psi_\delta$ of~\eqref{eq:os} is the exact minimum of the weighted mean
+of the row sums over that box~\cite[Lemma~2]{OstrowskiSchneider}.  So no
+bound built from the row sums and the weight ratio alone can do better.
+A sharper test must use more about the completion than that, as the
+completion bound~$\beta$ does.  Their Theorem~1 is weaker than their
+Theorem~2 (Table~\ref{tab:os}).  Their bound applied to the prefix, with
+$\rho$ replaced by $R$ in~\eqref{eq:delta}, is a bound on $\rho(A)$, and so
+has the defect above.
+
+\emph{Ledermann, Ostrowski (1952), Brauer.}  These sharpen the row-sum
+bounds for \emph{positive} matrices, through the smallest entry of the
+whole matrix (see~\cite[p.~65]{Seneta} and the comparisons
+in~\cite{Song92}).  The matrix of a completion may have zero entries, so
+nothing is known about its smallest entry, and these bounds reduce to the
+row sums.
+
+\emph{Hall and Porsching~\cite{HallPorsching}.}  This is the
+Collatz--Wielandt bound~\eqref{eq:cw} with the test vector $z$ equal to
+$1$ except for $z_j=x$, optimised over $0<x\le1$.  For fixed $j$ it gives
+$\rho\ge\min_{i\ne j}\lam_{ij}$, where
+\[
+  \lam_{ij}=\tfrac12\Bigl(R_i-a_{ij}+a_{jj}
+  +\sqrt{(R_i-a_{ij}-a_{jj})^2+4a_{ij}(R_j-a_{jj})}\Bigr)
+\]
+and $R_i$ is the $i$-th row sum.  It is at least as good as Brauer's
+bound.  But it depends on individual entries.  For a completion, whose
+entries are known only to satisfy $0\le a_{ij}\le R_i$, the quotients
+$(Xz)_i/z_i$ are only known to be at least $xR_i$ for $i\ne j$ and at
+least $R_j$ for $i=j$.  The best that can then be guaranteed is
+$\max_x\min(x\min_{i\ne j}R_i,R_j)$, which is the smallest row sum again.
+
+\emph{Szulc~\cite{Szulc88}.}  Put $b=\min_ia_{ii}$.  Szulc derives
+$\rho\ge b+\sqrt{\tr((A-bI)^2)/n}$ from Kuharenko's theorem on the
+eigenvalues of a zero-trace matrix.  For odd~$n$ he also gives the
+alternative $\rho\ge b+\bigl(\frac2{n-1}\sum_{i<j}a_{ij}a_{ji}\bigr)^{1/2}$,
+a bound through the $2$-cycles.  Both depend on individual entries and
+the diagonal, so they bound $\rho(A)$ only.  One possible use: inside the
+fast evaluation of~$\beta$, where the candidate $Y=Q'(I+E_S)N$ is a
+concrete matrix and each entry grows with~$S$.  There the odd-$n$ bound is
+also monotone in~$S$, and it adds up all the $2$-cycles where $C_3$ now
+checks each $2$-cycle separately.  It could only make~$C_3$ faster, never
+make it prune more, since $C_3$ goes on to bracket $\rho(Y)$.
+
+\emph{Song~\cite{Song92}.}  For weights $x\ge0$ with $\sum_ix_i=1$, a
+weighted geometric mean: $\rho\ge\prod_{ij}a_{ij}^{x_ix_j}/\sum_ix_i^2$,
+and a version shifted by $qI$ so that a zero diagonal does not kill it.  It
+is a bound on $\rho(A)$, it vanishes as soon as the principal block
+selected by the support of~$x$ has a zero entry off the diagonal, and it
+is a geometric-mean relative of the symmetrised norm of
+Section~\ref{sec:symnorm}.  Song's own Example~2 shows that it does not
+always beat the older bounds.
+
+\emph{Li~\cite{Li01}.}  A lower bound on the smallest singular value, by
+Brauer-type ovals restricted to the edges of the undirected graph of~$A$
+(improving Johnson and Szulc).  It is not a bound on the Perron root.  Its
+idea, restricting to the edges of the graph, has analogues for the Perron
+root that use the graph's cycles.  But the graph of a completion is
+unknown, and if the row with the smallest sum can carry a loop they give
+back that row sum.
+
+\emph{Not yet examined.}  The nested bounds of Deutsch and
+Wielandt~\cite{DeutschWielandt} are iterative, closer to the
+Collatz--Wielandt brackets that $C_3$ already computes than to a
+closed-form test.
+
+\begin{thebibliography}{99}
+
+\bibitem{DeutschWielandt}
+E.~Deutsch and H.~Wielandt, \emph{Nested bounds for the Perron root of a
+  nonnegative matrix}, Linear Algebra Appl.\ \textbf{52/53} (1983),
+  235--251.
 
 \bibitem{EJD}
 L.~Elsner, C.~R.~Johnson and J.~A.~Dias da Silva, \emph{The Perron root of
   a weighted geometric mean of nonnegative matrices}, Linear Multilinear
   Algebra \textbf{24} (1988), 1--13.
 
+\bibitem{HallPorsching}
+C.~A.~Hall and T.~A.~Porsching, \emph{Bounds for the maximal eigenvalue of
+  a nonnegative irreducible matrix}, Duke Math.\ J.\ \textbf{36} (1969),
+  159--164.
+
 \bibitem{HamSong}
 J.-Y.~Ham and W.~T.~Song, \emph{The minimum dilatation of pseudo-Anosov
   5-braids}, Experiment.\ Math.\ \textbf{16} (2007), 167--179.
+
+\bibitem{Li01}
+L.~Li, \emph{Lower bounds for the smallest singular value}, Comput.\
+  Math.\ Appl.\ \textbf{41} (2001), 483--487.
 
 \bibitem{OstrowskiSchneider}
 A.~Ostrowski and H.~Schneider, \emph{Bounds for the maximal characteristic
@@ -853,6 +959,14 @@ H.~Schneider, \emph{Note on the fundamental theorem on irreducible
 \bibitem{Seneta}
 E.~Seneta, \emph{Non-negative matrices and Markov chains}, 2nd ed.,
   Springer, 1981.
+
+\bibitem{Song92}
+Y.~Song, \emph{Lower bounds for the Perron root of a nonnegative matrix},
+  Linear Algebra Appl.\ \textbf{169} (1992), 269--278.
+
+\bibitem{Szulc88}
+T.~Szulc, \emph{A lower bound for the Perron root of a nonnegative
+  matrix}, Linear Algebra Appl.\ \textbf{101} (1988), 181--186.
 
 \end{thebibliography}
 
