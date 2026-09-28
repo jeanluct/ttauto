@@ -79,7 +79,10 @@ dimension two it cuts a run of shears exactly where it stops being useful
 finds the same pseudo-Anosov maps as the current tests, never missing one,
 while exploring up to $10^5$ times fewer partial paths.  Its cost in the
 larger automata of \ttauto\ is the main open question
-(Section~\ref{sec:open}).
+(Section~\ref{sec:open}).  A much cheaper refinement of the row-sum test,
+from a bound of Ostrowski and Schneider (Proposition~\ref{prop:os}), is
+also safe and explores 1.4 to 7 times fewer partial paths than the tests
+in use.
 
 \section{Setting}
 
@@ -187,6 +190,110 @@ By~\eqref{eq:cw}, $r(A)$ and $c(A)$ are lower bounds for $\rho(A)$, and
 along a path they never decrease; so abandoning a prefix when $r(A)>\Lam$
 or $c(A)>\Lam$ is safe.  This is the test described by Ham and Song and in
 the ttauto paper.
+
+\subsection{The bound of Ostrowski and Schneider}
+\label{sec:os}
+
+The row-sum test uses only the smallest row sum.  Seneta points to a line
+of results that sharpen $r\le\rho\le R$, with $R$ the largest row sum, to
+$r+p_1\le\rho\le R-p_2$ (Ledermann, Ostrowski and Brauer for positive
+matrices), and to Ostrowski and Schneider~\cite{OstrowskiSchneider} for
+irreducible ones~\cite[p.~65]{Seneta}.  (The code once declared an empty
+\code{check\_OstrovskiSchneider()}, removed in issue~\#23; this is
+presumably what it was meant for.)  Their argument is short.  Let $X\ge0$
+be irreducible, $d\times d$, with row sums $r_1,\dots,r_d$ and left
+Perron vector $y>0$.  Summing $yX=\rho y$ over the columns gives
+\[
+  \rho\sum_i y_i=\sum_i y_i r_i ,
+\]
+so $\rho$ is a weighted mean of the row sums.  The weights cannot be very
+unequal: with $\kappa$ the smallest positive off-diagonal entry of $X$ and
+$\lam$ its smallest diagonal entry, the $i$-th component of $yX=\rho y$
+gives $(\rho-X_{ii})y_i\ge X_{ji}y_j$, so $y_i\ge\kappa y_j/(\rho-\lam)$
+whenever $X_{ji}>0$ with $j\ne i$.  Since $X$ is irreducible, such steps
+lead from any index to any other in at most $d-1$ steps, which gives
+Schneider's bound~\cite{Schneider58}
+\begin{equation}
+  \label{eq:delta}
+  \delta=\frac{\min_i y_i}{\max_i y_i}
+  \ge\Bigl(\frac{\kappa}{\rho-\lam}\Bigr)^{d-1}.
+\end{equation}
+Scale $y$ so that $\max_i y_i=1$.  Then $y$ lies in the box $[\delta,1]^d$,
+and $\rho$ is at least the smallest weighted mean over that box.  The
+smallest puts weight $1$ on the $q$ smallest row sums and $\delta$ on the
+others, for the best~$q$ (\cite[Lemma~2]{OstrowskiSchneider}): with
+$r_{(1)}\le\dots\le r_{(d)}$ the row sums in increasing order,
+\begin{equation}
+  \label{eq:os}
+  \rho\ge\psi_\delta(r)=\min_{1\le q\le d}
+  \frac{\sum_{i\le q}r_{(i)}+\delta\sum_{i>q}r_{(i)}}{q+\delta(d-q)} .
+\end{equation}
+This is their Theorem~2.  Their Theorem~1 is the weaker, closed form
+$\rho\ge r+d\delta(p-r)/(d-1+\delta)$, with $p$ the mean row sum; they
+replace $\rho$ by $R$ in~\eqref{eq:delta} to make $\delta$ computable.
+
+Applied to a prefix, \eqref{eq:os} bounds $\rho(A)$, which is no use when
+folds carry permutations (the same trouble as for the symmetrised norm
+below, and for the test $C_1$ of Section~\ref{sec:check}).  Applied to a completion instead, it gives a safe
+test, because for an accepted closed path we may put $\Lam$ in place
+of~$\rho$ in~\eqref{eq:delta}.
+
+\begin{Proposition}
+  \label{prop:os}
+  Let $\delta_0=\Lam^{-(d-1)}$, with $\Lam\ge1$.  If a prefix $A$ has
+  $\psi_{\delta_0}(r)>\Lam$, where $r$ is its vector of row sums, or the
+  same with its column sums, then no completion of $A$ is accepted.
+\end{Proposition}
+
+\begin{proof}
+  Suppose $X=BA$ is accepted, so $X$ is primitive with $\rho(X)\le\Lam$.
+  Its entries are integers, so $\kappa\ge1$; and $0\le\lam<\rho(X)$, since
+  a diagonal entry of an irreducible matrix of size $d\ge2$ is less than
+  its spectral radius.  So each step in~\eqref{eq:delta} contributes a
+  factor at least $1/\Lam$, and $\delta\ge\delta_0$.  Now
+  $\psi_\delta(r)$ is the minimum of $\sum_ir_ix_i/\sum_ix_i$ over the box
+  $[\delta,1]^d$.  So it does not change when the $r_i$ are permuted, and
+  it does not decrease when $\delta$ grows (the box shrinks) or when any
+  $r_i$ grows.  By Lemma~\ref{lem:grow} the row sums of $FA$ are those of
+  $A$ in a new order with one increased, so $\psi_{\delta_0}$ of the row
+  sums never decreases along a path.  Hence
+  $\Lam\ge\rho(X)\ge\psi_\delta(r(X))\ge\psi_{\delta_0}(r(A))$.  For
+  columns, use the right Perron vector and $X^{\mathsf T}$.
+\end{proof}
+
+At first sight $\delta_0$ is too small to matter, but the prefixes that
+waste the search are those where a run of shears has made some row sums
+large while the smallest stays small, and there even a small weight on
+the large rows is enough.  Table~\ref{tab:os} shows the effect in the
+program of Section~\ref{sec:check}, as criterion \code{OS2}, which adds
+the test to~$C_0$, the tests in use (\code{OS} adds Theorem~1 instead);
+$C_3$ is the completion bound, computed fast.  Every run accepts
+exactly the words of the norm-only reference run.  The test costs
+a sort of $d$ numbers per prefix on top of~$C_0$.  It is much weaker than
+the completion bound~$\beta$ of Theorem~\ref{thm:general}, but it is
+polynomial in~$d$, so it can go into \ttauto\ as it stands, and it can
+serve as a cheap filter in front of~$\beta$.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{llrrrr}
+\toprule
+set & $\Lam$ & $C_0$ & \code{OS} (Thm.~1) & \code{OS2} (Thm.~2) & $C_3$ \\
+\midrule
+\code{RL}, $d=2$ & 20 & 2\,809 & 2\,037 & 2\,037 & 707 \\
+\code{rauzy3} & 2.5 & 2\,743\,123 & 2\,362\,483 & 465\,925 & 19 \\
+\code{perm3} & 3 & 47\,084 & 35\,570 & 13\,608 & 173 \\
+\code{sym3} & 3 & 1\,373\,198 & 713\,490 & 189\,493 & 394 \\
+\code{sym4} & 2 & 1\,306\,439 & 999\,613 & 263\,116 & 424 \\
+\bottomrule
+\end{tabular}
+\caption{Prefixes visited with the Ostrowski--Schneider test added to
+  $C_0$, against $C_0$ alone and the completion bound computed fast
+  ($C_3$).  All accept the same words.  From runs of \code{bounds\_toy}
+  by hand; \code{make\_tables.py} does not produce this table.}
+\label{tab:os}
+\end{table}
 
 \subsection{The symmetrised norm}
 \label{sec:symnorm}
@@ -706,7 +813,11 @@ which reach $d=8$; open question~1 is now the question.
   to searches over Rauzy classes, such as minimal dilatations in strata of
   abelian differentials.  Theorem~\ref{thm:general} applies to any folding
   automaton, Ham and Song's included.
-\item \emph{Into \ttauto.}  Measure $\Hgp$ and $\Pos$ on the real automata,
+\item \emph{Into \ttauto.}  The test of Proposition~\ref{prop:os} needs
+  nothing but the row and column sums, so it can go into
+  \code{check\_all\_norms} at once; the stratum $n=6$, stratum~7, whose
+  complete search does not finish with the current tests, is the case to
+  try it on.  Measure $\Hgp$ and $\Pos$ on the real automata,
   implement $C_2$ or a cheaper form of it in \code{check\_all\_norms}, and
   require that it reproduce the lists known to be complete: the 2\,541
   classes of the three-puncture benchmark, the 10 and 6 classes of
@@ -724,9 +835,20 @@ L.~Elsner, C.~R.~Johnson and J.~A.~Dias da Silva, \emph{The Perron root of
 J.-Y.~Ham and W.~T.~Song, \emph{The minimum dilatation of pseudo-Anosov
   5-braids}, Experiment.\ Math.\ \textbf{16} (2007), 167--179.
 
+\bibitem{OstrowskiSchneider}
+A.~Ostrowski and H.~Schneider, \emph{Bounds for the maximal characteristic
+  root of a non-negative irreducible matrix}, Duke Math.\ J.\ \textbf{27}
+  (1960), 547--553.  Scan at
+  \url{https://people.math.wisc.edu/hans/paper_archive/scanned_papers/hs014.pdf}.
+
 \bibitem{PapadopoulosPenner}
 A.~Papadopoulos and R.~C.~Penner, \emph{Enumerating pseudo-Anosov
   foliations}, Pacific J.\ Math.\ \textbf{142} (1990), 159--173.
+
+\bibitem{Schneider58}
+H.~Schneider, \emph{Note on the fundamental theorem on irreducible
+  non-negative matrices}, Proc.\ Edinburgh Math.\ Soc.\ (2) \textbf{11}
+  (1958), 127--130.
 
 \bibitem{Seneta}
 E.~Seneta, \emph{Non-negative matrices and Markov chains}, 2nd ed.,

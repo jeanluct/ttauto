@@ -22,7 +22,9 @@
 // Build:  g++ -std=c++17 -O2 -o bounds_toy bounds_toy.cpp
 // Run:    ./bounds_toy SET LAMBDA CRITERION [BUDGET]
 //         SET is RL, rauzy3, perm3 or sym3; CRITERION is HS, C0, C1, C2,
-//         C3 (the C2 decision computed fast) or BAD.
+//         C3 (the C2 decision computed fast), OS (C0 plus the
+//         Ostrowski-Schneider bound), OS2 (C0 plus their sharper bound)
+//         or BAD.
 // Prints: accepted words, cyclic classes, visited, wasted, longest prefix,
 // longest accepted word, and a hash of the accepted set for comparison.
 
@@ -272,6 +274,8 @@ void setup(const std::string& set)
   positions.assign(pos.begin(),pos.end());
 }
 
+long long os_pruned = 0;   // prefixes abandoned by OS or OS2, not by C0
+
 long long hs_bound() { return (long long)std::floor(std::pow(lam,(double)n)) + n - 1; }
 
 bool c0_prune(const Mat& A)
@@ -286,6 +290,68 @@ bool c0_prune(const Mat& A)
       if (rowmin < 0 || r < rowmin) rowmin = r;
     }
   return norm > hs_bound() || colmin > lam || rowmin > lam;
+}
+
+// Ostrowski and Schneider (Duke Math. J. 27, 1960, Theorem 1, display
+// (19)): for irreducible B with left Perron vector y, rho(B) is the
+// y-weighted mean of the row sums, so rho >= r + n delta (p - r) /
+// (n - 1 + delta), where r is the smallest row sum, p the mean row sum
+// and delta = min y / max y.  Schneider's lemma gives delta >=
+// (kappa / (rho - lambda))^(n-1), with kappa the smallest positive
+// off-diagonal entry and lambda the smallest diagonal entry.  For a
+// completion with rho <= Lambda of an integer matrix, kappa >= 1 and
+// lambda >= 0, so delta >= Lambda^-(n-1) whatever the completion; and r
+// and p never decrease along a path.  Columns likewise, with the right
+// Perron vector; the mean column sum is p again.
+bool os_prune(const Mat& A)
+{
+  long long total = 0, colmin = -1, rowmin = -1;
+  for (int j = 0; j < n; ++j)
+    {
+      long long c = 0, r = 0;
+      for (int i = 0; i < n; ++i) { c += A[i][j]; r += A[j][i]; }
+      total += c;
+      if (colmin < 0 || c < colmin) colmin = c;
+      if (rowmin < 0 || r < rowmin) rowmin = r;
+    }
+  const double p = (double)total/n;
+  const double e = std::pow(lam,-(double)(n-1));
+  const double w = n*e/(n - 1 + e);
+  const double lo = std::max(rowmin + w*(p - rowmin),colmin + w*(p - colmin));
+  if (lo > lam*(1+1e-12)) { ++os_pruned; return true; }
+  return false;
+}
+
+// Their Theorem 2 (Lemma 2) is sharper: rho = psi(y) with y scaled so
+// max y = 1, psi(x) = sum r_i x_i / sum x_i, and y in [delta,1]^n, so rho
+// is at least the minimum of psi over that box.  The minimum puts weight 1
+// on the q smallest row sums and delta on the rest, for the best q.  It
+// grows with delta and with every row sum, so it is safe with delta =
+// Lambda^-(n-1) as above.
+double os2_lower(std::array<long long,NMAX> s, const double e)
+{
+  for (int i = 1; i < n; ++i)          // insertion sort; n is at most 8
+    for (int j = i; j > 0 && s[j-1] > s[j]; --j) std::swap(s[j-1],s[j]);
+  double best = 0, low = 0, high = 0;
+  for (int i = 0; i < n; ++i) high += s[i];
+  for (int q = 1; q <= n; ++q)
+    {
+      low += s[q-1]; high -= s[q-1];
+      const double v = (low + e*high)/(q + e*(n-q));
+      if (q == 1 || v < best) best = v;
+    }
+  return best;
+}
+
+bool os2_prune(const Mat& A)
+{
+  std::array<long long,NMAX> rows{}, cols{};
+  for (int i = 0; i < n; ++i)
+    for (int j = 0; j < n; ++j) { rows[i] += A[i][j]; cols[j] += A[i][j]; }
+  const double e = std::pow(lam,-(double)(n-1));
+  if (std::max(os2_lower(rows,e),os2_lower(cols,e)) > lam*(1+1e-12))
+    { ++os_pruned; return true; }
+  return false;
 }
 
 // The completion bound: prune when every (Q, S) that allows an irreducible
@@ -504,6 +570,8 @@ bool prune(const Mat& A, const Mat& N)
       return norm > hs_bound();
     }
   if (c0_prune(A)) return true;
+  if (criterion == "OS" && os_prune(A)) return true;
+  if (criterion == "OS2" && os2_prune(A)) return true;
   if (criterion == "C1" || criterion == "BAD")
     {
       double lo, hi; bracket(A,lo,hi);
@@ -580,6 +648,7 @@ int main(int argc, char** argv)
             << " visited=" << visited << " wasted=" << wasted
             << " longest_prefix=" << maxlen << " longest_accepted=" << maxacc
             << " hash=" << std::hex << h << std::dec
-            << " brackets=" << fast_candidates << " gaveup=" << gaveup << "\n";
+            << " brackets=" << fast_candidates << " gaveup=" << gaveup
+            << " os_pruned=" << os_pruned << "\n";
   return 0;
 }
