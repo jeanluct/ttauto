@@ -22,7 +22,7 @@
 //   along with ttauto.  If not, see <http://www.gnu.org/licenses/>.
 // LICENSE>
 
-// Checks ttauto::ostrowski_schneider_bound, the lower bound behind the
+// Checks ttauto::OstSch_bound, the lower bound behind the
 // Ostrowski-Schneider prune test (issue #23), against its definition:
 // the smallest weighted mean sum_i s_i x_i / sum_i x_i of the sums s over
 // the box delta <= x_i <= 1.  The weighted mean is a ratio of linear
@@ -45,7 +45,7 @@ typedef ttauto::ttauto<traintracks::traintrack> tt;
 
 static double bound(std::vector<int> s, const double delta)
 {
-  return tt::ostrowski_schneider_bound(s,delta);
+  return tt::OstSch_bound(s,delta);
 }
 
 static double brute(const std::vector<int>& s, const double delta)
@@ -107,10 +107,10 @@ int main()
 
   // The sums are sorted in place, and the caller's buffer reused.
   std::vector<int> buf = {5,1,4};
-  tt::ostrowski_schneider_bound(buf,0.5);
+  tt::OstSch_bound(buf,0.5);
   CHECK((buf == std::vector<int>{1,4,5}));
 
-  std::cout << "test_ostrowski_bound: " << cases
+  std::cout << "test_OstSch_bound: " << cases
             << " random cases agree with brute force" << std::endl;
   return 0;
 }

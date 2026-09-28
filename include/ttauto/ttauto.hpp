@@ -30,6 +30,7 @@
 #include <list>
 #include <map>
 #include <stack>
+#include <string>
 #include <vector>
 #include <cmath>
 #include <cstdlib>
@@ -126,13 +127,13 @@ private:
 
   // Criteria to reject paths.
   bool do_check_norms;		// Limit path lengths from matrix norms.
-  bool do_check_os;		// Also the Ostrowski-Schneider test.
+  bool do_check_OstSch;		// Also the Ostrowski-Schneider test.
   bool do_check_gates;		// Reject candidates failing the gate test.
   double lambdamin;		// Minimum dilatation to keep (0: keep all).
   double lambdamax;		// Maximum dilatation to keep (0: keep all).
   double maxnorm;		// Maximum norm of matrix before giving up.
-  double osdelta;		// Ostrowski-Schneider weight ratio bound.
-  double osthresh;		// Ostrowski-Schneider threshold.
+  double OstSch_delta;		// Ostrowski-Schneider weight ratio bound.
+  double OstSch_thresh;		// Ostrowski-Schneider threshold.
   std::vector<int> rowsums, colsums;	// Scratch for check_all_norms.
   int max_path_length;		// Maximum path length before giving up.
   int max_badword_length;	// How long badwords can be.
@@ -155,17 +156,18 @@ public:
   // iss023-pathlength-bound.  A path is credited to the first test that
   // abandons it.
   enum prune_test {
-    prune_norm,		// Ham-Song: norm above lambdamax^n + n - 1.
+    prune_HamSong,	// Ham-Song: norm above lambdamax^n + n - 1.
     prune_colsum,	// Smallest column sum above lambdamax.
     prune_rowsum,	// Smallest row sum above lambdamax.
-    prune_ostrowski,	// Ostrowski-Schneider bound on sorted sums.
+    prune_OstSch,	// Ostrowski-Schneider bound on sorted sums.
     n_prune_tests
   };
 
+  // The names shown in the statistics block and in debug output.
   static const char* prune_test_name(const int t)
   {
     static const char* const name[n_prune_tests] =
-      { "matrix norm", "column sum", "row sum", "Ostrowski-Schneider" };
+      { "Ham-Song norm", "column sum", "row sum", "Ostrowski-Schneider" };
     return name[t];
   }
 
@@ -177,8 +179,7 @@ public:
   // smallest sums and delta on the rest, for the best q, which is what
   // this returns.  It does not change when the sums are permuted, and it
   // does not decrease when delta or any sum grows.  Sorts s in place.
-  static double ostrowski_schneider_bound(std::vector<int>& s,
-					  const double delta)
+  static double OstSch_bound(std::vector<int>& s, const double delta)
   {
     const int m = (int)s.size();
     for (int i = 1; i < m; ++i)	// insertion sort; m is small
@@ -226,13 +227,13 @@ public:
       p(ttg),
       TM(n,n),
       do_check_norms(false),
-      do_check_os(true),
+      do_check_OstSch(true),
       do_check_gates(true),
       lambdamin(0),
       lambdamax(0),
       maxnorm(0),
-      osdelta(0),
-      osthresh(0),
+      OstSch_delta(0),
+      OstSch_thresh(0),
       rowsums(n),
       colsums(n),
       max_path_length(15),
@@ -304,11 +305,11 @@ public:
 
   // In norm-bounded mode, also abandon a path by the Ostrowski-Schneider
   // test (see check_all_norms).  It is safe, so it only speeds the search
-  // up; it is on by default, and check_ostrowski(false) gives back the
+  // up; it is on by default, and check_OstSch(false) gives back the
   // search without it, counts included.
-  ttauto<TrTr>& check_ostrowski(const bool do_check_os_ = true)
+  ttauto<TrTr>& check_OstSch(const bool do_check_OstSch_ = true)
   {
-    do_check_os = do_check_os_;
+    do_check_OstSch = do_check_OstSch_;
     return *this;
   }
 
@@ -484,8 +485,8 @@ private:
     // class record_pA keeps, whose dilatation is up to lambdamax + tol.
     // Its threshold errs upward, so rounding can only keep a path.
     const double lam = lambdamax + tol;
-    osdelta = std::pow(lam,-(double)(n-1));
-    osthresh = lam*(1 + 1e-12);
+    OstSch_delta = std::pow(lam,-(double)(n-1));
+    OstSch_thresh = lam*(1 + 1e-12);
   }
 
   // Build todo_list while removing one side of reflection-symmetric pairs.
@@ -870,19 +871,16 @@ bool ttauto<TrTr>::find_pAs()
 #endif
   if (lambdamax != 0 && do_check_norms)
     {
-      // Labels padded by hand rather than with setw, whose alignment
-      // depends on flags new_vertex() leaves set.
-      static const char* const label[n_prune_tests] =
-	{ "       Exceeded max norm ",
-	  "     Exceeded column sum ",
-	  "        Exceeded row sum ",
-	  "Exceeded Ostrowski-Schn. " };
-      cout << "\n";
+      // Names right-aligned by hand rather than with setw, whose
+      // alignment depends on flags new_vertex() leaves set.
+      const std::size_t width = 24;
+      cout << "\nNorms exceeded:\n";
       for (int t = 0; t < n_prune_tests; ++t)
 	{
-	  if (t == prune_ostrowski && !do_check_os) continue;
-	  cout << label[t] << setw(9);
-	  cout << prunedv[t] << " times\n";
+	  if (t == prune_OstSch && !do_check_OstSch) continue;
+	  const std::string name = prune_test_name(t);
+	  cout << std::string(width - name.size(),' ') << name << " "
+	       << setw(9) << prunedv[t] << " times\n";
 	}
     }
   if (max_badword_length > 0)
@@ -1099,7 +1097,7 @@ bool ttauto<TrTr>::check_all_norms()
 	  rowsum += TMl.top()(i,j);
 	}
       Mnorm += colsum;
-      if (Mnorm > maxnorm) return abandon(prune_norm);
+      if (Mnorm > maxnorm) return abandon(prune_HamSong);
       if (colsum < colsummin || colsummin == 0) colsummin = colsum;
       if (rowsum < rowsummin || rowsummin == 0) rowsummin = rowsum;
       colsums[i] = colsum;
@@ -1115,21 +1113,21 @@ bool ttauto<TrTr>::check_all_norms()
   // that begins with this one and is accepted, so X is primitive with
   // spectral radius rho <= lambdamax + tol.  Schneider's lemma (Proc.
   // Edinburgh Math. Soc. 11 (1958) 127-130) bounds the ratio of its
-  // smallest to largest Perron weight below by (kappa/(rho -
-  // lambda))^(n-1), with kappa its smallest
-  // positive off-diagonal entry and lambda its smallest diagonal entry.
-  // X has integer entries and lambda < rho, so the ratio is at least
-  // osdelta, whatever the rest of the path.  Hence rho is at least
-  // ostrowski_schneider_bound(row sums of X, osdelta).  Folding permutes
-  // the row sums and increases one, and increases the column sums, so the
-  // bound for X is at least the bound for the current matrix; if that
-  // exceeds lambdamax + tol, no such X exists.  Columns likewise, with the
+  // smallest to largest Perron weight below by
+  // (kappa/(rho - lambda))^(n-1), with kappa its smallest positive
+  // off-diagonal entry and lambda its smallest diagonal entry.  X has
+  // integer entries and lambda < rho, so the ratio is at least
+  // OstSch_delta, whatever the rest of the path.  Hence rho is at least
+  // OstSch_bound(row sums of X, OstSch_delta).  Folding permutes the row
+  // sums and increases one, and increases the column sums, so the bound
+  // for X is at least the bound for the current matrix; if that exceeds
+  // lambdamax + tol, no such X exists.  Columns likewise, with the
   // right Perron vector.  See issue #23 and its note
   // devel/iss023/pruning_bounds.tex, on branch iss023-pathlength-bound.
-  if (do_check_os &&
-      (ostrowski_schneider_bound(rowsums,osdelta) > osthresh ||
-       ostrowski_schneider_bound(colsums,osdelta) > osthresh))
-    return abandon(prune_ostrowski);
+  if (do_check_OstSch &&
+      (OstSch_bound(rowsums,OstSch_delta) > OstSch_thresh ||
+       OstSch_bound(colsums,OstSch_delta) > OstSch_thresh))
+    return abandon(prune_OstSch);
   return true;
 }
 

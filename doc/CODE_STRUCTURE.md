@@ -443,16 +443,17 @@ Important internal flow:
 - `find_pAs()`: initialize per-start-vertex DFS state and counters.
 - `descend_graph()`: one DFS step; applies pruning, checks closure, and handles backtracking.
 - `check_all_norms()`: the prune tests of norm-bounded mode, listed in
-  the `prune_test` enum in the order they are tried (Ham-Song norm,
-  smallest column sum, smallest row sum, Ostrowski-Schneider); each
-  abandoned path is credited to the first that fires.  `pruned(t)` gives
-  the counts over the whole search, and the statistics block prints them
-  per initial vertex.  The Ostrowski-Schneider test bounds the dilatation
-  of every accepted completion from the sorted row and column sums
-  (`ostrowski_schneider_bound()`); it is on by default, and
-  `check_ostrowski(false)` gives back the search without it.  The tests
-  and why each is safe are in issue #23 and its note
-  `devel/iss023/pruning_bounds.tex`, on branch `iss023-pathlength-bound`.
+  the `prune_test` enum in the order they are tried (`prune_HamSong`,
+  `prune_colsum`, `prune_rowsum`, `prune_OstSch`); each abandoned path is
+  credited to the first that fires.  `pruned(t)` gives the counts over the
+  whole search, and the statistics block prints them per initial vertex
+  under "Norms exceeded:", with the names from `prune_test_name()`.  The
+  Ostrowski-Schneider test bounds the dilatation of every accepted
+  completion from the sorted row and column sums (`OstSch_bound()`); it
+  is on by default, and `check_OstSch(false)` gives back the search
+  without it.  The tests and why each is safe are in issue #23 and its
+  note `devel/iss023/pruning_bounds.tex`, on branch
+  `iss023-pathlength-bound`.
 - `record_pA()`: apply the dilatation window and the gate test, then insert/update the result class keyed by characteristic polynomial (`add_current_path`).
 - `check_gates(bool)`: enable/disable the gate test (default on); `rejected_pA_list()`, `gate_candidates()`, `gate_rejected()` and `gate_rejection_rate()` expose the rejections (cumulative over the search); the statistics block prints "Gate test = R rejected of C candidates (P%)".
 

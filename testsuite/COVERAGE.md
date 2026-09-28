@@ -273,12 +273,12 @@ predates that test and the string constructor it exercises.
       column-sum and row-sum tests, and the class polynomials, pinned to the
       values before the restructuring of issue #23; `pruned()` must agree
       with the printed per-vertex counts added up
-    - each search twice, with `check_ostrowski(false)` (the pins above, and
+    - each search twice, with `check_OstSch(false)` (the pins above, and
       no Ostrowski-Schneider line printed) and with the test on, the
       default: the same classes, no more paths tried, and its own counts
       pinned
-  - Also: `testsuite/ttauto/test_ostrowski_bound.cpp`
-    - `ostrowski_schneider_bound()` against a brute-force minimum over the
+  - Also: `testsuite/ttauto/test_OstSch_bound.cpp`
+    - `OstSch_bound()` against a brute-force minimum over the
       vertices of the box, on 20000 random sum vectors of length up to 8;
       invariance under permutation, monotonicity in delta and in each sum,
       and the range [smallest sum, mean]
