@@ -31,8 +31,11 @@
 // below this records how many paths it tried, how many each test
 // abandoned, and the characteristic polynomials of the classes it found,
 // read from the statistics the search prints, and checks that
-// ttauto::pruned() agrees with them.  The expected values are those of the
-// code before the restructuring of issue #23.
+// ttauto::pruned() agrees with them.  With check_ostrowski(false) the
+// expected values are those of the code before the restructuring of issue
+// #23.  The same searches are then run with the Ostrowski-Schneider test
+// on, the default: it is safe, so each must find exactly the classes of
+// its twin without it, and it must try no more paths.
 
 #include <iostream>
 #include <list>
@@ -50,9 +53,10 @@ typedef ttauto::ttfoldgraph<traintrack> ttgraph;
 
 struct counts
 {
-  long long tried = 0, norm = 0, colsum = 0, rowsum = 0;
-  // The same three, from ttauto::pruned() rather than the printout.
-  long long pnorm = 0, pcolsum = 0, prowsum = 0;
+  long long tried = 0, norm = 0, colsum = 0, rowsum = 0, os = 0;
+  // The same four, from ttauto::pruned() rather than the printout.
+  long long pnorm = 0, pcolsum = 0, prowsum = 0, pos = 0;
+  int oslines = 0;		// Printed Ostrowski-Schneider lines.
   std::set<std::string> polys;
 };
 
@@ -71,7 +75,7 @@ static long long after(const std::string& line, const std::string& label)
 
 // Search every subgraph of stratum s of n punctures, window Lambda.  The
 // statistics block is printed once per initial vertex; the counts add up.
-static counts run(const int n, const int s, const double lam)
+static counts run(const int n, const int s, const double lam, const bool os)
 {
   jlt::vector<traintrack> ttv = traintracks::build_traintrack_list(n);
   std::list<ttgraph> sg(ttauto::subgraphs(ttgraph(ttv[s])));
@@ -79,7 +83,7 @@ static counts run(const int n, const int s, const double lam)
   for (const ttgraph& g : sg)
     {
       ttauto::ttauto<traintrack> tta(g);
-      tta.max_dilatation(lam).check_norms();
+      tta.max_dilatation(lam).check_norms().check_ostrowski(os);
       std::ostringstream out;
       std::streambuf* saved = std::cout.rdbuf(out.rdbuf());
       tta.search();
@@ -88,6 +92,7 @@ static counts run(const int n, const int s, const double lam)
       c.pnorm += tta.pruned(tt::prune_norm);
       c.pcolsum += tta.pruned(tt::prune_colsum);
       c.prowsum += tta.pruned(tt::prune_rowsum);
+      c.pos += tta.pruned(tt::prune_ostrowski);
 
       std::istringstream in(out.str());
       std::string line;
@@ -98,6 +103,8 @@ static counts run(const int n, const int s, const double lam)
           if ((v = after(line,"Exceeded max norm")) >= 0) c.norm += v;
           if ((v = after(line,"Exceeded column sum")) >= 0) c.colsum += v;
           if ((v = after(line,"Exceeded row sum")) >= 0) c.rowsum += v;
+          if ((v = after(line,"Exceeded Ostrowski-Schn.")) >= 0)
+            { c.os += v; ++c.oslines; }
         }
       for (auto it = tta.pA_list().begin(); it != tta.pA_list().end(); ++it)
         {
@@ -109,33 +116,58 @@ static counts run(const int n, const int s, const double lam)
   return c;
 }
 
+static void print(const char* what, const int n, const int s,
+                  const double lam, const counts& c)
+{
+  std::cout << "n=" << n << " stratum " << s << " Lambda " << lam << " "
+            << what << ": tried " << c.tried << ", abandoned by norm "
+            << c.norm << ", column sum " << c.colsum << ", row sum "
+            << c.rowsum << ", Ostrowski-Schneider " << c.os << ", "
+            << c.polys.size() << " classes\n";
+}
+
+static std::string join(const std::set<std::string>& polys)
+{
+  std::string joined;
+  for (const std::string& p : polys)
+    joined += (joined.empty() ? "" : "; ") + p;
+  return joined;
+}
+
 int main()
 {
   // Classes are listed by characteristic polynomial, in the order the
-  // set sorts their printed forms, joined by "; ".
+  // set sorts their printed forms, joined by "; ".  The first counts are
+  // without the Ostrowski-Schneider test, the last five with it.
   struct expected { int n, s; double lam; long long tried, norm, colsum, rowsum;
-                    const char* polys; };
+                    const char* polys;
+                    long long ostried, osnorm, oscolsum, osrowsum, os; };
   const expected cases[] = {
     { 3, 0,  5.0,     206,     50,    30,     24,
-      "x^2 - 3 x + 1; x^2 - 4 x + 1; x^2 - 5 x + 1" },
+      "x^2 - 3 x + 1; x^2 - 4 x + 1; x^2 - 5 x + 1",
+         142,    28,     6,    20,    18 },
     { 3, 0, 10.0,    1090,    176,   200,    170,
       "x^2 - 10 x + 1; x^2 - 3 x + 1; x^2 - 4 x + 1; x^2 - 5 x + 1; "
-      "x^2 - 6 x + 1; x^2 - 7 x + 1; x^2 - 8 x + 1; x^2 - 9 x + 1" },
-    { 4, 0,  2.5,  216840, 142240,   608,   2292, "" },
+      "x^2 - 6 x + 1; x^2 - 7 x + 1; x^2 - 8 x + 1; x^2 - 9 x + 1",
+         766,   102,    88,   144,    50 },
+    { 4, 0,  2.5,  216840, 142240,   608,   2292, "",
+       54672, 16154,   256,  1894, 18152 },
     { 4, 1,  2.5,    8838,   2839,   343,   1239,
-      "x^4 - 2 x^3 - 2 x + 1" },
+      "x^4 - 2 x^3 - 2 x + 1",
+        3504,   245,    22,   837,   650 },
     { 4, 1,  3.0,   95602,  29395,  4082,  14326,
-      "x^4 - 2 x^3 - 2 x + 1; x^4 - 2 x^3 - 2 x^2 - 2 x + 1" },
-    { 5, 2,  2.0,   17920,   6945,   245,   1772, "" },
-    { 5, 3,  2.0, 2557432, 934747, 47112, 296862, "" },
+      "x^4 - 2 x^3 - 2 x + 1; x^4 - 2 x^3 - 2 x^2 - 2 x + 1",
+       18212,  1264,     0,  4348,  3496 },
+    { 5, 2,  2.0,   17920,   6945,   245,   1772, "",
+        5264,   865,     0,   606,  1163 },
+    { 5, 3,  2.0, 2557432, 934747, 47112, 296862, "",
+      301428, 25432,     0, 44501, 80786 },
   };
   for (const expected& e : cases)
     {
-      const counts c = run(e.n,e.s,e.lam);
-      std::cout << "n=" << e.n << " stratum " << e.s << " Lambda " << e.lam
-                << ": tried " << c.tried << ", abandoned by norm " << c.norm
-                << ", column sum " << c.colsum << ", row sum " << c.rowsum
-                << ", " << c.polys.size() << " classes\n";
+      // Without the Ostrowski-Schneider test: the search as it was.
+      const counts c = run(e.n,e.s,e.lam,false);
+      print("without",e.n,e.s,e.lam,c);
       for (const std::string& p : c.polys) std::cout << "    " << p << "\n";
       CHECK(c.tried == e.tried);
       CHECK(c.norm == e.norm);
@@ -146,10 +178,27 @@ int main()
       CHECK(c.pnorm == c.norm);
       CHECK(c.pcolsum == c.colsum);
       CHECK(c.prowsum == c.rowsum);
-      std::string joined;
-      for (const std::string& p : c.polys)
-        joined += (joined.empty() ? "" : "; ") + p;
-      CHECK_MSG(joined == e.polys, joined);
+      // Switched off, the test neither fires nor prints a line.
+      CHECK(c.pos == 0);
+      CHECK(c.oslines == 0);
+      CHECK_MSG(join(c.polys) == e.polys, join(c.polys));
+
+      // With it, as by default.
+      const counts d = run(e.n,e.s,e.lam,true);
+      print("with",e.n,e.s,e.lam,d);
+      CHECK(d.tried == e.ostried);
+      CHECK(d.norm == e.osnorm);
+      CHECK(d.colsum == e.oscolsum);
+      CHECK(d.rowsum == e.osrowsum);
+      CHECK(d.os == e.os);
+      CHECK(d.pnorm == d.norm);
+      CHECK(d.pcolsum == d.colsum);
+      CHECK(d.prowsum == d.rowsum);
+      CHECK(d.pos == d.os);
+      CHECK(d.oslines > 0);
+      CHECK(d.tried <= c.tried);
+      // Safe: the same classes as without it.
+      CHECK_MSG(join(d.polys) == e.polys, join(d.polys));
     }
   std::cout << "\ntest_prune_counts: all checks passed" << std::endl;
   return 0;
