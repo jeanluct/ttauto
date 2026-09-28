@@ -55,7 +55,10 @@
   sharper test, a lower bound on the dilatation of every possible way of
   closing up a path, and check it with a small program that knows nothing
   of \ttauto.  On the examples it removes all, or nearly all, of the
-  search that leads nowhere.
+  search that leads nowhere, but computing it exactly does not scale.  A
+  bound of Ostrowski and Schneider, applied to completions in the same
+  way, gives a much weaker test that costs next to nothing.  An appendix
+  records the bounds from the literature that cannot be used.
 \end{abstract}
 
 \maketitle
@@ -81,10 +84,10 @@ dimension two it cuts a run of shears exactly where it stops being useful
 finds the same pseudo-Anosov maps as the current tests, never missing one,
 while exploring up to $10^5$ times fewer partial paths.  Its cost in the
 larger automata of \ttauto\ is the main open question
-(Section~\ref{sec:open}).  A much cheaper refinement of the row-sum test,
-from a bound of Ostrowski and Schneider (Proposition~\ref{prop:os}), is
-also safe and explores 1.4 to 7 times fewer partial paths than the tests
-in use.
+(Section~\ref{sec:open}).  A refinement of the row-sum test, from a bound
+of Ostrowski and Schneider (Proposition~\ref{prop:os}), is also safe,
+costs a sort per partial path, and explores 1.4 to 7 times fewer partial
+paths than the tests in use.
 
 \section{Setting}
 
@@ -159,7 +162,7 @@ and applied to $X^{\mathsf T}$ it gives $c(X)\le\rho(X)$.
 The matrix of a prefix dominates a permutation matrix, so it has no zero
 row.  Hence along a path the norm and the smallest row and column sums
 never decrease, and a prefix of length $L$ has norm at least $d+L$.  This
-is what makes each of the next three tests safe: a bound that holds for
+is what makes the norm and sum tests below safe: a bound that holds for
 the closed path's matrix $BA$, and that $A$ already violates, stays
 violated whatever the completion.
 
@@ -191,121 +194,15 @@ cuts a path the norm test has not already cut.
 By~\eqref{eq:cw}, $r(A)$ and $c(A)$ are lower bounds for $\rho(A)$, and
 along a path they never decrease; so abandoning a prefix when $r(A)>\Lam$
 or $c(A)>\Lam$ is safe.  This is the test described by Ham and Song and in
-the ttauto paper.
-
-\subsection{The bound of Ostrowski and Schneider}
-\label{sec:os}
-
-The row-sum test uses only the smallest row sum.  Seneta points to a line
-of results that sharpen $r\le\rho\le R$, with $R$ the largest row sum, to
-$r+p_1\le\rho\le R-p_2$ (Ledermann, Ostrowski and Brauer for positive
-matrices), and to Ostrowski and Schneider~\cite{OstrowskiSchneider} for
-irreducible ones~\cite[p.~65]{Seneta}.  (The code once declared an empty
-\code{check\_OstrovskiSchneider()}, removed in issue~\#23; this is
-presumably what it was meant for.)  Their argument is short.  Let $X\ge0$
-be irreducible, $d\times d$, with row sums $r_1,\dots,r_d$ and left
-Perron vector $y>0$.  Summing $yX=\rho y$ over the columns gives
-\[
-  \rho\sum_i y_i=\sum_i y_i r_i ,
-\]
-so $\rho$ is a weighted mean of the row sums.  The weights cannot be very
-unequal: with $\kappa$ the smallest positive off-diagonal entry of $X$ and
-$\lam$ its smallest diagonal entry, the $i$-th component of $yX=\rho y$
-gives $(\rho-X_{ii})y_i\ge X_{ji}y_j$, so $y_i\ge\kappa y_j/(\rho-\lam)$
-whenever $X_{ji}>0$ with $j\ne i$.  Since $X$ is irreducible, such steps
-lead from any index to any other in at most $d-1$ steps, which gives
-Schneider's bound~\cite{Schneider58}
-\begin{equation}
-  \label{eq:delta}
-  \delta=\frac{\min_i y_i}{\max_i y_i}
-  \ge\Bigl(\frac{\kappa}{\rho-\lam}\Bigr)^{d-1}.
-\end{equation}
-Scale $y$ so that $\max_i y_i=1$.  Then $y$ lies in the box $[\delta,1]^d$,
-and $\rho$ is at least the smallest weighted mean over that box.  The
-smallest puts weight $1$ on the $q$ smallest row sums and $\delta$ on the
-others, for the best~$q$ (\cite[Lemma~2]{OstrowskiSchneider}): with
-$r_{(1)}\le\dots\le r_{(d)}$ the row sums in increasing order,
-\begin{equation}
-  \label{eq:os}
-  \rho\ge\psi_\delta(r)=\min_{1\le q\le d}
-  \frac{\sum_{i\le q}r_{(i)}+\delta\sum_{i>q}r_{(i)}}{q+\delta(d-q)} .
-\end{equation}
-This is their Theorem~2.  Their Theorem~1 is the weaker, closed form
-$\rho\ge r+d\delta(p-r)/(d-1+\delta)$, with $p$ the mean row sum; they
-replace $\rho$ by $R$ in~\eqref{eq:delta} to make $\delta$ computable.
-
-Applied to a prefix, \eqref{eq:os} bounds $\rho(A)$, which is no use when
-folds carry permutations (the same trouble as for the symmetrised norm
-below, and for the test $C_1$ of Section~\ref{sec:check}).  Applied to a completion instead, it gives a safe
-test, because for an accepted closed path we may put $\Lam$ in place
-of~$\rho$ in~\eqref{eq:delta}.
-
-\begin{Proposition}
-  \label{prop:os}
-  Let $\delta_0=\Lam^{-(d-1)}$, with $\Lam\ge1$.  If a prefix $A$ has
-  $\psi_{\delta_0}(r)>\Lam$, where $r$ is its vector of row sums, or the
-  same with its column sums, then no completion of $A$ is accepted.
-\end{Proposition}
-
-\begin{proof}
-  Suppose $X=BA$ is accepted, so $X$ is primitive with $\rho(X)\le\Lam$.
-  Its entries are integers, so $\kappa\ge1$; and $0\le\lam<\rho(X)$, since
-  a diagonal entry of an irreducible matrix of size $d\ge2$ is less than
-  its spectral radius.  So each step in~\eqref{eq:delta} contributes a
-  factor at least $1/\Lam$, and $\delta\ge\delta_0$.  Now
-  $\psi_\delta(r)$ is the minimum of $\sum_ir_ix_i/\sum_ix_i$ over the box
-  $[\delta,1]^d$.  So it does not change when the $r_i$ are permuted, and
-  it does not decrease when $\delta$ grows (the box shrinks) or when any
-  $r_i$ grows.  By Lemma~\ref{lem:grow} the row sums of $FA$ are those of
-  $A$ in a new order with one increased, so $\psi_{\delta_0}$ of the row
-  sums never decreases along a path.  Hence
-  $\Lam\ge\rho(X)\ge\psi_\delta(r(X))\ge\psi_{\delta_0}(r(A))$.  For
-  columns, use the right Perron vector and $X^{\mathsf T}$.
-\end{proof}
-
-At first sight $\delta_0$ is too small to matter, but the prefixes that
-waste the search are those where a run of shears has made some row sums
-large while the smallest stays small, and there even a small weight on
-the large rows is enough.  Table~\ref{tab:os} shows the effect in the
-program of Section~\ref{sec:check}, as criterion \code{OS2}, which adds
-the test to~$C_0$, the tests in use (\code{OS} adds Theorem~1 instead);
-$C_3$ is the completion bound, computed fast.  Every run accepts
-exactly the words of the norm-only reference run.  The test costs
-a sort of $d$ numbers per prefix on top of~$C_0$.  It is much weaker than
-the completion bound~$\beta$ of Theorem~\ref{thm:general}, but it is
-polynomial in~$d$, so it can go into \ttauto\ as it stands, and it can
-serve as a cheap filter in front of~$\beta$.
-Other lower bounds on the Perron root from the literature, and why they
-cannot be used here, are collected in Appendix~\ref{app:unusable}.
-
-\begin{table}[ht]
-\centering
-\small
-\begin{tabular}{llrrrr}
-\toprule
-set & $\Lam$ & $C_0$ & \code{OS} (Thm.~1) & \code{OS2} (Thm.~2) & $C_3$ \\
-\midrule
-\code{RL}, $d=2$ & 20 & 2\,809 & 2\,037 & 2\,037 & 707 \\
-\code{rauzy3} & 2.5 & 2\,743\,123 & 2\,362\,483 & 465\,925 & 19 \\
-\code{perm3} & 3 & 47\,084 & 35\,570 & 13\,608 & 173 \\
-\code{sym3} & 3 & 1\,373\,198 & 713\,490 & 189\,493 & 394 \\
-\code{sym4} & 2 & 1\,306\,439 & 999\,613 & 263\,116 & 424 \\
-\bottomrule
-\end{tabular}
-\caption{Prefixes visited with the Ostrowski--Schneider test added to
-  $C_0$, against $C_0$ alone and the completion bound computed fast
-  ($C_3$).  All accept the same words.  From runs of \code{bounds\_toy}
-  by hand; \code{make\_tables.py} does not produce this table.}
-\label{tab:os}
-\end{table}
+the \ttauto\ paper.  Section~\ref{sec:os} sharpens it.
 
 \subsection{The symmetrised norm}
 \label{sec:symnorm}
 
 With the macro \code{TTAUTO\_CHECK\_SYMMETRIC\_NORM}, the code used to
-abandon a prefix also when $\frac1d\sum_{ij}\sqrt{A_{ij}A_{ji}}>\Lam$, with the
-comment that this works only for Rauzy classes.  Here is why it is a lower
-bound, and what the restriction amounts to.  Put
+abandon a prefix also when $\frac1d\sum_{ij}\sqrt{A_{ij}A_{ji}}>\Lam$,
+with the comment that this works only for Rauzy classes.  Here is why it
+is a lower bound, and what the restriction amounts to.  Put
 $G_{ij}=\sqrt{A_{ij}A_{ji}}$, the entrywise geometric mean of $A$ and
 $A^{\mathsf T}$.  Then
 \[
@@ -572,12 +469,121 @@ $\Hgp=\{I\}$ it is the $\beta(A)$ of Theorem~\ref{thm:rauzy}.
   any case.
 \end{Remark}
 
+\subsection{The bound of Ostrowski and Schneider}
+\label{sec:os}
+
+The row-sum test uses only the smallest row sum.  Seneta points to a line
+of results that sharpen $r\le\rho\le R$, with $R$ the largest row sum, to
+$r+p_1\le\rho\le R-p_2$ (Ledermann, Ostrowski and Brauer for positive
+matrices), and to Ostrowski and Schneider~\cite{OstrowskiSchneider} for
+irreducible ones~\cite[p.~65]{Seneta}.  (The code once declared an empty
+\code{check\_OstrovskiSchneider()}, removed in issue~\#23; this is
+presumably what it was meant for.)  Their argument is short.  Let $X\ge0$
+be irreducible, $d\times d$, with row sums $r_1,\dots,r_d$ and left
+Perron vector $y>0$.  Summing $yX=\rho y$ over the columns gives
+\[
+  \rho\sum_i y_i=\sum_i y_i r_i ,
+\]
+so $\rho$ is a weighted mean of the row sums.  The weights cannot be very
+unequal: with $\kappa$ the smallest positive off-diagonal entry of $X$ and
+$\lam$ its smallest diagonal entry, the $i$-th component of $yX=\rho y$
+gives $(\rho-X_{ii})y_i\ge X_{ji}y_j$, so $y_i\ge\kappa y_j/(\rho-\lam)$
+whenever $X_{ji}>0$ with $j\ne i$.  Since $X$ is irreducible, such steps
+lead from any index to any other in at most $d-1$ steps, which gives
+Schneider's bound~\cite{Schneider58}
+\begin{equation}
+  \label{eq:delta}
+  \delta=\frac{\min_i y_i}{\max_i y_i}
+  \ge\Bigl(\frac{\kappa}{\rho-\lam}\Bigr)^{d-1}.
+\end{equation}
+Scale $y$ so that $\max_i y_i=1$.  Then $y$ lies in the box $[\delta,1]^d$,
+and $\rho$ is at least the smallest weighted mean over that box.  The
+smallest puts weight $1$ on the $q$ smallest row sums and $\delta$ on the
+others, for the best~$q$ (\cite[Lemma~2]{OstrowskiSchneider}): with
+$r_{(1)}\le\dots\le r_{(d)}$ the row sums in increasing order,
+\begin{equation}
+  \label{eq:os}
+  \rho\ge\psi_\delta(r)=\min_{1\le q\le d}
+  \frac{\sum_{i\le q}r_{(i)}+\delta\sum_{i>q}r_{(i)}}{q+\delta(d-q)} .
+\end{equation}
+This is their Theorem~2.  Their Theorem~1 is the weaker, closed form
+$\rho\ge r+d\delta(p-r)/(d-1+\delta)$, with $p$ the mean row sum; they
+replace $\rho$ by $R$ in~\eqref{eq:delta} to make $\delta$ computable.
+
+Applied to a prefix, \eqref{eq:os} bounds only $\rho(A)$, which can fall
+along a path when folds carry permutations, as for the symmetrised norm
+(Section~\ref{sec:symnorm}); without permutations $\rho(A)$ itself is the
+stronger test (Proposition~\ref{prop:rhomono}).  Applied to a completion
+instead, it gives a safe test, because for an accepted closed path we may
+put $\Lam$ in place of~$\rho$ in~\eqref{eq:delta}.
+
+\begin{Proposition}
+  \label{prop:os}
+  Let $\delta_0=\Lam^{-(d-1)}$, with $\Lam\ge1$.  If a prefix $A$ has
+  $\psi_{\delta_0}(r)>\Lam$, where $r$ is its vector of row sums, or the
+  same with its column sums, then no completion of $A$ is accepted.
+\end{Proposition}
+
+\begin{proof}
+  Suppose $X=BA$ is accepted, so $X$ is primitive with $\rho(X)\le\Lam$.
+  Its entries are integers, so $\kappa\ge1$; and $0\le\lam<\rho(X)$, since
+  a diagonal entry of an irreducible matrix of size $d\ge2$ is less than
+  its spectral radius.  So $\kappa/(\rho-\lam)\ge1/\rho\ge1/\Lam$
+  in~\eqref{eq:delta}, and $\delta\ge\delta_0$.  Now
+  $\psi_\delta(r)$ is the minimum of $\sum_ir_ix_i/\sum_ix_i$ over the box
+  $[\delta,1]^d$.  So it does not change when the $r_i$ are permuted, and
+  it does not decrease when $\delta$ grows (the box shrinks) or when any
+  $r_i$ grows.  By Lemma~\ref{lem:grow} the row sums of $FA$ are those of
+  $A$ in a new order with one increased, so $\psi_{\delta_0}$ of the row
+  sums never decreases along a path.  Hence
+  $\Lam\ge\rho(X)\ge\psi_\delta(r(X))\ge\psi_{\delta_0}(r(A))$.  For
+  columns, use the right Perron vector and $X^{\mathsf T}$.
+\end{proof}
+
+At first sight $\delta_0$ is too small to matter, but the prefixes that
+waste the search are those where a run of shears has made some row sums
+large while the smallest stays small, and there even a small weight on
+the large rows is enough.  Table~\ref{tab:os} shows the effect in the
+program of Section~\ref{sec:check}, where \code{OS2} is this test added
+to~$C_0$ and \code{OS} is Theorem~1 added to~$C_0$.  Every run accepts
+exactly the words of the norm-only reference run.  The test costs a sort
+of $d$ numbers per prefix on top of~$C_0$.  It is much weaker than the
+completion bound~$\beta$, since it ignores which entries a completion must
+fill, but it is polynomial in~$d$: it can go into \ttauto\ as it stands,
+and it can serve as a cheap filter in front of~$\beta$.  Other lower
+bounds on the Perron root from the literature, and why they cannot be used
+here, are collected in Appendix~\ref{app:unusable}.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{llrrrr}
+\toprule
+set & $\Lam$ & $C_0$ & \code{OS} (Thm.~1) & \code{OS2} (Thm.~2) & $C_3$ \\
+\midrule
+\code{RL}, $d=2$ & 20 & 2\,809 & 2\,037 & 2\,037 & 707 \\
+\code{rauzy3} & 2.5 & 2\,743\,123 & 2\,362\,483 & 465\,925 & 19 \\
+\code{perm3} & 3 & 47\,084 & 35\,570 & 13\,608 & 173 \\
+\code{sym3} & 3 & 1\,373\,198 & 713\,490 & 189\,493 & 394 \\
+\code{sym4} & 2 & 1\,306\,439 & 999\,613 & 263\,116 & 424 \\
+\bottomrule
+\end{tabular}
+\caption{Prefixes visited with the Ostrowski--Schneider test added to
+  $C_0$, against $C_0$ alone and the completion bound computed fast
+  ($C_3$).  All accept the same words.  Sets as named in
+  \code{bounds\_toy}; \code{sym3} and \code{sym4} are the full $S_3$ and
+  $S_4$ of Section~\ref{sec:fast}.  From runs by hand;
+  \code{make\_tables.py} does not produce this table.}
+\label{tab:os}
+\end{table}
+
 \section{A check that knows nothing of \ttauto}
 \label{sec:check}
 
 \code{bounds\_toy.cpp} uses only the C++ standard library;
-\code{bounds\_toy.py} is a slower version that accepts the same words and,
-except for $C_1$ (see below), visits the same prefixes.  Each
+\code{bounds\_toy.py} is a slower version of its criteria \code{HS},
+$C_0$, $C_1$, $C_2$ and faulty, which accepts the same words and, except
+for $C_1$ (see below), visits the same prefixes.  Each
 takes a set of fold matrices as a one-vertex automaton, so that every word
 is a closed path, and searches depth first, accepting the words whose
 product is primitive with $1<\rho\le\Lam$.  Spectral radii are never just
@@ -605,6 +611,10 @@ the complete list, against which each other test is judged.
   are kept because they are cheap and run first, so that the new test is
   computed only for prefixes they let through.  The norm test is kept
   because it guarantees that the search ends;
+\item[$C_3$] the decisions of $C_2$, computed fast
+  (Section~\ref{sec:fast});
+\item[\code{OS}, \code{OS2}] $C_0$ together with the Ostrowski--Schneider
+  test, from their Theorem~1 or Theorem~2 (Section~\ref{sec:os});
 \item[faulty] $C_0$ together with $\rho(A)>\Lam$, used where the folds
   carry permutations.  Nothing above justifies it there.  We include it on
   purpose, as a test we expect to be unsafe, to show that the comparison
@@ -691,6 +701,7 @@ about $6\times10^7$ at $d=5$.  The test works; it has to be computed
 differently.
 
 \subsection{Computing the bound faster}
+\label{sec:fast}
 
 The test only has to decide whether some pair $(Q',S)$ gives
 $\rho(Q'(I+E_S)N)\le\Lam$, and most pairs can be ruled out without a
@@ -793,7 +804,8 @@ which reach $d=8$; open question~1 is now the question.
   that may help: the permutations keeping the diagonal at most $\Lam$ are
   the solutions of a bottleneck assignment problem; cycle bounds beyond the
   diagonal and $2$-cycles; and the strongly connected components that every
-  admissible $S$ must join.
+  admissible $S$ must join.  Proposition~\ref{prop:os} is such a bound, but
+  a weak one, since it sees only the row and column sums.
 \item \emph{Permutations in a real automaton.}  $\Hgp$ and $\Pos$ come from
   the automaton lifted to (vertex, permutation) states
   (\code{include/ttauto/completion\_bound.hpp}).  The census of
@@ -819,13 +831,12 @@ which reach $d=8$; open question~1 is now the question.
   automaton, Ham and Song's included.
 \item \emph{Into \ttauto.}  The test of Proposition~\ref{prop:os} needs
   nothing but the row and column sums, so it can go into
-  \code{check\_all\_norms} at once; the stratum $n=6$, stratum~7, whose
-  complete search does not finish with the current tests, is the case to
-  try it on.  Measure $\Hgp$ and $\Pos$ on the real automata,
-  implement $C_2$ or a cheaper form of it in \code{check\_all\_norms}, and
-  require that it reproduce the lists known to be complete: the 2\,541
-  classes of the three-puncture benchmark, the 10 and 6 classes of
-  issue~\#16, and complete windows at four punctures.
+  \code{check\_all\_norms} at once.  The case to try it on is stratum~7 of
+  $n=6$, whose complete search does not finish with the current tests.
+  For $C_2$, or a cheaper form of it, the same place will do.  Any new
+  test must reproduce the lists known to be complete: the 2\,541 classes
+  of the three-puncture benchmark, the 10 and 6 classes of issue~\#16, and
+  complete windows at four punctures.
 \end{enumerate}
 
 \appendix
@@ -852,13 +863,14 @@ entry.
 \emph{Ostrowski--Schneider is already optimal for row sums.}  Once the
 Perron weights are confined to the box $[\delta,1]^d$, the value
 $\psi_\delta$ of~\eqref{eq:os} is the exact minimum of the weighted mean
-of the row sums over that box~\cite[Lemma~2]{OstrowskiSchneider}.  So no
-bound built from the row sums and the weight ratio alone can do better.
-A sharper test must use more about the completion than that, as the
-completion bound~$\beta$ does.  Their Theorem~1 is weaker than their
-Theorem~2 (Table~\ref{tab:os}).  Their bound applied to the prefix, with
-$\rho$ replaced by $R$ in~\eqref{eq:delta}, is a bound on $\rho(A)$, and so
-has the defect above.
+of the row sums over that box~\cite[Lemma~2]{OstrowskiSchneider}.  So
+along this route, which knows only the row sums and a lower bound on the
+weight ratio, nothing better is possible.  A sharper test must use more
+about the completion, as the completion bound~$\beta$ does.  Their
+Theorem~1 is weaker than their Theorem~2 (Table~\ref{tab:os}).  Their
+bound applied to the prefix, with $\rho$ replaced by $R$
+in~\eqref{eq:delta}, is a bound on $\rho(A)$, and so has the defect
+above.
 
 \emph{Ledermann, Ostrowski (1952), Brauer.}  These sharpen the row-sum
 bounds for \emph{positive} matrices, through the smallest entry of the
@@ -872,30 +884,30 @@ Collatz--Wielandt bound~\eqref{eq:cw} with the test vector $z$ equal to
 $1$ except for $z_j=x$, optimised over $0<x\le1$.  For fixed $j$ it gives
 $\rho\ge\min_{i\ne j}\lam_{ij}$, where
 \[
-  \lam_{ij}=\tfrac12\Bigl(R_i-a_{ij}+a_{jj}
-  +\sqrt{(R_i-a_{ij}-a_{jj})^2+4a_{ij}(R_j-a_{jj})}\Bigr)
+  \lam_{ij}=\tfrac12\Bigl(R_i-A_{ij}+A_{jj}
+  +\sqrt{(R_i-A_{ij}-A_{jj})^2+4A_{ij}(R_j-A_{jj})}\Bigr)
 \]
 and $R_i$ is the $i$-th row sum.  It is at least as good as Brauer's
 bound.  But it depends on individual entries.  For a completion, whose
-entries are known only to satisfy $0\le a_{ij}\le R_i$, the quotients
+entries are known only to satisfy $0\le X_{ij}\le R_i$, the quotients
 $(Xz)_i/z_i$ are only known to be at least $xR_i$ for $i\ne j$ and at
 least $R_j$ for $i=j$.  The best that can then be guaranteed is
 $\max_x\min(x\min_{i\ne j}R_i,R_j)$, which is the smallest row sum again.
 
-\emph{Szulc~\cite{Szulc88}.}  Put $b=\min_ia_{ii}$.  Szulc derives
-$\rho\ge b+\sqrt{\tr((A-bI)^2)/n}$ from Kuharenko's theorem on the
-eigenvalues of a zero-trace matrix.  For odd~$n$ he also gives the
-alternative $\rho\ge b+\bigl(\frac2{n-1}\sum_{i<j}a_{ij}a_{ji}\bigr)^{1/2}$,
+\emph{Szulc~\cite{Szulc88}.}  Put $b=\min_iA_{ii}$.  Szulc derives
+$\rho\ge b+\sqrt{\tr((A-bI)^2)/d}$ from Kuharenko's theorem on the
+eigenvalues of a zero-trace matrix.  For odd~$d$ he also gives the
+alternative $\rho\ge b+\bigl(\frac2{d-1}\sum_{i<j}A_{ij}A_{ji}\bigr)^{1/2}$,
 a bound through the $2$-cycles.  Both depend on individual entries and
 the diagonal, so they bound $\rho(A)$ only.  One possible use: inside the
 fast evaluation of~$\beta$, where the candidate $Y=Q'(I+E_S)N$ is a
-concrete matrix and each entry grows with~$S$.  There the odd-$n$ bound is
+concrete matrix and each entry grows with~$S$.  There the odd-$d$ bound is
 also monotone in~$S$, and it adds up all the $2$-cycles where $C_3$ now
 checks each $2$-cycle separately.  It could only make~$C_3$ faster, never
 make it prune more, since $C_3$ goes on to bracket $\rho(Y)$.
 
 \emph{Song~\cite{Song92}.}  For weights $x\ge0$ with $\sum_ix_i=1$, a
-weighted geometric mean: $\rho\ge\prod_{ij}a_{ij}^{x_ix_j}/\sum_ix_i^2$,
+weighted geometric mean: $\rho\ge\prod_{ij}A_{ij}^{x_ix_j}/\sum_ix_i^2$,
 and a version shifted by $qI$ so that a zero diagonal does not kill it.  It
 is a bound on $\rho(A)$, it vanishes as soon as the principal block
 selected by the support of~$x$ has a zero entry off the diagonal, and it
