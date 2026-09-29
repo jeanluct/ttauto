@@ -152,9 +152,8 @@ public:
   // in the order they are tried.  Each bounds from below the dilatation
   // of every closed path that begins with the current one, and never
   // decreases along a path, which is what makes abandoning safe; see
-  // issue #23 and its note devel/iss023/pruning_bounds.tex, on branch
-  // iss023-pathlength-bound.  A path is credited to the first test that
-  // abandons it.
+  // issue #23 and its note devel/iss023/pruning_bounds.tex.  A path is
+  // credited to the first test that abandons it.
   enum prune_test {
     prune_HamSong,	// Ham-Song: norm above lambdamax^n + n - 1.
     prune_colsum,	// Smallest column sum above lambdamax.
@@ -1123,7 +1122,7 @@ bool ttauto<TrTr>::check_all_norms()
   // for X is at least the bound for the current matrix; if that exceeds
   // lambdamax + tol, no such X exists.  Columns likewise, with the
   // right Perron vector.  See issue #23 and its note
-  // devel/iss023/pruning_bounds.tex, on branch iss023-pathlength-bound.
+  // devel/iss023/pruning_bounds.tex.
   if (do_check_OstSch &&
       (OstSch_bound(rowsums,OstSch_delta) > OstSch_thresh ||
        OstSch_bound(colsums,OstSch_delta) > OstSch_thresh))

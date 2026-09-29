@@ -1,0 +1,1309 @@
+% pruning_bounds.tex -- how the ttauto search decides that a path is
+% hopeless, and sharper ways of deciding it (issue #23).
+%
+% Build: latexmk -pdf pruning_bounds.tex
+% The tables of Section 7 are produced by make_tables.py from
+% bounds_toy.cpp.
+\documentclass[11pt]{amsart}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,citecolor=blue!60!black,
+  urlcolor=blue!60!black}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\ttauto}{\texttt{ttauto}}
+\newcommand{\lam}{\lambda}
+\newcommand{\Lam}{\Lambda}
+\newcommand{\nrm}[1]{\lVert #1\rVert}
+\newcommand{\D}{D}
+\newcommand{\Pos}{\mathcal{P}}
+\newcommand{\Hgp}{\mathcal{H}}
+\newcommand{\tr}{\operatorname{tr}}
+
+% Table highlighting (used by tables.tex, which make_tables.py writes).
+\definecolor{goodbg}{rgb}{0.80,0.93,0.80}
+\definecolor{caughtbg}{rgb}{0.99,0.87,0.70}
+\newcommand{\good}[1]{\cellcolor{goodbg}\textbf{#1}}
+\newcommand{\caught}[1]{\cellcolor{caughtbg}#1}
+
+\theoremstyle{plain}
+\newtheorem{Theorem}{Theorem}[section]
+\newtheorem{Proposition}[Theorem]{Proposition}
+\newtheorem{Lemma}[Theorem]{Lemma}
+\newtheorem{Corollary}[Theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{Definition}[Theorem]{Definition}
+\newtheorem{Remark}[Theorem]{Remark}
+\newtheorem{Example}[Theorem]{Example}
+
+\begin{document}
+
+\title{Pruning bounds for folding-automaton searches}
+\author{Notes for \ttauto\ issue \#23}
+\date{\today}
+
+\begin{abstract}
+  Every pseudo-Anosov map of a punctured disc is represented by a closed
+  path in a folding automaton, and its dilatation is the spectral radius of
+  a product of fold matrices along the path.  To list all candidates for
+  such maps with dilatation at most~$\Lam$, one explores the paths of the
+  automaton and
+  abandons a path as soon as one can prove that no way of closing it up
+  leads to a dilatation in the window.  We define the terms involved, set
+  out the tests in use and why each is safe, and explain why they are weak:
+  a run of shears makes a matrix grow while its spectral radius stays at
+  one.  We then prove two sharper tests, both lower bounds on the
+  dilatation of every possible way of closing up a path.  The first, from
+  the requirement that a closed path be irreducible, removes all or nearly
+  all of the wasted search in small examples, but is expensive to compute.
+  The second, from a bound of Ostrowski and Schneider, is much weaker but
+  costs next to nothing, and is now part of the search.  A final section
+  maps the mathematics onto the code, and an appendix records bounds from
+  the literature that cannot be used.
+\end{abstract}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+\label{sec:intro}
+
+\emph{The problem.}  A folding automaton (Section~\ref{sec:automaton}) is
+a finite directed graph whose edges carry nonnegative integer matrices,
+the fold matrices.  A closed path in it multiplies these matrices
+together, and when the product is primitive the path is a
+\emph{pseudo-Anosov candidate}, whose dilatation is the spectral radius of
+the product.  A candidate represents a pseudo-Anosov map if it also passes
+the Bestvina--Handel gate test, which is applied to each candidate as it
+is found.  To list every candidate whose dilatation lies in a window
+$(1,\Lam]$, one explores the paths from a start vertex, depth first.  There
+are infinitely many paths, so the search must decide, for each partial
+path, whether any way of continuing it back to the start could still give
+a dilatation in the window.  If not, the partial path is abandoned together
+with everything beyond it.  The rules that make this decision are called
+\emph{tests}.
+
+\emph{What a good test is.}  A test must never abandon a partial path that
+leads to an answer; we call such a test \emph{safe}.  An unsafe test is
+worse than a slow search, because it makes the search miss pseudo-Anosov
+candidates without saying so.  Among safe tests, a better one abandons more
+partial paths, and sooner.
+
+\emph{What this note does.}
+\begin{itemize}
+\item Sections~\ref{sec:matrices} and~\ref{sec:automaton} define the terms:
+  nonnegative matrices and their graphs, fold matrices, the automaton,
+  the search, and what it means for a test to be safe.
+  Lemma~\ref{lem:principle} gives the one principle behind every safe
+  test here.
+\item Section~\ref{sec:existing} describes the tests in use, and
+  Section~\ref{sec:lose} shows where they lose: along a run of shears,
+  the partial path's matrix grows while its spectral radius stays at one,
+  so none of them notices that the path is hopeless.
+\item Section~\ref{sec:completions} proves two new tests.  Each is a lower
+  bound on the spectral radius of \emph{every} closed path that begins
+  with a given partial path.  The first, $\beta$, uses the fact that a
+  closed path's matrix must be irreducible; the second, from a theorem of
+  Ostrowski and Schneider, uses only row and column sums.
+\item Section~\ref{sec:check} checks both on small examples with a program
+  independent of \ttauto.  $\beta$ explores up to $10^5$ times fewer
+  partial paths than the tests in use and never misses an answer, but its
+  exact evaluation is exponential in the dimension.  The
+  Ostrowski--Schneider test explores 1.4 to 7 times fewer, at the cost of
+  a sort, and has been added to \ttauto's search.
+\item Section~\ref{sec:open} lists open questions, and
+  Section~\ref{sec:code} maps each mathematical object onto the code.
+  Appendix~\ref{app:unusable} records bounds from the literature that
+  were examined and found unusable.
+\end{itemize}
+
+\section{Nonnegative matrices and their graphs}
+\label{sec:matrices}
+
+Throughout, $d$ is a fixed dimension, and all matrices are $d\times d$.
+
+\begin{Definition}[Order, norm, sums]
+  \label{def:basic}
+  A matrix $X$ is \emph{nonnegative}, $X\ge0$, if every entry is.  For
+  matrices $X,Y$ we write $X\le Y$ if $X_{ij}\le Y_{ij}$ for all $i,j$.  For
+  $X\ge0$:
+  \begin{itemize}
+  \item the \emph{norm} $\nrm{X}$ is the sum of all its entries;
+  \item its \emph{row sums} are $\sum_jX_{ij}$, and its \emph{column sums}
+    $\sum_iX_{ij}$; $r(X)$ and $c(X)$ denote the smallest row sum and the
+    smallest column sum;
+  \item $\rho(X)$ is its \emph{spectral radius}, the largest modulus of an
+    eigenvalue.
+  \end{itemize}
+\end{Definition}
+
+\begin{Definition}[Digraph, irreducible, primitive]
+  \label{def:graph}
+  The \emph{digraph} $\D(X)$ of $X\ge0$ has vertices $1,\dots,d$ and an
+  edge $j\to i$ whenever $X_{ij}>0$.  (With this orientation, $(Xx)_i$
+  depends on the $x_j$ with an edge $j\to i$, and a walk of length $k$ from
+  $j$ to $i$ exists exactly when $(X^k)_{ij}>0$.)  A digraph is
+  \emph{strongly connected} if every vertex can be reached from every
+  other by a walk.  The matrix $X$ is \emph{irreducible} if $\D(X)$ is
+  strongly connected, and \emph{primitive} if some power $X^k$ has all
+  entries positive.  A primitive matrix is irreducible.
+\end{Definition}
+
+The following facts are standard~\cite{Seneta}.
+
+\begin{Theorem}[Perron--Frobenius]
+  \label{thm:pf}
+  If $X\ge0$ is irreducible, then $\rho(X)$ is an eigenvalue of $X$, with
+  a right eigenvector $v>0$ and a left eigenvector $y>0$ (all entries
+  positive), each unique up to a positive factor.  These are the
+  \emph{Perron vectors}.
+\end{Theorem}
+
+\begin{Lemma}[Comparison]
+  \label{lem:facts}
+  Let $X,Y\ge0$.
+  \begin{enumerate}
+  \item If $X\le Y$ then $\rho(X)\le\rho(Y)$.
+  \item $\rho(PXP^{-1})=\rho(X)$ for a permutation matrix $P$, and
+    $\rho(X^{\mathsf T})=\rho(X)$.
+  \item $\rho(X)\ge X_{ii}$ for every $i$, and the inequality is strict if
+    $X$ is irreducible and $d\ge2$.
+  \item \emph{(Collatz--Wielandt.)}  For every vector $x$ with all entries
+    positive,
+    \begin{equation}
+      \label{eq:cw}
+      \min_i\frac{(Xx)_i}{x_i}\;\le\;\rho(X),
+    \end{equation}
+    and if $X$ is irreducible, $\rho(X)\le\max_i(Xx)_i/x_i$.  With
+    $x=\mathbf 1$ this gives $r(X)\le\rho(X)$, and applied to
+    $X^{\mathsf T}$ it gives $c(X)\le\rho(X)$.
+  \end{enumerate}
+\end{Lemma}
+
+The brackets of~\eqref{eq:cw} are how spectral radii are computed safely
+in Section~\ref{sec:check}: the lower end can only underestimate $\rho$,
+whatever the vector $x$, and iterating $x\leftarrow(X+I)x$ narrows the
+bracket.
+
+\section{Folding automata and the search}
+\label{sec:automaton}
+
+\subsection{Fold matrices}
+
+\begin{Definition}[Unit, position, fold matrix]
+  \label{def:fold}
+  A \emph{unit} is a matrix $e_{ab}$ with a single $1$, in row $a$ and
+  column $b$, and zeros elsewhere; $(a,b)$ is its \emph{position}.  For a
+  set $S$ of positions, $E_S=\sum_{(a,b)\in S}e_{ab}$.  A \emph{fold
+  matrix} is
+  \begin{equation}
+    \label{eq:fold}
+    F=P+e_{ab},
+  \end{equation}
+  where $P$ is a permutation matrix and $P$ has a zero at $(a,b)$.  We write
+  $P(c)$ for the index with $Pe_c=e_{P(c)}$.  A fold matrix with $P=I$ is
+  a \emph{shear}, $I+e_{ab}$.
+\end{Definition}
+
+For a set $S$ of positions, $\D(S)$ denotes the digraph with an edge
+$b\to a$ for each $(a,b)\in S$, so that $\D(E_S)=\D(S)$.
+
+\begin{Definition}[Folding automaton]
+  \label{def:automaton}
+  A \emph{folding automaton} is a finite directed graph, possibly with
+  loops and multiple edges, each of whose edges is labelled by a fold
+  matrix of the same dimension~$d$.  (Its vertices are train tracks, $d$ is
+  their number of main edges, and each edge of the automaton is a fold; for
+  what follows, only the matrices matter.)  A \emph{path} follows edges
+  $F_1,F_2,\dots,F_k$ in that order; its \emph{matrix} is
+  \[
+    M=F_kF_{k-1}\cdots F_1,
+  \]
+  the fold taken last standing on the left.  A path is \emph{closed} if it
+  ends where it starts.
+\end{Definition}
+
+\begin{Definition}[Dilatation, window, accepted]
+  \label{def:accepted}
+  The \emph{dilatation} of a closed path is $\rho(M)$.  Fix $\Lam>1$, the
+  \emph{window} being $(1,\Lam]$.  A closed path is \emph{accepted} if $M$
+  is primitive and $1<\rho(M)\le\Lam$.  An accepted closed path is a
+  \emph{pseudo-Anosov candidate} in the window.
+\end{Definition}
+
+Every pseudo-Anosov map is represented by a closed path whose matrix is
+primitive, and the map's dilatation is then $\rho(M)$.  Not every
+candidate represents one: the Bestvina--Handel gate condition must also
+hold.  The gate test is applied to each candidate the search finds, and
+it only removes candidates.  So everything below concerns candidates, and
+a test that never loses a candidate never loses a pseudo-Anosov map
+either.
+
+\subsection{The search, and safe tests}
+
+\begin{Definition}[Prefix, completion]
+  \label{def:prefix}
+  Fix a start vertex.  A \emph{prefix} is a path from the start vertex; we
+  write $A$ for its matrix.  A \emph{completion} of a prefix is a path from
+  the prefix's final vertex back to the start vertex, possibly empty; we
+  write $B$ for its matrix ($B=I$ for the empty completion).  The prefix
+  followed by a completion is a closed path with matrix $BA$, and every
+  closed path that begins with the prefix arises in this way from exactly
+  one completion.
+\end{Definition}
+
+The search starts from the empty prefix and extends prefixes one fold at a
+time, depth first, reporting each accepted closed path it meets.
+
+\begin{Definition}[Test, safe]
+  \label{def:safe}
+  A \emph{test} is a rule which, given a prefix (its matrix, and the vertex
+  where it ends), may declare it \emph{hopeless}; the search then abandons
+  the prefix and every extension of it.  A test is \emph{safe} if it never
+  declares hopeless a prefix that has a completion $B$ with $BA$ accepted.
+\end{Definition}
+
+A safe test changes only how long the search takes.  An unsafe one can make
+it miss accepted paths, which is the outcome to avoid at any cost.
+
+\subsection{What never decreases along a path}
+
+Every test below rests on quantities that can only grow as a path is
+extended.
+
+\begin{Lemma}
+  \label{lem:grow}
+  Let $A\ge0$ have no zero row, and let $F=P+e_{ab}$ be a fold matrix.
+  \begin{enumerate}
+  \item $\nrm{FA}=\nrm{A}+s_b\ge\nrm{A}+1$, where $s_b$ is the sum of
+    row~$b$ of~$A$.
+  \item Each column sum of $FA$ is at least the corresponding column sum
+    of $A$.
+  \item The row sums of $FA$ are those of $A$ in a new order, with one of
+    them increased by $s_b$.  So for each $k$, the $k$-th smallest row sum
+    of $FA$ is at least the $k$-th smallest row sum of $A$.
+  \end{enumerate}
+  In particular $c(FA)\ge c(A)$ and $r(FA)\ge r(A)$.
+\end{Lemma}
+
+\begin{proof}
+  $FA=PA+e_{ab}A$.  The matrix $PA$ is $A$ with its rows reordered, and
+  $e_{ab}A$ has row~$b$ of $A$ in row~$a$ and zeros elsewhere.
+\end{proof}
+
+A prefix's matrix is a product of fold matrices, each at least a
+permutation matrix, so it has no zero row; the lemma applies along every
+path.  A prefix with $L$ folds therefore has norm at least $d+L$.
+
+\begin{Lemma}[The principle behind safe tests]
+  \label{lem:principle}
+  Let $q$ be a real-valued function of nonnegative integer matrices, and
+  $t$ a number, such that
+  \begin{enumerate}
+  \item $q(FA)\ge q(A)$ for every fold matrix $F$ and every matrix $A$ of a
+    prefix, and
+  \item $q(X)\le t$ for every accepted matrix $X$.
+  \end{enumerate}
+  Then the test ``$q(A)>t$'' is safe.
+\end{Lemma}
+
+\begin{proof}
+  If $BA$ is accepted, then applying (1) once for each fold of $B$ gives
+  $q(BA)\ge q(A)$, and (2) gives $q(BA)\le t$.  So $q(A)\le t$: the test
+  does not fire.
+\end{proof}
+
+\section{The tests in use}
+\label{sec:existing}
+
+\subsection{The Ham--Song norm bound}
+
+\begin{Lemma}[{Ham--Song~\cite[Lemma 3.1]{HamSong}}]
+  \label{lem:hs}
+  If $M\ge0$ is an integer matrix, irreducible, with $\lam=\rho(M)>1$,
+  then $\nrm{M}\le\lam^d+d-1$.
+\end{Lemma}
+
+The proof takes the Perron vector $v$ and its smallest coordinate $v_p$.
+Then $\lam^dv_p=(M^dv)_p\ge v_p\sum_j(M^d)_{pj}$, so $\lam^d$ is at least
+the number of walks of length $d$ from $p$ in the multigraph of $M$.  A
+spanning tree at $p$ has $d-1$ edges, and every other edge is where some
+such walk first leaves the tree.  The lemma improves an earlier bound of
+Papadopoulos and Penner~\cite{PapadopoulosPenner}.
+
+\emph{The test.}  Abandon a prefix when $\nrm{A}>\lfloor\Lam^d\rfloor+d-1$.
+It is safe by Lemma~\ref{lem:principle}, with $q$ the norm (which grows,
+by Lemma~\ref{lem:grow}) and $t=\lfloor\Lam^d\rfloor+d-1$ (which bounds
+every accepted matrix, by Lemma~\ref{lem:hs}, since its norm is an
+integer).  Since each fold raises the norm by at least one, the same
+number also bounds the length of every prefix the search can reach.  That
+cap on the length is the norm test restated, and never cuts a prefix the
+norm test has not already cut.
+
+\subsection{Row and column sums}
+
+By Lemma~\ref{lem:facts}(4), $r(X)$ and $c(X)$ are at most $\rho(X)$, so
+an accepted matrix has $r(X)\le\Lam$ and $c(X)\le\Lam$; and by
+Lemma~\ref{lem:grow} both grow along a path.  By
+Lemma~\ref{lem:principle}, abandoning a prefix when $r(A)>\Lam$ or
+$c(A)>\Lam$ is safe.  This is the test described by Ham and Song, and in
+the paper for which \ttauto\ was written.  Section~\ref{sec:os} sharpens
+it.
+
+\subsection{The symmetrised norm, and why it was removed}
+\label{sec:symnorm}
+
+The search once also abandoned a prefix when
+$\frac1d\sum_{ij}\sqrt{A_{ij}A_{ji}}>\Lam$, with the comment that this
+works only when every fold is a shear.  It is worth recording why it is a
+lower bound, and why that restriction matters.  Put
+$G_{ij}=\sqrt{A_{ij}A_{ji}}$, the entrywise geometric mean of $A$ and
+$A^{\mathsf T}$.  Then
+\[
+  \tfrac1d\textstyle\sum_{ij}G_{ij}
+  =\tfrac1d\,\mathbf 1^{\mathsf T}G\,\mathbf 1\le\rho(G)
+  \le\rho(A)^{1/2}\rho(A^{\mathsf T})^{1/2}=\rho(A),
+\]
+the first inequality because $G$ is symmetric (a Rayleigh quotient), the
+second by the inequality of Elsner, Johnson and Dias da Silva for weighted
+geometric means of nonnegative matrices~\cite{EJD}, which generalises a
+result of Karlin and Ost.  So it bounds $\rho(A)$ below for \emph{every}
+$A\ge0$.  What needs shears is condition~(1) of
+Lemma~\ref{lem:principle}: only when $P=I$ is $FA\ge A$, so that $G$ never
+decreases.  With permutations, $G$ can decrease along a path, and the
+test can abandon a prefix that leads to an accepted path.  In automata
+with four or more punctures most folds carry permutations, so the test was
+unsafe there, and it has been removed.  Where it was safe, the test of
+Proposition~\ref{prop:rhomono} below is stronger.
+
+\subsection{Bad words}
+
+This one is of a different kind.  Ham and Song's
+Lemma~3.3~\cite{HamSong} says, roughly, that if repeating a loop more
+times makes its matrix larger without changing its pattern of zeros, then
+shortening the repeat keeps a closed path pseudo-Anosov and does not raise
+its dilatation.  So a search for the \emph{smallest} dilatation may skip
+paths with long repeats: whatever they give, a shorter path gives no more.
+It is not safe in the sense of Definition~\ref{def:safe}, since the
+skipped paths may well be accepted; it only guarantees that the minimum is
+not among them.  A search that lists everything in the window must not use
+it.  The other tests in this note are safe, and can be combined with it.
+
+\section{Where the tests lose}
+\label{sec:lose}
+
+\begin{Example}[A run of shears]
+  \label{ex:shear}
+  In dimension $d=2$ take $R=I+e_{12}$ and $L=I+e_{21}$, the two folds of
+  the automaton for three punctures, which has one vertex.  The prefix
+  $R^k=\bigl(\begin{smallmatrix}1&k\\0&1\end{smallmatrix}\bigr)$ has
+  $\nrm{R^k}=k+2$, $r(R^k)=c(R^k)=1$ and $\rho(R^k)=1$, so it passes
+  every test above until $k+2>\Lam^2+1$.  But every completion that makes
+  it primitive contains an $L$, and then the trace is at least $k+2$
+  (Theorem~\ref{thm:d2}).  So no extension of $R^k$ with $k$ beyond about
+  $\Lam$ can be accepted, while the search goes on to $k\approx\Lam^2$.
+\end{Example}
+
+The same happens in practice.  In complete searches of the
+three-puncture automaton up to trace~$T$, the longest accepted path has
+length $T-1$, while the mean length of the prefixes explored grows
+roughly like $T^2$:\footnote{Measured with \ttauto\ in the benchmark of
+issue~\#22.  The cap is the length bound $\lfloor\Lam^2\rfloor+1$ that the
+norm test implies.}
+\begin{center}
+  \small
+  \begin{tabular}{rrrrr}
+    \toprule
+    $T$ & longest accepted & mean length & cap on & prefixes explored \\
+    & path & of prefixes explored & the length & \\
+    \midrule
+    20 & 19 & 71 & 399 & 5\,230 \\
+    40 & 39 & 214 & 1\,599 & 26\,430 \\
+    80 & 79 & 677 & 6\,399 & 128\,478 \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\begin{Example}[The norm bound is not the culprit]
+  \label{ex:hssharp}
+  $M=\bigl(\begin{smallmatrix}k&1\\k^2-1&k\end{smallmatrix}\bigr)$ is a
+  product of $R$'s and $L$'s (every nonnegative $2\times2$ integer matrix of
+  determinant one is), with trace $2k$, so $\lam\approx2k$ and
+  $\nrm{M}=k^2+2k\approx\lam^2/4$.  So even for these matrices
+  Lemma~\ref{lem:hs} is sharp up to a factor of about four.  The loss is in
+  applying it to prefixes: the norm of a run of shears says almost nothing
+  about the dilatation of its completions.
+\end{Example}
+
+\section{Bounds over completions}
+\label{sec:completions}
+
+The tests of Section~\ref{sec:existing} bound quantities of the prefix
+itself.  The tests of this section bound instead the dilatation of every
+closed path that begins with the prefix, using what any completion must
+do.  Recall that for a test to be safe it must hold for every completion
+$B$ such that $BA$ is accepted.
+
+\subsection{When every fold is a shear}
+
+\begin{Proposition}
+  \label{prop:rhomono}
+  If every fold matrix is a shear, then $\rho(FA)\ge\rho(A)$ for every fold
+  $F$.  So abandoning a prefix when $\rho(A)>\Lam$ is safe, and this test
+  is at least as strong as the row-sum, column-sum and symmetrised-norm
+  tests.
+\end{Proposition}
+
+\begin{proof}
+  $FA=A+e_{ab}A\ge A$, so Lemma~\ref{lem:facts}(1) applies, and
+  Lemma~\ref{lem:principle} with $q=\rho$ and $t=\Lam$ gives safety.  Each
+  of the other three tests bounds $\rho(A)$ from below.
+\end{proof}
+
+This does not help with Example~\ref{ex:shear}, since $\rho(R^k)=1$.  What
+helps is that a completion has to \emph{mix}: it must make the matrix
+irreducible, and to do so it must add entries that connect the graph.
+
+\begin{Lemma}
+  \label{lem:expand}
+  Let $B=(I+E_k)\cdots(I+E_1)$, each $E_i$ a unit, and let $S$ be the set of
+  their positions.  Then $B\ge I+E_S$, and $B_{ij}>0$ only if $i$ can be
+  reached from $j$ in $\D(S)$ (counting every vertex as reachable from
+  itself).
+\end{Lemma}
+
+\begin{proof}
+  Expanding the product gives a sum of nonnegative terms, and those with at
+  most one factor $E_i$ add up to $I+\sum_iE_i\ge I+E_S$.  A term
+  $E_{i_r}\cdots E_{i_1}$ is nonzero only when consecutive positions chain
+  up, which is a walk in $\D(S)$.
+\end{proof}
+
+\begin{Definition}[Admissible]
+  \label{def:admissible}
+  A set $S$ of positions is \emph{admissible} for a matrix $A$ if the
+  union of the digraphs $\D(A)\cup\D(S)$ is strongly connected.
+\end{Definition}
+
+\begin{Theorem}
+  \label{thm:rauzy}
+  Suppose every fold is a shear.  Let $A$ be the matrix of a prefix, and
+  $\Pos$ a set of positions containing the position of every fold that can
+  occur in a completion.  Put
+  \[
+    \beta(A)=\min\bigl\{\rho\bigl((I+E_S)A\bigr) :
+      S\subseteq\Pos\text{ admissible for }A\bigr\},
+  \]
+  with $\min\emptyset=\infty$.  Then $\rho(BA)\ge\beta(A)$ for every
+  completion $B$ such that $BA$ is irreducible.  In particular, abandoning
+  the prefix when $\beta(A)>\Lam$ is safe.
+\end{Theorem}
+
+\begin{proof}
+  Let $S$ be the positions of the folds in $B$.  If $(BA)_{ij}>0$ there is
+  a $k$ with $A_{kj}>0$ and $B_{ik}>0$, so by Lemma~\ref{lem:expand} each
+  edge $j\to i$ of $\D(BA)$ comes from a walk in $\D(A)\cup\D(S)$.  If $BA$
+  is irreducible, $\D(BA)$ is strongly connected, hence so is
+  $\D(A)\cup\D(S)$, and $S$ is admissible.  And $BA\ge(I+E_S)A$ by
+  Lemma~\ref{lem:expand}, so $\rho(BA)\ge\rho((I+E_S)A)\ge\beta(A)$.  An
+  accepted matrix is primitive, hence irreducible, so no accepted path is
+  lost.  The empty completion is the case $S=\emptyset$.
+\end{proof}
+
+Since $\rho((I+E_S)A)$ can only grow with $S$, the minimum is attained at a
+minimal admissible $S$.  In an automaton with several vertices, $\Pos$ may
+depend on where the prefix ends: it need only contain the positions that
+occur on paths from there back to the start.
+
+\begin{Theorem}[Dimension two]
+  \label{thm:d2}
+  A word $W$ in $R$ and $L$ that contains both letters has
+  $\tr W\ge|W|+1$, where $|W|$ is its length, with equality for instance
+  for $LR^m$.  So an accepted word, whose trace is at most
+  $T=\Lam+\Lam^{-1}$, has length at most $T-1$.  Moreover
+  $\beta(R^k)=\rho(LR^k)$: the test of Theorem~\ref{thm:rauzy} keeps the
+  prefix $R^k$ exactly when $LR^k$ is itself accepted, so it stops a run of
+  shears at the length of the longest accepted word.
+\end{Theorem}
+
+\begin{proof}
+  If $W$ contains both letters then $W\ge I+e_{12}+e_{21}$ by
+  Lemma~\ref{lem:expand}, so $W_{12},W_{21}\ge1$.  Now
+  $\tr(RW)=\tr W+W_{21}$ and $\tr(LW)=\tr W+W_{12}$, so each letter added
+  on the left raises the trace by at least one.  The shortest right factor
+  of $W$ that contains both letters is $LR^m$ or $RL^m$, whose trace is
+  $m+2$, one more than its length.  For the last claim: $\D(R^k)$ has the
+  single edge $2\to1$ besides the loops, so an admissible $S$ must contain
+  $(2,1)$, the position of~$L$, and $(I+e_{21})R^k=LR^k$.
+\end{proof}
+
+\subsection{General folds}
+
+When the folds carry permutations, the shears of different folds are
+written in different labels, and the product does not grow entrywise.
+The remedy is to move all the permutations to the left.
+
+\begin{Lemma}[Frames]
+  \label{lem:frame}
+  Write a fold as $F=P(I+e_{a'b})$, where $P(a')=a$.  If a prefix has
+  matrix $A=QN$, with $Q$ a permutation matrix and $N$ a product of shears,
+  then
+  \[
+    FA=(PQ)\,\bigl(I+Q^{-1}e_{a'b}Q\bigr)N,
+  \]
+  and $Q^{-1}e_{a'b}Q$ is again a unit, at the position
+  $(Q^{-1}(a'),Q^{-1}(b))$.  So every path, starting from the empty one,
+  has matrix $QN$, where $Q$ is the product of the permutation parts of its
+  folds and $N$ is a product of shears $I+\tilde e$, one for each fold, with
+  the units $\tilde e$ written in the labels of the start vertex.
+\end{Lemma}
+
+\begin{proof}
+  $P+e_{ab}=P(I+P^{-1}e_{ab})$ and $P^{-1}e_{ab}=e_{a'b}$; then
+  $(I+e_{a'b})Q=Q(I+Q^{-1}e_{a'b}Q)$.
+\end{proof}
+
+We call $(Q,N)$ the \emph{frame} of the path.  Apply the lemma to a closed
+path that begins with the prefix, that is, the prefix followed by a
+completion~$B$:
+\[
+  M=BA=Q'\,N'N.
+\]
+Here $Q'$, the \emph{total permutation} of the closed path, is the product
+of the permutation parts of \emph{all} its folds, prefix and completion
+together, and $N'$ is the product of the shears contributed by the folds of
+the completion.  Neither $Q'$ nor $N'$ is known while the search is at the
+prefix, so the bound has to allow for every value they can take.
+
+\begin{Theorem}
+  \label{thm:general}
+  Let the prefix have frame $(Q,N)$.  Let $\Hgp$ be a set of permutations
+  containing the total permutation of every closed path that begins with
+  the prefix, and $\Pos$ a set of positions containing the position of
+  every unit $\tilde e$ that a completion can contribute.  For $Q'\in\Hgp$
+  and $S\subseteq\Pos$, let $G_{Q',S}$ be the digraph with an edge
+  $j\to Q'(i)$ whenever $j\to k$ in $\D(N)$ and $i$ can be reached from
+  $k$ in $\D(S)$.  Put
+  \[
+    \beta(A)=\min\bigl\{\rho\bigl(Q'(I+E_S)N\bigr) :
+      Q'\in\Hgp,\ S\subseteq\Pos,\ G_{Q',S}\text{ strongly connected}\bigr\}.
+  \]
+  Then $\rho(BA)\ge\beta(A)$ for every completion $B$ such that $BA$ is
+  irreducible.  In particular, abandoning the prefix when
+  $\beta(A)>\Lam$ is safe.
+\end{Theorem}
+
+\begin{proof}
+  Write $M=Q'N'N$ as above, and let $S$ be the positions of the units
+  in~$N'$.  By Lemma~\ref{lem:expand}, $N'\ge I+E_S$, so $M\ge Q'(I+E_S)N$
+  and $\rho(M)\ge\rho(Q'(I+E_S)N)$.  Also by Lemma~\ref{lem:expand},
+  $N'_{ik}>0$ only if $i$ can be reached from $k$ in $\D(S)$.  Now
+  $M_{Q'(i)\,j}=(N'N)_{ij}$, so if it is positive there is a $k$ with
+  $N_{kj}>0$ and $N'_{ik}>0$, which gives an edge $j\to Q'(i)$ of
+  $G_{Q',S}$.  So $\D(M)$ is contained in $G_{Q',S}$, and if $M$ is
+  irreducible $G_{Q',S}$ is strongly connected: the pair $(Q',S)$ is one of
+  those in the minimum.
+\end{proof}
+
+With $\Hgp=\{I\}$ this is Theorem~\ref{thm:rauzy}.  Any sets $\Hgp$ and
+$\Pos$ large enough will do; larger ones only weaken the bound.  In a
+one-vertex automaton, where every word is a closed path, one can take for
+$\Hgp$ the group generated by the permutation parts of the folds, and for
+$\Pos$ the positions of the conjugates $q^{-1}e_{a'b}q$, $q\in\Hgp$, of
+the folds' units.  In a general automaton the smallest choices are the
+total permutations and units that occur on paths from the prefix's final
+vertex back to the start.  They can be computed once and for all, on the
+automaton whose states are pairs (vertex, permutation).
+
+\begin{Proposition}
+  \label{prop:dominate}
+  $\beta(A)\ge\max\bigl(r(A),c(A)\bigr)$, and if every fold is a shear then
+  $\beta(A)\ge\rho(A)$.  So the test $\beta(A)>\Lam$ never keeps a prefix
+  that the row-sum or column-sum test would abandon, nor, without
+  permutations, one that the test of Proposition~\ref{prop:rhomono} or the
+  symmetrised norm would abandon.
+\end{Proposition}
+
+\begin{proof}
+  Each candidate in the minimum is $\rho(Q'X)$ with $X=(I+E_S)N$.  A
+  permutation $Q'$ leaves the column sums of $X$ unchanged and only
+  reorders its row sums, so $c(Q'X)=c(X)$ and $r(Q'X)=r(X)$.  Since
+  $X\ge N$, these are at least $c(N)$ and $r(N)$, which equal $c(A)$ and
+  $r(A)$ because $A=QN$ is $N$ with its rows reordered.  By
+  Lemma~\ref{lem:facts}(4), $\rho(Q'X)\ge\max(r(A),c(A))$.  Without
+  permutations the candidates are $\rho((I+E_S)A)$ with $(I+E_S)A\ge A$,
+  so each is at least $\rho(A)$, which is at least the symmetrised norm
+  (Section~\ref{sec:symnorm}).
+\end{proof}
+
+\begin{Remark}
+  \label{rem:norm}
+  The Ham--Song norm test is not covered.  Lemma~\ref{lem:hs} applies to an
+  irreducible matrix, and the matrices $(I+E_S)A$ over which $\beta$ is
+  minimised need not be irreducible: $S$ being admissible makes
+  $\D(A)\cup\D(S)$ strongly connected, but an edge of $\D((I+E_S)A)$ is an
+  edge of $\D(A)$ followed by at most one edge of $\D(S)$.  Whether a
+  prefix can have a norm above the Ham--Song bound and yet
+  $\beta(A)\le\Lam$ is open.  It matters little in practice: the norm test
+  costs one sum and is what guarantees that the search ends, so it stays in
+  any case.
+\end{Remark}
+
+\subsection{The bound of Ostrowski and Schneider}
+\label{sec:os}
+
+The row-sum test uses only the smallest row sum.  There is a line of
+results that sharpen $r\le\rho\le R$, where $R$ is the largest row sum, to
+$r+p_1\le\rho\le R-p_2$ with explicit $p_1,p_2>0$: by Ledermann, Ostrowski
+and Brauer for positive matrices, and by Ostrowski and
+Schneider~\cite{OstrowskiSchneider} for irreducible
+ones~\cite[p.~65]{Seneta}.  Their argument is short.
+
+Let $X\ge0$ be irreducible, with row sums $r_1,\dots,r_d$ and left Perron
+vector $y>0$.  Summing the components of $yX=\rho y$ gives
+\[
+  \rho\sum_iy_i=\sum_iy_ir_i,
+\]
+so $\rho$ is a weighted mean of the row sums, with weights $y_i$.  The
+weights cannot be very unequal.  Let $\kappa$ be the smallest positive
+off-diagonal entry of $X$, and $\lam$ its smallest diagonal entry.  The
+$i$-th component of $yX=\rho y$ gives $(\rho-X_{ii})y_i\ge X_{ji}y_j$, so
+$y_i\ge\kappa y_j/(\rho-\lam)$ whenever $X_{ji}>0$ with $j\ne i$.  Since
+$X$ is irreducible, such steps lead from any index to any other in at most
+$d-1$ steps, which gives Schneider's bound~\cite{Schneider58}
+\begin{equation}
+  \label{eq:delta}
+  \delta=\frac{\min_iy_i}{\max_iy_i}
+  \ge\Bigl(\frac{\kappa}{\rho-\lam}\Bigr)^{d-1}.
+\end{equation}
+Scale $y$ so that $\max_iy_i=1$.  Then $y$ lies in the box $[\delta,1]^d$,
+and $\rho$ is at least the smallest weighted mean over that box.  The
+smallest puts weight $1$ on the $q$ smallest row sums and weight $\delta$ on
+the others, for the best~$q$~\cite[Lemma~2]{OstrowskiSchneider}.  With
+$r_{(1)}\le\dots\le r_{(d)}$ the row sums in increasing order,
+\begin{equation}
+  \label{eq:os}
+  \rho\ge\psi_\delta(r)=\min_{1\le q\le d}
+  \frac{\sum_{i\le q}r_{(i)}+\delta\sum_{i>q}r_{(i)}}{q+\delta(d-q)}.
+\end{equation}
+This is their Theorem~2.  Their Theorem~1 is a weaker closed form,
+$\rho\ge r+d\delta(p-r)/(d-1+\delta)$ with $p$ the mean row sum.  To make
+$\delta$ computable from $X$ alone, they replace $\rho$ by $R$
+in~\eqref{eq:delta}.
+
+Applied to a prefix, \eqref{eq:os} bounds only $\rho(A)$, which can fall
+along a path when folds carry permutations, as for the symmetrised norm;
+without permutations, $\rho(A)$ itself is the stronger test
+(Proposition~\ref{prop:rhomono}).  Applied to the matrix of an accepted
+closed path instead, it gives a safe test, because there we may put $\Lam$
+in place of~$\rho$ in~\eqref{eq:delta}.
+
+\begin{Proposition}
+  \label{prop:os}
+  Let $\delta_0=\Lam^{-(d-1)}$.  If a prefix $A$ has
+  $\psi_{\delta_0}(r)>\Lam$, where $r$ is its vector of row sums, or the
+  same with its vector of column sums, then no completion of $A$ is
+  accepted.
+\end{Proposition}
+
+\begin{proof}
+  Suppose $X=BA$ is accepted, so $X$ is primitive with $\rho(X)\le\Lam$.
+  Its entries are integers, so $\kappa\ge1$; and $0\le\lam<\rho(X)$ by
+  Lemma~\ref{lem:facts}(3).  So $\kappa/(\rho-\lam)\ge1/\rho\ge1/\Lam$
+  in~\eqref{eq:delta}, and $\delta\ge\delta_0$.  Now $\psi_\delta(r)$ is the
+  minimum of $\sum_ir_ix_i/\sum_ix_i$ over the box $[\delta,1]^d$.  So it
+  does not change when the $r_i$ are permuted, and it does not decrease
+  when $\delta$ grows (the box shrinks) or when any $r_i$ grows.  By
+  Lemma~\ref{lem:grow}(3), $\psi_{\delta_0}$ of the row sums therefore
+  never decreases along a path, and by Lemma~\ref{lem:principle} the test
+  is safe:
+  $\Lam\ge\rho(X)\ge\psi_\delta(r(X))\ge\psi_{\delta_0}(r(X))
+  \ge\psi_{\delta_0}(r(A))$.  For columns, use the right Perron vector,
+  that is, apply the argument to $X^{\mathsf T}$, and
+  Lemma~\ref{lem:grow}(2).
+\end{proof}
+
+At first sight $\delta_0$ is too small to matter.  But the prefixes that
+waste the search are exactly those where a run of shears has made some row
+sums large while the smallest stays small, and there even a small weight
+on the large rows is enough.  The test is much weaker than $\beta$, since it
+ignores which entries a completion must fill; but it needs only the sorted
+row and column sums, so it costs a sort of $d$ numbers per prefix, and it
+can also serve as a cheap filter in front of~$\beta$.
+Section~\ref{sec:check} measures it, and Appendix~\ref{app:unusable}
+explains why, among bounds that use only the row sums, it cannot be
+improved.
+
+\section{A numerical check}
+\label{sec:check}
+
+\subsection{The experiment}
+
+The tests are compared on small examples by a program that is independent
+of \ttauto.\footnote{\code{devel/iss023/bounds\_toy.cpp}; see
+Section~\ref{sec:code}.}  Each example is a set of fold matrices, taken as
+a one-vertex automaton, so that every word is a closed path.  The program
+searches depth first and accepts the words whose product is primitive with
+$1<\rho\le\Lam$.  Spectral radii are never estimated, only bracketed
+by~\eqref{eq:cw}: a decision to abandon a prefix uses only the lower end
+of the bracket, so it is safe however few iterations are run, and a
+decision to accept uses the upper end, on a primitive matrix.
+
+\emph{The examples.}
+\begin{itemize}
+\item $\{R,L\}$, $d=2$: the three-puncture automaton of
+  Example~\ref{ex:shear}.
+\item All six shears $I+e_{ab}$, $d=3$.
+\item Shears and a 3-cycle, $d=3$: two shears, and a fold whose
+  permutation is a 3-cycle.
+\item Shears, a 3-cycle and a transposition, $d=3$: the previous example
+  plus a fold whose permutation is a transposition, so that the
+  permutations generate all of $S_3$, as in \ttauto's automata
+  (Table~\ref{tab:census}).  We also call it \emph{full $S_3$}.
+\item \emph{Full $S_d$}, $d=4,5$: shears $e_{i,i+1}$ along a chain, plus
+  one fold carrying a $d$-cycle and one carrying a transposition, so that
+  the permutations again generate all of $S_d$.
+\end{itemize}
+
+\emph{The reference list.}  For each example and each $\Lam$, the search is
+first run with the Ham--Song norm test alone.  That test is safe, so this
+search finds every accepted word: its output is the complete list, against
+which each other test is judged.
+
+\emph{The tests compared}, each in a separate search:
+\begin{description}
+\item[$C_0$] the tests in use: the norm, row-sum and column-sum tests;
+\item[$C_1$] $C_0$ together with $\rho(A)>\Lam$
+  (Proposition~\ref{prop:rhomono}), used only where every fold is a shear;
+\item[$C_2$] $C_0$ together with the test $\beta(A)>\Lam$ of
+  Theorem~\ref{thm:general}, taking the minimum over all subsets $S$ of
+  $\Pos$ and all $Q'$ in $\Hgp$.  By Proposition~\ref{prop:dominate} the row
+  and column sums never abandon a prefix that $\beta$ keeps; they are kept
+  because they are cheap and run first, so that $\beta$ is computed only
+  for prefixes they let through.  The norm test is kept because it
+  guarantees that the search ends;
+\item[$C_3$] the same decisions as $C_2$, computed faster
+  (Section~\ref{sec:fast});
+\item[$O_1$, $O_2$] $C_0$ together with the Ostrowski--Schneider test of
+  Proposition~\ref{prop:os}, from their Theorem~1 or their Theorem~2;
+\item[faulty] $C_0$ together with $\rho(A)>\Lam$, used where the folds
+  carry permutations, where nothing above justifies it.  It is included on
+  purpose, as a test expected to be unsafe, to show that the comparison
+  notices an unsafe test.  For this row, missing words is the expected
+  outcome.
+\end{description}
+
+\emph{The columns of Tables~\ref{tab:RL}--\ref{tab:sym3}.}
+\emph{Accepted} and \emph{classes} count the words found, and their
+classes up to cyclic rotation.  \emph{Visited} counts the prefixes the
+search enters, and \emph{wasted} those among them that begin no accepted
+word: the work a perfect test would have avoided.  \emph{Fewer than
+$C_0$} is $C_0$'s count of visited prefixes divided by the test's.
+\emph{Longest prefix} is the longest prefix entered, and \emph{longest
+word} the longest accepted word.  \emph{Check} says ``finds all'' when the
+test's accepted words are exactly those of the reference list, and how
+many it misses otherwise.
+
+\emph{Shading.}  Green marks where $C_2$ stands out: it visits at least ten
+times fewer prefixes than $C_0$; it wastes none; or its longest prefix is
+the longest accepted word while $C_0$ goes further.  Orange marks the
+faulty test missing words, which is the check working as intended.
+
+\input{tables}
+
+\subsection{What the tables show}
+
+\emph{Nothing is missed.}  $C_0$, $C_1$ and $C_2$ find exactly the
+reference list in every case.  The faulty test misses 6 of the 69 accepted
+words at $\Lam=3$ in Table~\ref{tab:perm3}, so an unsafe test is caught.
+At $\Lam=2$ and $2.5$ it happens to miss nothing, a reminder that one
+passing case proves little.
+
+\emph{Dimension two} (Table~\ref{tab:RL}).  $C_2$ wastes no prefix at any
+$\Lam$, and its longest prefix is the longest accepted word, as
+Theorem~\ref{thm:d2} predicts; $C_0$ goes about $\Lam^2$ deep.  At
+$\Lam=20$, $C_2$ visits 707 prefixes, four times fewer than $C_0$ and 69
+times fewer than the norm test alone.  The gain is modest here only because
+the row and column sums already do much of the work in dimension two.  The
+classes found, 1, 5, 15, 30 and 78 up to traces 3, 5, 8, 12 and 20, are
+those of the three-puncture benchmark of issue~\#22.
+
+\emph{Dimension three, all shears} (Table~\ref{tab:rauzy3}).  This is where
+the gain is dramatic.  At $\Lam=2.5$, $C_2$ visits 19 prefixes, none
+wasted, where $C_0$ visits 2\,743\,123: about $1.4\times10^5$ times fewer.
+At $\Lam=2.2$ nothing is accepted, and $C_2$ abandons every one-letter
+prefix.  At $\Lam=3$, $C_2$ accepts 30 words (8 classes) after visiting 67
+prefixes, 6 of them wasted, in a hundredth of a second.  $C_0$ did not
+finish that case within 71 minutes, when it was stopped, and the reference
+search did not finish in 100 seconds, so the case is not in the table and
+whether $C_2$ missed anything there is unchecked.  But the contrast between
+a hundredth of a second and more than an hour is itself the result.
+
+\emph{With permutations} (Table~\ref{tab:perm3}).  $C_2$ now wastes some
+prefixes, because it must allow for every possible total permutation, but
+at $\Lam=3$ it still visits 173 prefixes where $C_0$ visits 47\,084, 272
+times fewer.
+
+\emph{With the full symmetric group} (Table~\ref{tab:sym3}).  In
+\ttauto's automata the folds' permutations generate all of $S_d$
+(Table~\ref{tab:census}), so the total permutation of a closed path is
+barely constrained, and one might fear that $\beta$ then loses its force:
+a completion can choose a permutation that makes the matrix irreducible
+without adding any units.  It does not.  With four folds whose
+permutations generate $S_3$, $C_2$ visits 394 prefixes at $\Lam=3$ where
+$C_0$ visits 1\,373\,198, about 3\,500 times fewer, and finds the same 112
+words.
+
+\emph{$C_1$.}  Proposition~\ref{prop:rhomono} gains a factor of about two
+in dimension two and little in dimension three: along a run of shears the
+prefix's own dilatation stays near one.  The bracket is also cautious on
+reducible prefixes, where the Collatz--Wielandt iteration need not reach
+$\rho$: at $\Lam=2.2$ a version that computes the eigenvalues exactly
+visits 36\,721 prefixes against 40\,561 here.  Both find the complete list;
+the bracketed version just abandons fewer hopeless prefixes.
+
+\emph{The Ostrowski--Schneider test} (Table~\ref{tab:os}).  Every run
+accepts exactly the words of the reference list.  $O_2$ visits 3.5 to 7
+times fewer prefixes than $C_0$ in dimensions three and four, and 1.4 times
+fewer in dimension two, where it coincides with $O_1$; elsewhere $O_1$ is
+much weaker.  Both are far from $\beta$.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{llrrrr}
+\toprule
+example & $\Lam$ & $C_0$ & $O_1$ & $O_2$ & $C_3$ \\
+\midrule
+$\{R,L\}$, $d=2$ & 20 & 2\,809 & 2\,037 & 2\,037 & 707 \\
+all shears, $d=3$ & 2.5 & 2\,743\,123 & 2\,362\,483 & 465\,925 & 19 \\
+shears and a 3-cycle & 3 & 47\,084 & 35\,570 & 13\,608 & 173 \\
+full $S_3$ & 3 & 1\,373\,198 & 713\,490 & 189\,493 & 394 \\
+full $S_4$ & 2 & 1\,306\,439 & 999\,613 & 263\,116 & 424 \\
+\bottomrule
+\end{tabular}
+\caption{Prefixes visited with the Ostrowski--Schneider test added to the
+  tests in use ($O_1$ from their Theorem~1, $O_2$ from their Theorem~2),
+  against $C_0$ alone and $\beta$ computed fast ($C_3$).  All accept the same
+  words.}
+\label{tab:os}
+\end{table}
+
+\emph{Cost of $\beta$.}  $C_2$ as implemented tries every subset of $\Pos$
+and every element of $\Hgp$ at every prefix.  In these examples
+$|\Pos|\le6$ and $|\Hgp|\le6$, so this is cheap.  In \ttauto's automata it
+is not: Table~\ref{tab:census} shows that $\Pos$ is every off-diagonal
+position and $\Hgp$ is all of $S_d$ or half of it, so the count is
+$2^{d(d-1)}\,d!/2$ or more, already about $6\times10^7$ at $d=5$.  The
+test works; it has to be computed differently.
+
+\subsection{Computing \texorpdfstring{$\beta$}{beta} faster}
+\label{sec:fast}
+
+The test only has to decide whether some pair $(Q',S)$ gives
+$\rho(Q'(I+E_S)N)\le\Lam$, and most pairs can be ruled out without a
+spectral bound.
+\begin{itemize}
+\item \emph{The diagonal.}  By Lemma~\ref{lem:facts}(3), $\rho$ is at least
+  every diagonal entry, and the diagonal of $Q'X$ is $X_{\sigma(k),k}$ with
+  $\sigma=Q'^{-1}$ and $X\ge N$.  So a permutation that puts an entry of
+  $N$ above $\Lam$ on the diagonal can be skipped whatever $S$ is.  The
+  others are found by backtracking over $\sigma$ one column at a time.
+\item \emph{Minimal sets.}  For each remaining permutation only minimal
+  admissible $S$ are tried.  A unit $e_{ab}$ is skipped if $b$ already
+  reaches $a$, since it then changes no reachability, for this $S$ or any
+  larger one, or if it pushes a diagonal entry above $\Lam$.
+\item \emph{Cheap filters.}  Quantities that only grow with $S$ reject
+  whole branches before any spectral bound: the diagonal, the $2$-cycles
+  $\sqrt{Y_{ij}Y_{ji}}$, and the smallest row and column sums of $Y=Q'X$.
+\end{itemize}
+Everything skipped has $\rho>\Lam$, so this, $C_3$, makes exactly the
+decisions of $C_2$: in every case of Tables~\ref{tab:RL}--\ref{tab:sym3} it
+visits the same prefixes and accepts the same words.
+
+\begin{center}
+  \small
+  \begin{tabular}{llrrrr}
+    \toprule
+    example & $\Lam$ & $C_0$ visits & $C_0$ time & $C_3$ visits & $C_3$ time \\
+    \midrule
+    full $S_3$ & 3.0 & 1\,373\,198 & 0.94\,s & 394 & $<0.01$\,s \\
+    full $S_4$ & 2.0 & 1\,306\,439 & 1.95\,s & 424 & 0.74\,s \\
+    full $S_4$ & 2.5 & & over 60\,s & 7\,027 & 4.95\,s \\
+    full $S_5$ & 1.6 & 154\,631 & 0.38\,s & & over 50\,s \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+In dimension four $C_3$ is faster than the tests in use, as well as
+visiting three thousand times fewer prefixes.  In dimension five it is not:
+with 120 permutations and 20 positions, ruling out every pair for one
+prefix costs far more than the tests in use spend on the whole search.
+
+Capping the effort per evaluation, and keeping the prefix whenever the cap
+runs out, is safe, since keeping a prefix only costs time.  But it makes
+things much worse (a cap of 1\,000 steps did not finish in ten minutes on
+the full $S_4$, $\Lam=2.5$ case, which takes 5\,s uncapped): the prefixes
+whose refutation is expensive are mostly ones that should be abandoned, and
+keeping them multiplies the work below them.
+
+So $\beta$ is strong even when the completion's permutation is almost free,
+but evaluating it exactly does not scale to \ttauto's dimensions, which
+reach $d=8$.
+
+\subsection{The permutations and positions of real automata}
+
+How large are $\Hgp$ and $\Pos$ in \ttauto's automata?  For a vertex $v$
+that can return to the start vertex, let $R(v)$ be the set of total
+permutations of the paths from $v$ back to the start, and $U(v)$ the set of
+positions of the units they contribute, both in the labels of the start
+vertex.  These are the smallest valid choices of $\Hgp$ and $\Pos$ for a
+prefix ending at $v$.  Table~\ref{tab:census} gives their sizes: as large
+as they can be.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{rrrrrrrr}
+    \toprule
+    $n$ & stratum & $d$ & vertices & group & $|R(v)|$ & $|U(v)|$ &
+      $d(d-1)$ \\
+    \midrule
+    4 & 1 & 3 & 4 & 6 & 6 & 6 & 6 \\
+    4 & 2 & 4 & 3 & 24 & 12 & 12 & 12 \\
+    5 & 1 & 4 & 11 & 24 & 12 & 12 & 12 \\
+    5 & 2 & 5 & 21 & 120 & 120 & 20 & 20 \\
+    5 & 3 & 5 & 3 & 120 & 120 & 20 & 20 \\
+    5 & 4 & 6 & 9 & 720 & 360 & 30 & 30 \\
+    6 & 1 & 5 & 49 & 120 & 120 & 20 & 20 \\
+    6 & 2 & 6 & 138 & 720 & 1--360 & 2--30 & 30 \\
+    6 & 3 & 6 & 27 & 720 & 720 & 30 & 30 \\
+    6 & 4 & 6 & 3 & 720 & 360 & 30 & 30 \\
+    6 & 5 & 7 & 110 & 5\,040 & 5\,040 & 42 & 42 \\
+    6 & 6 & 7 & 21 & 5\,040 & 5\,040 & 42 & 42 \\
+    6 & 7 & 8 & 28 & 40\,320 & 20\,160 & 56 & 56 \\
+    7 & 1 & 6 & 204 & 720 & 360 & 30 & 30 \\
+    7 & 3 & 7 & 190 & 5\,040 & 1--5\,040 & 2--42 & 42 \\
+    7 & 4 & 7 & 30 & 5\,040 & 5\,040 & 42 & 42 \\
+    7 & 5 & 7 & 3 & 5\,040 & 5\,040 & 42 & 42 \\
+    7 & 8 & 8 & 24 & 40\,320 & 20\,160 & 56 & 56 \\
+    7 & 9 & 8 & 12 & 40\,320 & 40\,320 & 56 & 56 \\
+    \bottomrule
+  \end{tabular}
+  \caption{The permutations and positions of \ttauto's automata, for $n$
+    punctures, from the start vertex, over the vertices that can return to
+    it.  \emph{Group}: the order of the group the folds' permutations
+    generate, which is always all of $S_d$.  $R(v)$ is all of it or half
+    of it, and $U(v)$ is every off-diagonal position.  The ranges in strata
+    $6.2$ and $7.3$ come from a single vertex each.  The other $n=7$
+    strata, where $d\ge7$ and there are hundreds of vertices, have the same
+    group and were not computed further.}
+  \label{tab:census}
+\end{table}
+
+So the structure of the automaton does not help: a fast evaluation of
+$\beta$ has to exploit instead that $\Hgp$ is a whole group ($S_d$ or its
+even half) and $\Pos$ is every position.
+
+\subsection{The Ostrowski--Schneider test in \texorpdfstring{\ttauto}{ttauto}}
+\label{sec:os-ttauto}
+
+The test of Proposition~\ref{prop:os} (from Theorem~2, as $O_2$) is now
+part of \ttauto's search, on by default.  In real automata it finds the
+same pseudo-Anosov candidates, grouped into the same classes, while
+trying far fewer paths:
+\begin{center}
+  \small
+  \begin{tabular}{lrrr}
+    \toprule
+    search & paths without & paths with & fewer \\
+    \midrule
+    $n=3$, $\Lam=10$ & 1\,090 & 766 & 1.4$\times$ \\
+    $n=4$, stratum 1, $\Lam=3$ & 95\,602 & 18\,212 & 5.2$\times$ \\
+    $n=5$, stratum 3, $\Lam=2$ & 2\,557\,432 & 301\,428 & 8.5$\times$ \\
+    $n=6$, stratum 6, $\Lam=1.884$ & 24\,204\,368 & 3\,136\,282 & 7.7$\times$ \\
+    $n=7$, stratum 7, $\Lam=1.46557$ & $1.93\times10^{10}$ &
+      $2.78\times10^9$ & 6.9$\times$ \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+The last two rows are the complete searches of the ttauto paper's data
+(with bad words of length two, which only matter for the minimum); the
+$n=7$ search went from 46 minutes to 9.  But the complete search of
+$n=6$, stratum 7, at $\Lam=2.172$ still does not finish: an hour and
+$9.4\times10^9$ paths were not enough for its first starting vertex.  That
+stratum's minimum, $2.17113$, found in 2008 with the unsafe symmetrised
+norm, remains unproved.
+
+\section{Open questions}
+\label{sec:open}
+
+\begin{enumerate}
+\item \emph{A fast form of $\beta$.}  Exact evaluation is exponential in $d$
+  even in the form of Section~\ref{sec:fast}.  What is needed is a single
+  lower bound on $\rho(Q'(I+E_S)N)$, valid for every permutation $Q'$ and
+  every admissible $S$ at once, and computable in time polynomial in $d$.
+  Pieces that may help: the permutations keeping the diagonal at most
+  $\Lam$ are the solutions of a bottleneck assignment problem; cycle
+  bounds beyond the diagonal and $2$-cycles; and the strongly connected
+  components that every admissible $S$ must join.
+  Proposition~\ref{prop:os} is such a bound, but a weak one, since it sees
+  only the row and column sums.  This is what stratum~7 of $n=6$
+  needs.
+\item \emph{Using that $\Hgp$ is a group.}  Table~\ref{tab:census} shows
+  that $\Hgp$ is $S_d$ or its even half and $\Pos$ is everything.  A cheaper
+  bound, $\min_{Q'\in\Hgp}\rho(Q'N)$, needs no irreducibility, and extends
+  $C_1$ to folds with permutations, since $M=Q'N'N\ge Q'N$.
+\item \emph{The norm test.}  Is $\beta(A)>\Lam$ whenever the norm of $A$
+  exceeds the Ham--Song bound (Remark~\ref{rem:norm})?  A positive answer
+  would make $\beta$ a single test containing all the others.
+\item \emph{A length cap.}  Theorem~\ref{thm:d2} caps an accepted word at
+  $T-1$ in dimension two.  No cap logarithmic in $\Lam$ is possible in
+  general, since a run of shears grows only linearly.  Is the length of the
+  longest accepted path polynomial in $\Lam$ at fixed $d$, and with what
+  exponent?
+\item \emph{Beyond \ttauto.}  Rauzy--Veech induction matrices are exactly
+  shears, so Theorem~\ref{thm:rauzy} applies as it stands to searches over
+  Rauzy classes, such as minimal dilatations in strata of abelian
+  differentials.  Theorem~\ref{thm:general} applies to any folding
+  automaton, Ham and Song's included.
+\item \emph{Regression.}  Any new test must reproduce the lists known to be
+  complete: the 2\,541 classes of the three-puncture benchmark, the 10 and
+  6 classes of issue~\#16, and complete windows at four punctures.
+\end{enumerate}
+
+\section{From the mathematics to the code}
+\label{sec:code}
+
+The library code is in the folders \code{include/ttauto/} and
+\code{include/traintracks/}.  This note is in \code{devel/iss023/}, on
+the \code{master} branch.  The work on $\beta$ and the programs of
+Section~\ref{sec:check} are only on the branch
+\code{iss023-pathlength-bound}.  That branch's copy of \code{ttauto.hpp}
+predates the Ostrowski--Schneider test.
+
+\begin{center}
+  \small
+  \begin{tabular}{>{\raggedright\arraybackslash}p{0.32\textwidth}
+                  >{\raggedright\arraybackslash}p{0.6\textwidth}}
+    \toprule
+    mathematics & code \\
+    \midrule
+    fold matrix $F=P+e_{ab}$ &
+      \code{traintracks::mathmatrix\_permplus1}; $P(c)$ is
+      \code{column\_perm()[c]}, $P^{-1}(a)$ is \code{row\_perm()[a]}, and
+      $(a,b)$ is (\code{plus1\_row()}, \code{plus1\_col()}) \\
+    folding automaton; its fold matrices &
+      \code{ttauto::ttfoldgraph}; \code{transition\_matrix(v,f)} \\
+    path, and its matrix $F_k\cdots F_1$ &
+      \code{ttauto::folding\_path}; the search keeps a stack of prefix
+      matrices, \code{TMl.push(F * TMl.top())} \\
+    window $(1,\Lam]$ & \code{max\_dilatation(}$\Lam$\code{)}, member
+      \code{lambdamax}; norm-bounded mode is \code{check\_norms()} \\
+    accepted closed path & the search checks that a closed path's matrix
+      is primitive; \code{record\_pA} then checks the window (to within a
+      tolerance \code{tol}) and applies the gate test,
+      \code{check\_gates()} \\
+    the tests of a prefix & \code{check\_all\_norms()}, which tries them in
+      the order of the enum \code{prune\_test} and credits the first that
+      fires \\
+    Ham--Song norm test & \code{prune\_HamSong}; the threshold is
+      \code{maxnorm}, set by \code{find\_maxnorm()}, which also sets the
+      length cap \code{max\_path\_length} \\
+    row- and column-sum tests & \code{prune\_rowsum}, \code{prune\_colsum} \\
+    Ostrowski--Schneider test, $\psi_\delta$ &
+      \code{prune\_OstSch}; $\psi_\delta$ is \code{OstSch\_bound()};
+      $\delta_0$ is \code{OstSch\_delta}, computed with $\Lam+$\code{tol};
+      switched off by \code{check\_OstSch(false)} \\
+    symmetrised norm & the macro \code{TTAUTO\_CHECK\_SYMMETRIC\_NORM},
+      removed in commit \code{f7b7d24} \\
+    bad words & \code{badword\_length()} \\
+    counts per test & \code{pruned(t)}; the statistics block prints them
+      under ``Norms exceeded'', named by \code{prune\_test\_name()} \\
+    frame $(Q,N)$; Lemma~\ref{lem:frame} &
+      \code{decompose\_fold}, \code{advance\_frame}, in
+      \code{include/ttauto/completion\_bound.hpp} (on the branch) \\
+    $R(v)$ and $U(v)$ (choices of $\Hgp$, $\Pos$) &
+      \code{completion\_sets}: \code{completion\_perms(v)},
+      \code{unit\_positions(v)}, computed over the \code{lifted\_states()}
+      (vertex, permutation) \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+\emph{Tests of the library.}  On \code{master},
+\code{testsuite/ttauto/test\_prune\_counts.cpp} pins what each prune test
+abandons in seven searches, with the Ostrowski--Schneider test off and on,
+and checks that it finds the same classes; and
+\code{testsuite/ttauto/test\_OstSch\_bound.cpp} checks $\psi_\delta$ against
+a brute-force minimum over the box.  On the branch, the test program
+\code{test\_completion\_bound.cpp}, in the same folder, checks the frames
+of Lemma~\ref{lem:frame} and the sets $R(v)$, $U(v)$.
+
+\emph{The programs of Section~\ref{sec:check}}, in \code{devel/iss023/} on the
+branch:
+\begin{itemize}
+\item \code{bounds\_toy.cpp}, the experiment.  Its examples are
+  \code{RL}, \code{rauzy3} (all shears, $d=3$), \code{perm3} (shears and a
+  3-cycle), \code{sym3} (shears, a 3-cycle and a transposition), and
+  \code{symD} for $D=4,\dots,8$ (full $S_D$).  Its
+  tests are \code{HS} (norm only, the reference), \code{C0} to \code{C3},
+  \code{OS} and \code{OS2} ($O_1$, $O_2$), and \code{BAD} (faulty).
+\item \code{bounds\_toy.py}, a slower version of \code{HS}, \code{C0} to
+  \code{C2} and \code{BAD}, which computes eigenvalues exactly.
+\item \code{make\_tables.py}, which runs \code{bounds\_toy} and writes
+  \code{tables.tex}, Tables~\ref{tab:RL}--\ref{tab:sym3}.
+  Table~\ref{tab:os} and the timing table of Section~\ref{sec:fast} were
+  made by hand from the same program.
+\item \code{census.cpp}, which computes Table~\ref{tab:census}.
+\end{itemize}
+
+\appendix
+
+\section{Bounds that do not help}
+\label{app:unusable}
+
+This appendix records lower bounds on the Perron root that were examined
+for issue~\#23 and found unusable, with the reason, so that they need not
+be examined again.
+
+\emph{What a usable bound needs.}  By Lemma~\ref{lem:principle}, a test
+must bound something that never decreases along a path by something that
+holds for every accepted matrix.  So it can use only two kinds of
+information.  The first is quantities of the prefix that never decrease
+along a path (Lemma~\ref{lem:grow}): the norm, the sorted row sums, and
+the column sums.  The second is what acceptance guarantees about the
+closed path's matrix~$X$: integer entries, irreducibility, and
+$\rho(X)\le\Lam$.  A lower bound on $\rho(A)$ for the prefix itself is
+safe only when no fold carries a permutation, and then $\rho(A)$ itself is
+the stronger test (Proposition~\ref{prop:rhomono}).  So a bound in terms
+of individual entries of~$A$, or of its diagonal, is of no use: folds move
+entries between rows, and a completion can add to any entry.
+
+\emph{Ostrowski--Schneider is already optimal for row sums.}  Once the
+Perron weights are confined to the box $[\delta,1]^d$, the value
+$\psi_\delta$ of~\eqref{eq:os} is the exact minimum of the weighted mean of
+the row sums over that box~\cite[Lemma~2]{OstrowskiSchneider}.  So along
+this route, which knows only the row sums and a lower bound on the weight
+ratio, nothing better is possible.  A sharper test must use more about the
+completion, as $\beta$ does.  Their Theorem~1 is weaker than their
+Theorem~2 (Table~\ref{tab:os}).  Their bound applied to the prefix, with
+$\rho$ replaced by $R$ in~\eqref{eq:delta}, is a bound on $\rho(A)$, and so
+has the defect above.
+
+\emph{Ledermann, Ostrowski (1952), Brauer.}  These sharpen the row-sum
+bounds for \emph{positive} matrices, through the smallest entry of the
+whole matrix (see~\cite[p.~65]{Seneta} and the comparisons
+in~\cite{Song92}).  The matrix of a completion may have zero entries, so
+nothing is known about its smallest entry, and these bounds reduce to the
+row sums.
+
+\emph{Hall and Porsching~\cite{HallPorsching}.}  This is the
+Collatz--Wielandt bound~\eqref{eq:cw} with the test vector $z$ equal to
+$1$ except for $z_j=x$, optimised over $0<x\le1$.  For fixed $j$ it gives
+$\rho\ge\min_{i\ne j}\lam_{ij}$, where
+\[
+  \lam_{ij}=\tfrac12\Bigl(R_i-A_{ij}+A_{jj}
+  +\sqrt{(R_i-A_{ij}-A_{jj})^2+4A_{ij}(R_j-A_{jj})}\Bigr)
+\]
+and $R_i$ is the $i$-th row sum.  It is at least as good as Brauer's
+bound.  But it depends on individual entries.  For a completion, whose
+entries are known only to satisfy $0\le X_{ij}\le R_i$, the quotients
+$(Xz)_i/z_i$ are only known to be at least $xR_i$ for $i\ne j$ and at
+least $R_j$ for $i=j$.  The best that can then be guaranteed is
+$\max_x\min(x\min_{i\ne j}R_i,R_j)$, which is the smallest row sum again.
+
+\emph{Szulc~\cite{Szulc88}.}  Put $b=\min_iA_{ii}$.  Szulc derives
+$\rho\ge b+\sqrt{\tr((A-bI)^2)/d}$ from Kuharenko's theorem on the
+eigenvalues of a zero-trace matrix.  For odd~$d$ he also gives the
+alternative $\rho\ge b+\bigl(\frac2{d-1}\sum_{i<j}A_{ij}A_{ji}\bigr)^{1/2}$,
+a bound through the $2$-cycles.  Both depend on individual entries and
+the diagonal, so they bound $\rho(A)$ only.  One possible use: inside the
+fast evaluation of~$\beta$, where the candidate $Y=Q'(I+E_S)N$ is a
+concrete matrix and each entry grows with~$S$.  There the odd-$d$ bound is
+also monotone in~$S$, and it adds up all the $2$-cycles where $C_3$ now
+checks each $2$-cycle separately.  It could only make~$C_3$ faster, never
+make it prune more, since $C_3$ goes on to bracket $\rho(Y)$.
+
+\emph{Song~\cite{Song92}.}  For weights $x\ge0$ with $\sum_ix_i=1$, a
+weighted geometric mean: $\rho\ge\prod_{ij}A_{ij}^{x_ix_j}/\sum_ix_i^2$,
+and a version shifted by $qI$ so that a zero diagonal does not kill it.  It
+is a bound on $\rho(A)$, it vanishes as soon as the principal block
+selected by the support of~$x$ has a zero entry off the diagonal, and it
+is a geometric-mean relative of the symmetrised norm of
+Section~\ref{sec:symnorm}.  Song's own Example~2 shows that it does not
+always beat the older bounds.
+
+\emph{Li~\cite{Li01}.}  A lower bound on the smallest singular value, by
+Brauer-type ovals restricted to the edges of the undirected graph of~$A$
+(improving Johnson and Szulc).  It is not a bound on the Perron root.  Its
+idea, restricting to the edges of the graph, has analogues for the Perron
+root that use the graph's cycles.  But the graph of a completion is
+unknown, and if the row with the smallest sum can carry a loop they give
+back that row sum.
+
+\emph{Not yet examined.}  The nested bounds of Deutsch and
+Wielandt~\cite{DeutschWielandt} are iterative, closer to the
+Collatz--Wielandt brackets that $C_3$ already computes than to a
+closed-form test.
+
+\begin{thebibliography}{99}
+
+\bibitem{DeutschWielandt}
+E.~Deutsch and H.~Wielandt, \emph{Nested bounds for the Perron root of a
+  nonnegative matrix}, Linear Algebra Appl.\ \textbf{52/53} (1983),
+  235--251.
+
+\bibitem{EJD}
+L.~Elsner, C.~R.~Johnson and J.~A.~Dias da Silva, \emph{The Perron root of
+  a weighted geometric mean of nonnegative matrices}, Linear Multilinear
+  Algebra \textbf{24} (1988), 1--13.
+
+\bibitem{HallPorsching}
+C.~A.~Hall and T.~A.~Porsching, \emph{Bounds for the maximal eigenvalue of
+  a nonnegative irreducible matrix}, Duke Math.\ J.\ \textbf{36} (1969),
+  159--164.
+
+\bibitem{HamSong}
+J.-Y.~Ham and W.~T.~Song, \emph{The minimum dilatation of pseudo-Anosov
+  5-braids}, Experiment.\ Math.\ \textbf{16} (2007), 167--179.
+
+\bibitem{Li01}
+L.~Li, \emph{Lower bounds for the smallest singular value}, Comput.\
+  Math.\ Appl.\ \textbf{41} (2001), 483--487.
+
+\bibitem{OstrowskiSchneider}
+A.~Ostrowski and H.~Schneider, \emph{Bounds for the maximal characteristic
+  root of a non-negative irreducible matrix}, Duke Math.\ J.\ \textbf{27}
+  (1960), 547--553.  Scan at
+  \url{https://people.math.wisc.edu/hans/paper_archive/scanned_papers/hs014.pdf}.
+
+\bibitem{PapadopoulosPenner}
+A.~Papadopoulos and R.~C.~Penner, \emph{Enumerating pseudo-Anosov
+  foliations}, Pacific J.\ Math.\ \textbf{142} (1990), 159--173.
+
+\bibitem{Schneider58}
+H.~Schneider, \emph{Note on the fundamental theorem on irreducible
+  non-negative matrices}, Proc.\ Edinburgh Math.\ Soc.\ (2) \textbf{11}
+  (1958), 127--130.
+
+\bibitem{Seneta}
+E.~Seneta, \emph{Non-negative matrices and Markov chains}, 2nd ed.,
+  Springer, 1981.
+
+\bibitem{Song92}
+Y.~Song, \emph{Lower bounds for the Perron root of a nonnegative matrix},
+  Linear Algebra Appl.\ \textbf{169} (1992), 269--278.
+
+\bibitem{Szulc88}
+T.~Szulc, \emph{A lower bound for the Perron root of a nonnegative
+  matrix}, Linear Algebra Appl.\ \textbf{101} (1988), 181--186.
+
+\end{thebibliography}
+
+\end{document}
