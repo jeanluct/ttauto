@@ -99,21 +99,22 @@ partial paths, and sooner.
 \item Sections~\ref{sec:matrices} and~\ref{sec:automaton} define the terms:
   nonnegative matrices and their graphs, fold matrices, the automaton,
   the search, and what it means for a test to be safe.
-  Lemma~\ref{lem:principle} gives the one principle behind every safe
-  test here.
-\item Section~\ref{sec:existing} describes the tests in use, and
-  Section~\ref{sec:lose} shows where they lose: along a run of shears,
-  the partial path's matrix grows while its spectral radius stays at one,
-  so none of them notices that the path is hopeless.
-\item Section~\ref{sec:completions} proves two new tests.  Each is a lower
-  bound on the spectral radius of \emph{every} closed path that begins
-  with a given partial path.  The first, $\beta$, uses the fact that a
-  closed path's matrix must be irreducible; the second, from a theorem of
-  Ostrowski and Schneider, uses only row and column sums.
-\item Section~\ref{sec:check} checks both on small examples with a program
-  independent of \ttauto.  $\beta$ explores up to $10^5$ times fewer
-  partial paths than the tests in use and never misses an answer, but its
-  exact evaluation is exponential in the dimension.  The
+  Lemma~\ref{lem:principle} gives a simple principle for safe tests:
+  bound a quantity of the partial path that only grows.
+\item Section~\ref{sec:existing} describes the tests in use, all of that
+  form.  One is new: it sharpens the row-sum test through a theorem of
+  Ostrowski and Schneider, using all the sorted row and column sums.
+  Section~\ref{sec:lose} shows where these tests lose: along a run of
+  shears, the partial path's matrix grows while its spectral radius stays
+  at one, so none of them notices early that the path is hopeless.
+\item Section~\ref{sec:completions} proves a test of another kind, $\beta$:
+  a lower bound on the spectral radius of \emph{every} closed path that
+  begins with a given partial path, from the fact that a closed path's
+  matrix must be irreducible.
+\item Section~\ref{sec:check} checks both new tests on small examples,
+  with a program independent of \ttauto.  $\beta$ explores up to $10^5$
+  times fewer partial paths than the tests in use and never misses an
+  answer, but its exact evaluation is exponential in the dimension.  The
   Ostrowski--Schneider test explores 1.4 to 7 times fewer, at the cost of
   a sort, and has been added to \ttauto's search.
 \item Section~\ref{sec:open} lists open questions, and
@@ -273,8 +274,8 @@ it miss accepted paths, which is the outcome to avoid at any cost.
 
 \subsection{What never decreases along a path}
 
-Every test below rests on quantities that can only grow as a path is
-extended.
+The tests of Section~\ref{sec:existing} rest on quantities that can only
+grow as a path is extended.
 
 \begin{Lemma}
   \label{lem:grow}
@@ -300,7 +301,7 @@ A prefix's matrix is a product of fold matrices, each at least a
 permutation matrix, so it has no zero row; the lemma applies along every
 path.  A prefix with $L$ folds therefore has norm at least $d+L$.
 
-\begin{Lemma}[The principle behind safe tests]
+\begin{Lemma}[A principle for safe tests]
   \label{lem:principle}
   Let $q$ be a real-valued function of nonnegative integer matrices, and
   $t$ a number, such that
@@ -352,34 +353,100 @@ an accepted matrix has $r(X)\le\Lam$ and $c(X)\le\Lam$; and by
 Lemma~\ref{lem:grow} both grow along a path.  By
 Lemma~\ref{lem:principle}, abandoning a prefix when $r(A)>\Lam$ or
 $c(A)>\Lam$ is safe.  This is the test described by Ham and Song, and in
-the paper for which \ttauto\ was written.  Section~\ref{sec:os} sharpens
-it.
+the paper for which \ttauto\ was written.  It uses only the smallest row
+and column sums; the next test uses all of them.
 
-\subsection{The symmetrised norm, and why it was removed}
-\label{sec:symnorm}
+\subsection{Sorted row and column sums: the bound of Ostrowski and Schneider}
+\label{sec:os}
 
-The search once also abandoned a prefix when
-$\frac1d\sum_{ij}\sqrt{A_{ij}A_{ji}}>\Lam$, with the comment that this
-works only when every fold is a shear.  It is worth recording why it is a
-lower bound, and why that restriction matters.  Put
-$G_{ij}=\sqrt{A_{ij}A_{ji}}$, the entrywise geometric mean of $A$ and
-$A^{\mathsf T}$.  Then
+The row-sum test uses only the smallest row sum.  There is a line of
+results that sharpen $r\le\rho\le R$, where $R$ is the largest row sum, to
+$r+p_1\le\rho\le R-p_2$ with explicit $p_1,p_2>0$: by Ledermann, Ostrowski
+and Brauer for positive matrices, and by Ostrowski and
+Schneider~\cite{OstrowskiSchneider} for irreducible
+ones~\cite[p.~65]{Seneta}.  Their argument is short.
+
+Let $X\ge0$ be irreducible, with row sums $r_1,\dots,r_d$ and left Perron
+vector $y>0$.  Summing the components of $yX=\rho y$ gives
 \[
-  \tfrac1d\textstyle\sum_{ij}G_{ij}
-  =\tfrac1d\,\mathbf 1^{\mathsf T}G\,\mathbf 1\le\rho(G)
-  \le\rho(A)^{1/2}\rho(A^{\mathsf T})^{1/2}=\rho(A),
+  \rho\sum_iy_i=\sum_iy_ir_i,
 \]
-the first inequality because $G$ is symmetric (a Rayleigh quotient), the
-second by the inequality of Elsner, Johnson and Dias da Silva for weighted
-geometric means of nonnegative matrices~\cite{EJD}, which generalises a
-result of Karlin and Ost.  So it bounds $\rho(A)$ below for \emph{every}
-$A\ge0$.  What needs shears is condition~(1) of
-Lemma~\ref{lem:principle}: only when $P=I$ is $FA\ge A$, so that $G$ never
-decreases.  With permutations, $G$ can decrease along a path, and the
-test can abandon a prefix that leads to an accepted path.  In automata
-with four or more punctures most folds carry permutations, so the test was
-unsafe there, and it has been removed.  Where it was safe, the test of
-Proposition~\ref{prop:rhomono} below is stronger.
+so $\rho$ is a weighted mean of the row sums, with weights $y_i$.  The
+weights cannot be very unequal.  Let $\kappa$ be the smallest positive
+off-diagonal entry of $X$, and $\lam$ its smallest diagonal entry.  The
+$i$-th component of $yX=\rho y$ gives $(\rho-X_{ii})y_i\ge X_{ji}y_j$, so
+$y_i\ge\kappa y_j/(\rho-\lam)$ whenever $X_{ji}>0$ with $j\ne i$.  Since
+$X$ is irreducible, such steps lead from any index to any other in at most
+$d-1$ steps, which gives Schneider's bound~\cite{Schneider58}
+\begin{equation}
+  \label{eq:delta}
+  \delta=\frac{\min_iy_i}{\max_iy_i}
+  \ge\Bigl(\frac{\kappa}{\rho-\lam}\Bigr)^{d-1}.
+\end{equation}
+Scale $y$ so that $\max_iy_i=1$.  Then $y$ lies in the box $[\delta,1]^d$,
+and $\rho$ is at least the smallest weighted mean over that box.  The
+smallest puts weight $1$ on the $q$ smallest row sums and weight $\delta$ on
+the others, for the best~$q$~\cite[Lemma~2]{OstrowskiSchneider}.  With
+$r_{(1)}\le\dots\le r_{(d)}$ the row sums in increasing order,
+\begin{equation}
+  \label{eq:os}
+  \rho\ge\psi_\delta(r)=\min_{1\le q\le d}
+  \frac{\sum_{i\le q}r_{(i)}+\delta\sum_{i>q}r_{(i)}}{q+\delta(d-q)}.
+\end{equation}
+This is their Theorem~2.  Their Theorem~1 is a weaker closed form,
+$\rho\ge r+d\delta(p-r)/(d-1+\delta)$ with $p$ the mean row sum.  To make
+$\delta$ computable from $X$ alone, they replace $\rho$ by $R$
+in~\eqref{eq:delta}.
+
+To use this in a test, the bound must be put in the form of
+Lemma~\ref{lem:principle}.  Computed with the prefix's own $\delta$,
+\eqref{eq:os} is no use: that $\delta$ depends on $\rho(A)$ through
+\eqref{eq:delta}, and $\rho(A)$ can fall along a path when folds carry
+permutations.  Computed instead with a fixed $\delta_0$, $\psi_{\delta_0}$
+of the sorted row sums is a quantity of the prefix that only grows.  The
+threshold then comes from what acceptance guarantees: for an accepted
+matrix we may put $\Lam$ in place of~$\rho$ in~\eqref{eq:delta}, and its
+entries are integers.
+
+\begin{Proposition}
+  \label{prop:os}
+  Let $\delta_0=\Lam^{-(d-1)}$, and for a nonnegative integer matrix $A$
+  put
+  \[
+    \omega(A)=\max\bigl(\psi_{\delta_0}(\text{row sums of }A),\,
+      \psi_{\delta_0}(\text{column sums of }A)\bigr).
+  \]
+  Then the test $\omega(A)>\Lam$ is safe.
+\end{Proposition}
+
+\begin{proof}
+  We check the two conditions of Lemma~\ref{lem:principle}, with
+  $q=\omega$ and $t=\Lam$.
+  First, $\psi_\delta(r)$ is the minimum of $\sum_ir_ix_i/\sum_ix_i$ over
+  the box $[\delta,1]^d$.  So it does not change when the $r_i$ are
+  permuted, and it does not decrease when $\delta$ grows (the box shrinks)
+  or when any $r_i$ grows.  By Lemma~\ref{lem:grow}(2) and~(3), $\omega$
+  therefore never decreases along a path.  Second, let $X$ be accepted, so
+  $X$ is primitive with $\rho(X)\le\Lam$.  Its entries are integers, so
+  $\kappa\ge1$; and $0\le\lam<\rho(X)$ by Lemma~\ref{lem:facts}(3).  So
+  $\kappa/(\rho-\lam)\ge1/\rho\ge1/\Lam$ in~\eqref{eq:delta}, and
+  $\delta\ge\delta_0$.  Hence
+  $\psi_{\delta_0}(r(X))\le\psi_\delta(r(X))\le\rho(X)\le\Lam$, and the
+  same for the column sums, applying the argument to $X^{\mathsf T}$, whose
+  left Perron vector is the right Perron vector of~$X$.  So
+  $\omega(X)\le\Lam$.
+\end{proof}
+
+At first sight $\delta_0$ is too small to matter.  But the prefixes that
+waste the search are exactly those where a run of shears has made some row
+sums large while the smallest stays small, and there even a small weight
+on the large rows is enough.  The test needs only the sorted row and
+column sums, so it costs a sort of $d$ numbers per prefix.  It is much
+weaker than the completion bound $\beta$ of Section~\ref{sec:completions},
+since it ignores which entries a completion must fill, but it can serve as
+a cheap filter in front of~$\beta$.  Section~\ref{sec:check} measures it,
+and Appendix~\ref{app:unusable} explains why, among bounds that use only
+the row sums, it cannot be improved.
 
 \subsection{Bad words}
 
@@ -402,8 +469,12 @@ it.  The other tests in this note are safe, and can be combined with it.
   In dimension $d=2$ take $R=I+e_{12}$ and $L=I+e_{21}$, the two folds of
   the automaton for three punctures, which has one vertex.  The prefix
   $R^k=\bigl(\begin{smallmatrix}1&k\\0&1\end{smallmatrix}\bigr)$ has
-  $\nrm{R^k}=k+2$, $r(R^k)=c(R^k)=1$ and $\rho(R^k)=1$, so it passes
-  every test above until $k+2>\Lam^2+1$.  But every completion that makes
+  $\nrm{R^k}=k+2$, $r(R^k)=c(R^k)=1$ and $\rho(R^k)=1$.  Its sorted row
+  sums, like its column sums, are $1$ and $k+1$, and with $\delta_0=1/\Lam$
+  the minimum in~\eqref{eq:os} is at $q=1$, giving
+  $\omega(R^k)=(\Lam+k+1)/(\Lam+1)$.  So $R^k$ passes every test of
+  Section~\ref{sec:existing} until $k>\Lam^2-1$, when the norm test and the
+  Ostrowski--Schneider test both fire.  But every completion that makes
   it primitive contains an $L$, and then the trace is at least $k+2$
   (Theorem~\ref{thm:d2}).  So no extension of $R^k$ with $k$ beyond about
   $\Lam$ can be accepted, while the search goes on to $k\approx\Lam^2$.
@@ -443,11 +514,12 @@ norm test implies.}
 \section{Bounds over completions}
 \label{sec:completions}
 
-The tests of Section~\ref{sec:existing} bound quantities of the prefix
-itself.  The tests of this section bound instead the dilatation of every
-closed path that begins with the prefix, using what any completion must
-do.  Recall that for a test to be safe it must hold for every completion
-$B$ such that $BA$ is accepted.
+Every test of Section~\ref{sec:existing} has the form of
+Lemma~\ref{lem:principle}: it bounds a quantity of the prefix that only
+grows along a path.  The test of this section is of another kind.  It is
+not shown to grow along a path.  Instead it bounds directly the
+dilatation of every closed path that begins with the prefix, using what
+any completion must do: make the matrix irreducible.
 
 \subsection{When every fold is a shear}
 
@@ -455,14 +527,13 @@ $B$ such that $BA$ is accepted.
   \label{prop:rhomono}
   If every fold matrix is a shear, then $\rho(FA)\ge\rho(A)$ for every fold
   $F$.  So abandoning a prefix when $\rho(A)>\Lam$ is safe, and this test
-  is at least as strong as the row-sum, column-sum and symmetrised-norm
-  tests.
+  is at least as strong as the row-sum and column-sum tests.
 \end{Proposition}
 
 \begin{proof}
   $FA=A+e_{ab}A\ge A$, so Lemma~\ref{lem:facts}(1) applies, and
-  Lemma~\ref{lem:principle} with $q=\rho$ and $t=\Lam$ gives safety.  Each
-  of the other three tests bounds $\rho(A)$ from below.
+  Lemma~\ref{lem:principle} with $q=\rho$ and $t=\Lam$ gives safety.  The
+  row and column sums bound $\rho(A)$ from below.
 \end{proof}
 
 This does not help with Example~\ref{ex:shear}, since $\rho(R^k)=1$.  What
@@ -625,8 +696,8 @@ automaton whose states are pairs (vertex, permutation).
   $\beta(A)\ge\max\bigl(r(A),c(A)\bigr)$, and if every fold is a shear then
   $\beta(A)\ge\rho(A)$.  So the test $\beta(A)>\Lam$ never keeps a prefix
   that the row-sum or column-sum test would abandon, nor, without
-  permutations, one that the test of Proposition~\ref{prop:rhomono} or the
-  symmetrised norm would abandon.
+  permutations, one that the test of Proposition~\ref{prop:rhomono} would
+  abandon.
 \end{Proposition}
 
 \begin{proof}
@@ -637,8 +708,7 @@ automaton whose states are pairs (vertex, permutation).
   $r(A)$ because $A=QN$ is $N$ with its rows reordered.  By
   Lemma~\ref{lem:facts}(4), $\rho(Q'X)\ge\max(r(A),c(A))$.  Without
   permutations the candidates are $\rho((I+E_S)A)$ with $(I+E_S)A\ge A$,
-  so each is at least $\rho(A)$, which is at least the symmetrised norm
-  (Section~\ref{sec:symnorm}).
+  so each is at least $\rho(A)$.
 \end{proof}
 
 \begin{Remark}
@@ -653,91 +723,6 @@ automaton whose states are pairs (vertex, permutation).
   costs one sum and is what guarantees that the search ends, so it stays in
   any case.
 \end{Remark}
-
-\subsection{The bound of Ostrowski and Schneider}
-\label{sec:os}
-
-The row-sum test uses only the smallest row sum.  There is a line of
-results that sharpen $r\le\rho\le R$, where $R$ is the largest row sum, to
-$r+p_1\le\rho\le R-p_2$ with explicit $p_1,p_2>0$: by Ledermann, Ostrowski
-and Brauer for positive matrices, and by Ostrowski and
-Schneider~\cite{OstrowskiSchneider} for irreducible
-ones~\cite[p.~65]{Seneta}.  Their argument is short.
-
-Let $X\ge0$ be irreducible, with row sums $r_1,\dots,r_d$ and left Perron
-vector $y>0$.  Summing the components of $yX=\rho y$ gives
-\[
-  \rho\sum_iy_i=\sum_iy_ir_i,
-\]
-so $\rho$ is a weighted mean of the row sums, with weights $y_i$.  The
-weights cannot be very unequal.  Let $\kappa$ be the smallest positive
-off-diagonal entry of $X$, and $\lam$ its smallest diagonal entry.  The
-$i$-th component of $yX=\rho y$ gives $(\rho-X_{ii})y_i\ge X_{ji}y_j$, so
-$y_i\ge\kappa y_j/(\rho-\lam)$ whenever $X_{ji}>0$ with $j\ne i$.  Since
-$X$ is irreducible, such steps lead from any index to any other in at most
-$d-1$ steps, which gives Schneider's bound~\cite{Schneider58}
-\begin{equation}
-  \label{eq:delta}
-  \delta=\frac{\min_iy_i}{\max_iy_i}
-  \ge\Bigl(\frac{\kappa}{\rho-\lam}\Bigr)^{d-1}.
-\end{equation}
-Scale $y$ so that $\max_iy_i=1$.  Then $y$ lies in the box $[\delta,1]^d$,
-and $\rho$ is at least the smallest weighted mean over that box.  The
-smallest puts weight $1$ on the $q$ smallest row sums and weight $\delta$ on
-the others, for the best~$q$~\cite[Lemma~2]{OstrowskiSchneider}.  With
-$r_{(1)}\le\dots\le r_{(d)}$ the row sums in increasing order,
-\begin{equation}
-  \label{eq:os}
-  \rho\ge\psi_\delta(r)=\min_{1\le q\le d}
-  \frac{\sum_{i\le q}r_{(i)}+\delta\sum_{i>q}r_{(i)}}{q+\delta(d-q)}.
-\end{equation}
-This is their Theorem~2.  Their Theorem~1 is a weaker closed form,
-$\rho\ge r+d\delta(p-r)/(d-1+\delta)$ with $p$ the mean row sum.  To make
-$\delta$ computable from $X$ alone, they replace $\rho$ by $R$
-in~\eqref{eq:delta}.
-
-Applied to a prefix, \eqref{eq:os} bounds only $\rho(A)$, which can fall
-along a path when folds carry permutations, as for the symmetrised norm;
-without permutations, $\rho(A)$ itself is the stronger test
-(Proposition~\ref{prop:rhomono}).  Applied to the matrix of an accepted
-closed path instead, it gives a safe test, because there we may put $\Lam$
-in place of~$\rho$ in~\eqref{eq:delta}.
-
-\begin{Proposition}
-  \label{prop:os}
-  Let $\delta_0=\Lam^{-(d-1)}$.  If a prefix $A$ has
-  $\psi_{\delta_0}(r)>\Lam$, where $r$ is its vector of row sums, or the
-  same with its vector of column sums, then no completion of $A$ is
-  accepted.
-\end{Proposition}
-
-\begin{proof}
-  Suppose $X=BA$ is accepted, so $X$ is primitive with $\rho(X)\le\Lam$.
-  Its entries are integers, so $\kappa\ge1$; and $0\le\lam<\rho(X)$ by
-  Lemma~\ref{lem:facts}(3).  So $\kappa/(\rho-\lam)\ge1/\rho\ge1/\Lam$
-  in~\eqref{eq:delta}, and $\delta\ge\delta_0$.  Now $\psi_\delta(r)$ is the
-  minimum of $\sum_ir_ix_i/\sum_ix_i$ over the box $[\delta,1]^d$.  So it
-  does not change when the $r_i$ are permuted, and it does not decrease
-  when $\delta$ grows (the box shrinks) or when any $r_i$ grows.  By
-  Lemma~\ref{lem:grow}(3), $\psi_{\delta_0}$ of the row sums therefore
-  never decreases along a path, and by Lemma~\ref{lem:principle} the test
-  is safe:
-  $\Lam\ge\rho(X)\ge\psi_\delta(r(X))\ge\psi_{\delta_0}(r(X))
-  \ge\psi_{\delta_0}(r(A))$.  For columns, use the right Perron vector,
-  that is, apply the argument to $X^{\mathsf T}$, and
-  Lemma~\ref{lem:grow}(2).
-\end{proof}
-
-At first sight $\delta_0$ is too small to matter.  But the prefixes that
-waste the search are exactly those where a run of shears has made some row
-sums large while the smallest stays small, and there even a small weight
-on the large rows is enough.  The test is much weaker than $\beta$, since it
-ignores which entries a completion must fill; but it needs only the sorted
-row and column sums, so it costs a sort of $d$ numbers per prefix, and it
-can also serve as a cheap filter in front of~$\beta$.
-Section~\ref{sec:check} measures it, and Appendix~\ref{app:unusable}
-explains why, among bounds that use only the row sums, it cannot be
-improved.
 
 \section{A numerical check}
 \label{sec:check}
@@ -1037,8 +1022,9 @@ The last two rows are the complete searches of the ttauto paper's data
 $n=7$ search went from 46 minutes to 9.  But the complete search of
 $n=6$, stratum 7, at $\Lam=2.172$ still does not finish: an hour and
 $9.4\times10^9$ paths were not enough for its first starting vertex.  That
-stratum's minimum, $2.17113$, found in 2008 with the unsafe symmetrised
-norm, remains unproved.
+stratum's minimum, $2.17113$, remains unproved: the 2008 search that found
+it finished only because it also used the symmetrised norm, which is not
+safe there (Appendix~\ref{app:unusable}).
 
 \section{Open questions}
 \label{sec:open}
@@ -1120,8 +1106,6 @@ predates the Ostrowski--Schneider test.
       \code{prune\_OstSch}; $\psi_\delta$ is \code{OstSch\_bound()};
       $\delta_0$ is \code{OstSch\_delta}, computed with $\Lam+$\code{tol};
       switched off by \code{check\_OstSch(false)} \\
-    symmetrised norm & the macro \code{TTAUTO\_CHECK\_SYMMETRIC\_NORM},
-      removed in commit \code{f7b7d24} \\
     bad words & \code{badword\_length()} \\
     counts per test & \code{pruned(t)}; the statistics block prints them
       under ``Norms exceeded'', named by \code{prune\_test\_name()} \\
@@ -1172,9 +1156,11 @@ This appendix records lower bounds on the Perron root that were examined
 for issue~\#23 and found unusable, with the reason, so that they need not
 be examined again.
 
-\emph{What a usable bound needs.}  By Lemma~\ref{lem:principle}, a test
-must bound something that never decreases along a path by something that
-holds for every accepted matrix.  So it can use only two kinds of
+\emph{What a usable bound needs.}  The bounds below are candidates for
+tests of the form of Lemma~\ref{lem:principle}: a quantity that never
+decreases along a path, bounded by something that holds for every
+accepted matrix.  (The completion bound $\beta$ takes the other route, and
+bounds every completion directly.)  Such a test can use only two kinds of
 information.  The first is quantities of the prefix that never decrease
 along a path (Lemma~\ref{lem:grow}): the norm, the sorted row sums, and
 the column sums.  The second is what acceptance guarantees about the
@@ -1184,6 +1170,24 @@ safe only when no fold carries a permutation, and then $\rho(A)$ itself is
 the stronger test (Proposition~\ref{prop:rhomono}).  So a bound in terms
 of individual entries of~$A$, or of its diagonal, is of no use: folds move
 entries between rows, and a completion can add to any entry.
+
+\emph{The symmetrised norm.}  Put $G_{ij}=\sqrt{A_{ij}A_{ji}}$, the
+entrywise geometric mean of $A$ and $A^{\mathsf T}$.  Then
+\[
+  \tfrac1d\textstyle\sum_{ij}G_{ij}
+  =\tfrac1d\,\mathbf 1^{\mathsf T}G\,\mathbf 1\le\rho(G)
+  \le\rho(A)^{1/2}\rho(A^{\mathsf T})^{1/2}=\rho(A),
+\]
+the first inequality because $G$ is symmetric (a Rayleigh quotient), the
+second by the inequality of Elsner, Johnson and Dias da Silva for weighted
+geometric means of nonnegative matrices~\cite{EJD}, which generalises a
+result of Karlin and Ost.  So it is a cheap lower bound on $\rho(A)$ for
+every $A\ge0$, but it is a bound on the prefix.  It satisfies condition~(1)
+of Lemma~\ref{lem:principle} only when every fold is a shear, for then
+$FA\ge A$ and $G$ never decreases.  With permutations $G$ can decrease
+along a path, and the test ``$\frac1d\sum_{ij}G_{ij}>\Lam$'' can abandon a
+prefix that leads to an accepted path.  Where it is safe, the test of
+Proposition~\ref{prop:rhomono} is stronger.
 
 \emph{Ostrowski--Schneider is already optimal for row sums.}  Once the
 Perron weights are confined to the box $[\delta,1]^d$, the value
@@ -1235,9 +1239,8 @@ weighted geometric mean: $\rho\ge\prod_{ij}A_{ij}^{x_ix_j}/\sum_ix_i^2$,
 and a version shifted by $qI$ so that a zero diagonal does not kill it.  It
 is a bound on $\rho(A)$, it vanishes as soon as the principal block
 selected by the support of~$x$ has a zero entry off the diagonal, and it
-is a geometric-mean relative of the symmetrised norm of
-Section~\ref{sec:symnorm}.  Song's own Example~2 shows that it does not
-always beat the older bounds.
+is a geometric-mean relative of the symmetrised norm above.  Song's own
+Example~2 shows that it does not always beat the older bounds.
 
 \emph{Li~\cite{Li01}.}  A lower bound on the smallest singular value, by
 Brauer-type ovals restricted to the edges of the undirected graph of~$A$
