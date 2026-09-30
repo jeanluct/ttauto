@@ -121,7 +121,32 @@ Conventions worth knowing:
 - Mathematica post-processing lives in `mathematica/` (`TrainTracks.m`,
   saved `ttauto_output/`).  Notebooks go through the `dropoutput_nb` filter.
 
-## Current work: issue #4 (branch `iss004-braid-from-path`)
+## Current work: issue #23 (pruning the search)
+
+Issue #23: prune the norm-bounded search harder without losing classes.
+`check_all_norms()` tries the tests of the `prune_test` enum in order
+(`prune_HamSong`, `prune_colsum`, `prune_rowsum`, `prune_OstSch`) and
+credits the first that fires; the statistics block prints the counts
+under "Norms exceeded:", named by `prune_test_name()`.  The
+Ostrowski-Schneider test bounds the dilatation of every accepted
+completion from the sorted row and column sums (`OstSch_bound()`); it is
+safe and on by default, and `check_OstSch(false)` gives back the search
+without it, counts included.  It cuts paths tried by 1.2 to 8.5 times;
+`testsuite/ttauto/test_prune_counts.cpp` pins both modes.  The unsafe
+symmetrised-norm test was removed.  The mathematics, the tests and why
+each is safe, and a map from the maths onto the code, are in
+`devel/iss023/pruning_bounds.tex` (edit it here on master only).  The
+stronger completion bound beta, which prunes ~10^3 times more in small
+examples but is exponential to evaluate, lives on branch
+`iss023-pathlength-bound` with `include/ttauto/completion_bound.hpp` and
+the toy programs (`devel/iss023/bounds_toy.cpp`, `census.cpp`); that
+branch predates the Ostrowski-Schneider test, so merge master into it
+before resuming (expect a conflict in `ttauto.hpp`, and take master's
+note).  Still open: stratum 7 of n=6 at 2.172 does not finish (over
+9e9 paths on its first vertex in an hour), so its minimum 2.17113 is
+unproved; it needs a fast form of beta.
+
+## Earlier work: issue #4 (branch `closed_iss004-braid-from-path`)
 
 Issue #4: read the braid off a closed folding path.  Done.  A closed path
 defines a homeomorphism of the punctured disc; turning it into a word in
@@ -175,6 +200,9 @@ in `testsuite/COVERAGE.md` and `doc/TESTING.md`.  Older material in
   `toby_hall-email_2009-04-30.pdf`, `notes_badbraid.pdf`: source data.
 - `ttauto.input` / `ttauto.output`: answers that drive `examples/ttauto` to
   the bad case (6 punctures, stratum 5, subgraph 1 of 8, the 90-vertex one).
+  `ttauto.output` is a record of the April 2026 run, before the gate test,
+  trimmed by hand to vertex 28, where the reducible 2.01536 class shows up;
+  keep it as evidence rather than regenerating it.
 
 The canonical bad case is `n=6`, `trk=4`, `sgidx=0`, cycle
 `{29,46,43,71,88,85,29}` (1-based; `{28,45,42,70,87,84,28}` in C++) with
